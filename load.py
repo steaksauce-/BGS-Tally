@@ -13,7 +13,7 @@ from os import path
 
 
 this = sys.modules[__name__]	# For holding module globals
-this.VersionNo = "2.0.0"
+this.VersionNo = "2.0.1"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -92,6 +92,8 @@ def plugin_start(plugin_dir):
    this.LastTick = tk.StringVar(value= config.get("XLastTick"))
    this.TickTime = tk.StringVar(value= config.get("XTickTime"))
    this.Status = tk.StringVar(value= config.get("XStatus"))
+   this.DataIndex = tk.IntVar(value= config.get("xIndex"))
+   this.StationFaction = tk.StringVar(value = config.get("XStation"))
 
    # this.LastTick.set("12")
 
@@ -121,6 +123,8 @@ def plugin_stop():
     config.set('XLastTick', this.CurrentTick)
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
+    config.set('XIndex', this.DataIndex.get())
+    config.set('XStation', this.StationFaction.get())
 
     file = os.path.join(this.Dir, "Today Data.txt")
     with open(file, 'w') as outfile:
@@ -162,7 +166,7 @@ def plugin_app(parent):
 def journal_entry(cmdr, is_beta, system, station, entry, state):
 
    if this.Status.get()!="Active":
-       print(Paused)
+       print('Paused')
        return
 
    if entry['event'] == 'Location':  # get factions at startup
@@ -179,7 +183,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
 
    if entry['event'] == 'Docked':   # enter system and faction named
-      this.StationFaction = entry['StationFaction']  # set controlling faction name
+
+      this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
 
       #  tick check and counter reset
       response = requests.get('https://elitebgs.app/api/ebgs/v4/ticks')  # get current tick and reset if changed
@@ -200,18 +205,19 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
       if (x >= 1):
           for y in range (1,x+1):
               if entry['StarSystem'] == this.TodayData[y][0]['System']:
-                  this.DataIndex = y
+                  this.DataIndex.set(y)
                   print('system in data')
+                  print(this.DataIndex.get())
                   return
           this.TodayData[x+1] =[{'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions': []}]
-          this.DataIndex = x+1
+          this.DataIndex.set(x+1)
           z = len(this.FactionNames)
           for i in range(0, z):
               this.TodayData[x+1][0]['Factions'].append({'Faction': this.FactionNames[i], 'MissionPoints': 0, 'TradeProfit': 0, 'Bounties': 0, 'CartData': 0})
       else:
           this.TodayData= {1: [{'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions':[]}]}
           z = len(this.FactionNames)
-          this.DataIndex = 1
+          this.DataIndex.set(1)
           for i in range(0, z):
               this.TodayData[1][0]['Factions'].append ({'Faction': this.FactionNames[i], 'MissionPoints': 0, 'TradeProfit': 0, 'Bounties': 0, 'CartData': 0})
 
@@ -231,26 +237,34 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         if fe3 == this.TodayData[y][0]['Factions'][z]['Faction']:
                             this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
 
-   if entry['event'] == 'SellExplorationData' or entry['event'] == "MultiSellExplorationData":  # get carto data value
-      t = len(this.TodayData[this.DataIndex][0]['Factions'])
+   if entry['event'] == 'SellExplorationData' or entry['event'] == "MultiSellExplorationData": # get carto data value
+      print('sell cart data')
+      print(entry)
+      print(this.DataIndex.get())
+      print(this.StationFaction.get())
+      t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
       for z in range(0, t):
-          if this.StationFaction == this.TodayData[this.DataIndex][0]['Factions'][z]['Faction']:
-              this.TodayData[this.DataIndex][0]['Factions'][z]['CartData'] += entry['TotalEarning']
+          if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
+              this.TodayData[this.DataIndex.get()][0]['Factions'][z]['CartData'] += entry['TotalEarnings']
 
    if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'bounty':  # bounties collected
-      t = len(this.TodayData[this.DataIndex][0]['Factions'])
+      t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
       for z in entry['Factions']:
           for x in range(0, t):
-              if z['Faction'] == this.TodayData[this.DataIndex][0]['Factions'][x]['Faction']:
-                  this.TodayData[this.DataIndex][0]['Factions'][x]['Bounties'] += z['Amount']
+              if z['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
+                  this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Bounties'] += z['Amount']
 
    if entry['event'] == 'MarketSell':  # Trade Profit
-       t = len(this.TodayData[this.DataIndex][0]['Factions'])
+       print('trade')
+       print(this.DataIndex.get())
+       print(entry)
+       print(this.StationFaction.get())
+       t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
        for z in range(0, t):
-           if this.StationFaction == this.TodayData[this.DataIndex][0]['Factions'][z]['Faction']:
+           if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
                cost = entry['Count'] * entry['AvgPricePaid']
                profit = entry['TotalSale'] - cost
-               this.TodayData[this.DataIndex][0]['Factions'][z]['TradeProfit'] += profit
+               this.TodayData[this.DataIndex.get()][0]['Factions'][z]['TradeProfit'] += profit
 
 
 def version_tuple(version):
