@@ -13,7 +13,7 @@ from os import path
 
 
 this = sys.modules[__name__]	# For holding module globals
-this.VersionNo = "2.0.1"
+this.VersionNo = "2.0.2"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -32,11 +32,8 @@ def plugin_prefs(parent, cmdr, is_beta):
    """
 
    frame = nb.Frame(parent)
-   nb.Label(frame, text="Faction to monitor").grid(column=0, sticky=tk.W)
+   nb.Label(frame, text="BGS Tally v" + this.VersionNo).grid(column=0, sticky=tk.W)
    """
-   factionname = nb.Entry(frame, textvariable = this.FactionName ,width=40).grid(column=0, sticky=tk.W)
-   systemlabel = nb.Label(frame, text="System to monitor").grid(column=0, sticky=tk.W)
-   systemname = nb.Entry(frame, textvariable =this.SystemName, width=40).grid(column=0, sticky=tk.W)
    reset = nb.Button(frame, text="Reset Counter").place(x=0 , y=290)
    """
    nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid()
@@ -48,18 +45,6 @@ def prefs_changed(cmdr, is_beta):
    """
    this.StatusLabel["text"] = this.Status.get()
 
-   """
-   this.factionlabel2["text"] = this.FactionName.get()
-   this.systemlabel2["text"] = this.SystemName.get()
-   this.MissionPoints.set(0)
-   this.TradeProfit.set(0)
-   this.BountiesCollected.set(0)
-   this.CartDataSold.set(0)
-   this.missioninf2["text"] = this.MissionPoints.get()
-   this.tradeprofit2["text"] = this.TradeProfit.get()
-   this.bountiescollected2["text"] = this.BountiesCollected.get()
-   this.cartdata2["text"] = this.CartDataSold.get()
-   """
 
 def plugin_start(plugin_dir):
    """
@@ -120,6 +105,8 @@ def plugin_stop():
     """
     EDMC is closing
     """
+    save_data()
+    """
     config.set('XLastTick', this.CurrentTick)
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
@@ -133,9 +120,7 @@ def plugin_stop():
     file = os.path.join(this.Dir, "Yesterday Data.txt")
     with open(file, 'w') as outfile:
         json.dump(this.YesterdayData, outfile)
-
-
-
+    """
     print ("Farewell cruel world!")
 
 def plugin_app(parent):
@@ -236,6 +221,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                     for z in range(0, t) :
                         if fe3 == this.TodayData[y][0]['Factions'][z]['Faction']:
                             this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
+      save_data()
 
    if entry['event'] == 'SellExplorationData' or entry['event'] == "MultiSellExplorationData": # get carto data value
       print('sell cart data')
@@ -246,6 +232,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
       for z in range(0, t):
           if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
               this.TodayData[this.DataIndex.get()][0]['Factions'][z]['CartData'] += entry['TotalEarnings']
+      save_data()
 
    if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'bounty':  # bounties collected
       t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
@@ -253,6 +240,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
           for x in range(0, t):
               if z['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
                   this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Bounties'] += z['Amount']
+      save_data()
 
    if entry['event'] == 'MarketSell':  # Trade Profit
        print('trade')
@@ -265,6 +253,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                cost = entry['Count'] * entry['AvgPricePaid']
                profit = entry['TotalSale'] - cost
                this.TodayData[this.DataIndex.get()][0]['Factions'][z]['TradeProfit'] += profit
+       save_data()
 
 
 def version_tuple(version):
@@ -388,3 +377,18 @@ def tick_format(ticktime):
    time1 = z[0:5]
    datetimetick = time1+' UTC '+date1
    return (datetimetick)
+
+def save_data():
+    config.set('XLastTick', this.CurrentTick)
+    config.set('XTickTime', this.TickTime)
+    config.set('XStatus', this.Status.get())
+    config.set('XIndex', this.DataIndex.get())
+    config.set('XStation', this.StationFaction.get())
+
+    file = os.path.join(this.Dir, "Today Data.txt")
+    with open(file, 'w') as outfile:
+        json.dump(this.TodayData, outfile)
+
+    file = os.path.join(this.Dir, "Yesterday Data.txt")
+    with open(file, 'w') as outfile:
+        json.dump(this.YesterdayData, outfile)
