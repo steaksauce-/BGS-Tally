@@ -1,7 +1,6 @@
-import Tkinter as tk
+
 import myNotebook as nb
 import sys
-import ttk
 import json
 import requests
 from config import config
@@ -9,11 +8,18 @@ from theme import theme
 import webbrowser
 import os.path
 from os import path
-
+try:
+    # Python 2
+    import Tkinter as tk
+    import ttk
+except ModuleNotFoundError:
+    # Python 3
+    import tkinter as tk
+    from tkinter import ttk
 
 
 this = sys.modules[__name__]	# For holding module globals
-this.VersionNo = "2.0.2"
+this.VersionNo = "2.1.0"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -101,26 +107,16 @@ def plugin_start(plugin_dir):
    return "BGS Tally v2"
 
 
+def plugin_start3(plugin_dir):
+    return plugin_start(plugin_dir)
+
+
 def plugin_stop():
     """
     EDMC is closing
     """
     save_data()
-    """
-    config.set('XLastTick', this.CurrentTick)
-    config.set('XTickTime', this.TickTime)
-    config.set('XStatus', this.Status.get())
-    config.set('XIndex', this.DataIndex.get())
-    config.set('XStation', this.StationFaction.get())
 
-    file = os.path.join(this.Dir, "Today Data.txt")
-    with open(file, 'w') as outfile:
-        json.dump(this.TodayData, outfile)
-
-    file = os.path.join(this.Dir, "Yesterday Data.txt")
-    with open(file, 'w') as outfile:
-        json.dump(this.YesterdayData, outfile)
-    """
     print ("Farewell cruel world!")
 
 def plugin_app(parent):
@@ -156,15 +152,41 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
    if entry['event'] == 'Location':  # get factions at startup
        this.FactionNames = []
+       this.FactionStates = {'Factions' : []}
+       z = 0
        for i in entry['Factions']:
            if i['Name'] != "Pilots' Federation Local Branch":
                this.FactionNames.append(i['Name'])
+               this.FactionStates['Factions'].append({'Faction': i['Name'], 'Happiness': i['Happiness_Localised'], 'States': []})
+
+               try:
+                   for x in i['ActiveStates']:
+                        this.FactionStates['Factions'][z]['States'].append({'State': x['State']})
+               except KeyError:
+                   this.FactionStates['Factions'][z]['States'].append({'State': 'None'})
+               z+=1
+       print("Location / conflicts")
+       print(entry['Conflicts'])
 
    if entry['event'] == 'FSDJump':  # get factions at jump
        this.FactionNames = []
+       this.FactionStates = {'Factions': []}
+       z = 0
        for i in entry['Factions']:
            if i['Name'] != "Pilots' Federation Local Branch":
                this.FactionNames.append(i['Name'])
+               this.FactionStates['Factions'].append(
+                   {'Faction': i['Name'], 'Happiness': i['Happiness_Localised'], 'States': []})
+
+               try:
+                   for x in i['ActiveStates']:
+                       this.FactionStates['Factions'][z]['States'].append({'State': x['State']})
+               except KeyError:
+                   this.FactionStates['Factions'][z]['States'].append({'State': 'None'})
+               z += 1
+       print(this.FactionStates)
+       print("FSDJump / conflicts")
+       print(entry['Conflicts'])
 
 
    if entry['event'] == 'Docked':   # enter system and faction named
@@ -184,7 +206,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
           this.TodayData = {}
           this.TickTimeLabel["text"] = tick_format(this.TickTime)
           print("Tick auto reset happened")
-
 
       x = len(this.TodayData)
       if (x >= 1):
@@ -208,7 +229,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
    if entry['event'] == 'MissionCompleted':  # get mission influence value
       fe = entry['FactionEffects']
-
+      print("mission completed")
+      print(entry)
       for i in fe:
          fe3 = i['Faction']
          fe4 = i['Influence']
@@ -224,10 +246,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
       save_data()
 
    if entry['event'] == 'SellExplorationData' or entry['event'] == "MultiSellExplorationData": # get carto data value
-      print('sell cart data')
-      print(entry)
-      print(this.DataIndex.get())
-      print(this.StationFaction.get())
       t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
       for z in range(0, t):
           if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
@@ -243,10 +261,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
       save_data()
 
    if entry['event'] == 'MarketSell':  # Trade Profit
-       print('trade')
-       print(this.DataIndex.get())
-       print(entry)
-       print(this.StationFaction.get())
        t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
        for z in range(0, t):
            if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
@@ -254,6 +268,26 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                profit = entry['TotalSale'] - cost
                this.TodayData[this.DataIndex.get()][0]['Factions'][z]['TradeProfit'] += profit
        save_data()
+
+   if entry['event'] == 'MissionAccepted':  #mission accpeted
+       print('Mission Accepted')
+       print(entry)
+
+   if entry['event'] == 'MissionFailed':  # mission failed
+       print('Mission Failed')
+       print(entry)
+
+   if entry['event'] == 'MissionAbandoned':
+       print('Mission Abandoned')
+       print(entry)
+
+   if entry['event'] == 'Missions': # missions on startup
+       print('Missions on Startup')
+       print(entry)
+
+   if entry['event'] =='USSDrop':
+       print('USSDrop')
+       print(entry)
 
 
 def version_tuple(version):
