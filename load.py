@@ -19,13 +19,13 @@ except ModuleNotFoundError:
 
 
 this = sys.modules[__name__]	# For holding module globals
-this.VersionNo = "2.1.0"
+this.VersionNo = "2.1.1"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
 this.Status = "Active"
-this.TickTime = ""
+this.TickTime =""
 this.State = tk.IntVar()
 
 
@@ -138,7 +138,7 @@ def plugin_app(parent):
     tk.Label(this.frame, text="Last Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, text=this.Status.get())
     this.StatusLabel.grid(row=2, column=1, sticky=tk.W)
-    this.TickTimeLabel = tk.Label(this.frame, text= tick_format(this.TickTime)).grid(row=3, column=1, sticky = tk.W)
+    this.TimeLabel = tk.Label(this.frame, text= tick_format(this.TickTime)).grid(row=3, column=1, sticky = tk.W)
 
 
     return this.frame
@@ -200,11 +200,13 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
       this.TickTime = tick[0]['time']
       print(this.LastTick.get())
       print(this.CurrentTick)
+      print(this.TickTime)
       if this.LastTick.get() != this.CurrentTick:
           this.LastTick.set(this.CurrentTick)
           this.YesterdayData = this.TodayData
           this.TodayData = {}
-          this.TickTimeLabel["text"] = tick_format(this.TickTime)
+          this.TimeLabel = tk.Label(this.frame, text= tick_format(this.TickTime)).grid(row=3, column=1, sticky = tk.W)
+          theme.update(this.frame)
           print("Tick auto reset happened")
 
       x = len(this.TodayData)
