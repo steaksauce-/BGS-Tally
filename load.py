@@ -165,8 +165,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                except KeyError:
                    this.FactionStates['Factions'][z]['States'].append({'State': 'None'})
                z+=1
-       print("Location / conflicts")
-       print(entry['Conflicts'])
 
    if entry['event'] == 'FSDJump':  # get factions at jump
        this.FactionNames = []
@@ -184,9 +182,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                except KeyError:
                    this.FactionStates['Factions'][z]['States'].append({'State': 'None'})
                z += 1
-       print(this.FactionStates)
-       print("FSDJump / conflicts")
-       print(entry['Conflicts'])
 
 
    if entry['event'] == 'Docked':   # enter system and faction named
