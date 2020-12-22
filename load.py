@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 
 this = sys.modules[__name__]	# For holding module globals
-this.VersionNo = "2.1.2"
+this.VersionNo = "2.1.3"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -154,6 +154,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
        this.FactionNames = []
        this.FactionStates = {'Factions' : []}
        z = 0
+       try:
+           test = entry['Factions']
+       except KeyError:
+           return
        for i in entry['Factions']:
            if i['Name'] != "Pilots' Federation Local Branch":
                this.FactionNames.append(i['Name'])
@@ -170,6 +174,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
        this.FactionNames = []
        this.FactionStates = {'Factions': []}
        z = 0
+       try:
+           test = entry['Factions']
+       except KeyError:
+           return
        for i in entry['Factions']:
            if i['Name'] != "Pilots' Federation Local Branch":
                this.FactionNames.append(i['Name'])
