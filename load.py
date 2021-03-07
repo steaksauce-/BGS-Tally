@@ -18,7 +18,7 @@ except ModuleNotFoundError:
     from tkinter import ttk
 
 
-this = sys.modules[__name__]	# For holding module globals
+this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "2.1.3"
 this.FactionNames = []
 this.TodayData = {}
@@ -230,7 +230,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
           z = len(this.FactionNames)
           this.DataIndex.set(1)
           for i in range(0, z):
-              this.TodayData[1][0]['Factions'].append ({'Faction': this.FactionNames[i], 'MissionPoints': 0, 'TradeProfit': 0, 'Bounties': 0, 'CartData': 0})
+              this.TodayData[1][0]['Factions'].append ({'Faction': this.FactionNames[i], 'MissionPoints': 0, 'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,})
 
    if entry['event'] == 'MissionCompleted':  # get mission influence value
       fe = entry['FactionEffects']
