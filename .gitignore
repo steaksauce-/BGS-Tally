@@ -126,7 +126,7 @@ dmypy.json
 .pyre/
 
 # oath service account
-.json
+*.json
 
 # data files
-.txt
+*.txt
