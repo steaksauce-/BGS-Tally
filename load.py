@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "2.1.3"
+this.VersionNo = "2.1.4"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -191,6 +191,26 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                    this.FactionStates['Factions'][z]['States'].append({'State': 'None'})
                z += 1
 
+   if entry['event'] == 'CarrierJump':  # get factions at jump
+       this.FactionNames = []
+       this.FactionStates = {'Factions': []}
+       z = 0
+       try:
+           test = entry['Factions']
+       except KeyError:
+           return
+       for i in entry['Factions']:
+           if i['Name'] != "Pilots' Federation Local Branch":
+               this.FactionNames.append(i['Name'])
+               this.FactionStates['Factions'].append(
+                   {'Faction': i['Name'], 'Happiness': i['Happiness_Localised'], 'States': []})
+
+               try:
+                   for x in i['ActiveStates']:
+                       this.FactionStates['Factions'][z]['States'].append({'State': x['State']})
+               except KeyError:
+                   this.FactionStates['Factions'][z]['States'].append({'State': 'None'})
+               z += 1
 
    if entry['event'] == 'Docked':   # enter system and faction named
 
