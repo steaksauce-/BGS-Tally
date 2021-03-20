@@ -4,7 +4,7 @@ A plugin for EDMC to count BGS work
 Now compatabile with Python 3 release
 
 # Installation
-Download the [latest release](https://github.com/tezw21/BGS-Tally-v2.0/releases/tag/2.1.3) of BGS Tally
+Download the [latest release](https://github.com/tezw21/BGS-Tally-v2.0/releases/tag/2.1.4) of BGS Tally
  - In EDMC, on the Plugins settings tab press the “Open” button. This reveals the plugins folder where this app looks for plugins.
  - Open the .zip archive that you downloaded and move the folder contained inside into the plugins folder.
 
