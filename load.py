@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "2.1.4"
+this.VersionNo = "2.1.5"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
