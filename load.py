@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "2.1.5"
+this.VersionNo = "2.1.6"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -161,7 +161,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
        for i in entry['Factions']:
            if i['Name'] != "Pilots' Federation Local Branch":
                this.FactionNames.append(i['Name'])
-               this.FactionStates['Factions'].append({'Faction': i['Name'], 'Happiness': i['Happiness_Localised'], 'States': []})
+               this.FactionStates['Factions'].append({'Faction': i['Name'], 'States': []})
 
                try:
                    for x in i['ActiveStates']:
@@ -182,7 +182,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
            if i['Name'] != "Pilots' Federation Local Branch":
                this.FactionNames.append(i['Name'])
                this.FactionStates['Factions'].append(
-                   {'Faction': i['Name'], 'Happiness': i['Happiness_Localised'], 'States': []})
+                   {'Faction': i['Name'], 'States': []})
 
                try:
                    for x in i['ActiveStates']:
@@ -203,7 +203,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
            if i['Name'] != "Pilots' Federation Local Branch":
                this.FactionNames.append(i['Name'])
                this.FactionStates['Factions'].append(
-                   {'Faction': i['Name'], 'Happiness': i['Happiness_Localised'], 'States': []})
+                   {'Faction': i['Name'], 'States': []})
 
                try:
                    for x in i['ActiveStates']:
