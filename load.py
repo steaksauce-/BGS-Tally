@@ -273,10 +273,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 this.MissionLog.pop(x)
         save_data()
     
-    if entry['event'] == 'Missions':  # missions on startup
-    
-    if entry['event'] == 'USSDrop':
-    
     if entry['event'] == 'CommitCrime':
         if entry['CrimeType'] == 'murder':
             for y in this.TodayData:
