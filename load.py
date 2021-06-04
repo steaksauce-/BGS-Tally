@@ -18,7 +18,7 @@ except ModuleNotFoundError:
     from tkinter import ttk
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "2.2.0"
+this.VersionNo = "2.2.1"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -28,9 +28,10 @@ this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
 this.MissionList = ['Mission_Courier_Elections_name', 'Mission_Delivery_name', 'Mission_AltruismCredits_name',
-                  'Mission_Collect_Industrial_name','Mission_Delivery_Confederacy_name','Chain_HelpFinishTheOrder_name',
-                    'MISSION_Salvage_Refinery_name','Mission_Rescue_Elections_name','Mission_Sightseeing_name',
-                    'Mission_PassengerVIP_Tourist_ELECTION_name','Mission_PassengerBulk_AIDWORKER_ARRIVING_name',
+                    'Mission_Collect_Industrial_name', 'Mission_Delivery_Confederacy_name',
+                    'Chain_HelpFinishTheOrder_name',
+                    'MISSION_Salvage_Refinery_name', 'Mission_Rescue_Elections_name', 'Mission_Sightseeing_name',
+                    'Mission_PassengerVIP_Tourist_ELECTION_name', 'Mission_PassengerBulk_AIDWORKER_ARRIVING_name',
                     'Mission_PassengerBulk_name']
 
 
@@ -38,12 +39,8 @@ def plugin_prefs(parent, cmdr, is_beta):
     """
     Return a TK Frame for adding to the EDMC settings dialog.
     """
-    
     frame = nb.Frame(parent)
     nb.Label(frame, text="BGS Tally v" + this.VersionNo).grid(column=0, sticky=tk.W)
-    """
-    reset = nb.Button(frame, text="Reset Counter").place(x=0 , y=290)
-    """
     nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
                    offvalue="Paused").grid()
     return frame
@@ -62,7 +59,6 @@ def plugin_start(plugin_dir):
     """
     this.Dir = plugin_dir
     file = os.path.join(this.Dir, "Today Data.txt")
-    
     if path.exists(file):
         with open(file) as json_file:
             this.TodayData = json.load(json_file)
@@ -71,9 +67,7 @@ def plugin_start(plugin_dir):
                 x = str(i)
                 this.TodayData[i] = this.TodayData[x]
                 del this.TodayData[x]
-    
     file = os.path.join(this.Dir, "Yesterday Data.txt")
-    
     if path.exists(file):
         with open(file) as json_file:
             this.YesterdayData = json.load(json_file)
@@ -82,21 +76,15 @@ def plugin_start(plugin_dir):
                 x = str(i)
                 this.YesterdayData[i] = this.YesterdayData[x]
                 del this.YesterdayData[x]
-    
     file = os.path.join(this.Dir, "MissionLog.txt")
-    
     if path.exists(file):
         with open(file) as json_file:
             this.MissionLog = json.load(json_file)
-    
-    this.LastTick = tk.StringVar(value=config.get("XLastTick"))
-    this.TickTime = tk.StringVar(value=config.get("XTickTime"))
-    this.Status = tk.StringVar(value=config.get("XStatus"))
-    this.DataIndex = tk.IntVar(value=config.get("xIndex"))
-    this.StationFaction = tk.StringVar(value=config.get("XStation"))
-    
-    # this.LastTick.set("12")
-    
+    this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
+    this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
+    this.Status = tk.StringVar(value=config.get_str("XStatus"))
+    this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
+    this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     response = requests.get('https://api.github.com/repos/tezw21/BGS-Tally/releases/latest')  # check latest version
     latest = response.json()
     this.GitVersion = latest['tag_name']
@@ -109,8 +97,6 @@ def plugin_start(plugin_dir):
         this.LastTick.set(this.CurrentTick)
         this.YesterdayData = this.TodayData
         this.TodayData = {}
-        print("Tick auto reset happened")
-    
     return "BGS Tally v2"
 
 
@@ -123,8 +109,6 @@ def plugin_stop():
     EDMC is closing
     """
     save_data()
-    
-    print("BGS Tally closing")
 
 
 def plugin_app(parent):
@@ -132,14 +116,12 @@ def plugin_app(parent):
     Create a frame for the EDMC main window
     """
     this.frame = tk.Frame(parent)
-    
     Title = tk.Label(this.frame, text="BGS Tally v" + this.VersionNo)
     Title.grid(row=0, column=0, sticky=tk.W)
     if version_tuple(this.GitVersion) > version_tuple(this.VersionNo):
         title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
         title2.grid(row=0, column=1, sticky=tk.W, )
         title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/tezw21/BGS-Tally/releases"))
-    
     tk.Button(this.frame, text='Data Today', command=display_data).grid(row=1, column=0, padx=3)
     tk.Button(this.frame, text='Data Yesterday', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="Status:").grid(row=2, column=0, sticky=tk.W)
@@ -147,20 +129,14 @@ def plugin_app(parent):
     this.StatusLabel = tk.Label(this.frame, text=this.Status.get())
     this.StatusLabel.grid(row=2, column=1, sticky=tk.W)
     this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
-    
     return this.frame
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
-    
     EventList = ['Location', 'FSDJump', 'CarrierJump']
-    
     if this.Status.get() != "Active":
-        print('Paused')
         return
-    
     if entry['event'] in EventList:  # get factions and populate today data
-        print(entry['event'])
         this.FactionNames = []
         this.FactionStates = []
         z = 0
@@ -178,8 +154,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             for y in range(1, x + 1):
                 if entry['StarSystem'] == this.TodayData[y][0]['System']:
                     this.DataIndex.set(y)
-                    print('system in data')
-                    print(this.DataIndex.get())
                     return
             this.TodayData[x + 1] = [
                 {'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions': []}]
@@ -204,29 +178,21 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                      'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0})
     
     if entry['event'] == 'Docked':  # enter system and faction named
-        
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
-        
         #  tick check and counter reset
         response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
         tick = response.json()
         this.CurrentTick = tick[0]['_id']
         this.TickTime = tick[0]['time']
-        print(this.TickTime)
         if this.LastTick.get() != this.CurrentTick:
             this.LastTick.set(this.CurrentTick)
             this.YesterdayData = this.TodayData
             this.TodayData = {}
             this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
             theme.update(this.frame)
-            print("Tick auto reset happened")
-        
-        
     
     if entry['event'] == 'MissionCompleted':  # get mission influence value
         fe = entry['FactionEffects']
-        print("mission completed")
-        print(entry)
         for i in fe:
             fe3 = i['Faction']
             if i['Influence'] != []:
@@ -246,7 +212,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                                 for z in range(0, len(this.TodayData[y][0]['Factions'])):
                                     if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3 and entry['Name'] in this.MissionList:
                                         this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
-        
         for count in range(len(this.MissionLog)):
             if this.MissionLog[count]["MissionID"] == entry["MissionID"]:
                 this.MissionLog.pop(count)
@@ -267,8 +232,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 if z['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
                     this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Bounties'] += z['Amount']
         save_data()
-        
-    if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond': # combat bonds collected
+    
+    if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':  # combat bonds collected
         print('Combat Bond redeemed')
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for x in range(0, t):
@@ -307,24 +272,19 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             if this.MissionLog[x]["MissionID"] == entry["MissionID"]:
                 this.MissionLog.pop(x)
         save_data()
-        
+    
     if entry['event'] == 'Missions':  # missions on startup
-        print('Missions on Startup')
-        print(entry)
     
     if entry['event'] == 'USSDrop':
-        print('USSDrop')
-        print(entry)
-        
+    
     if entry['event'] == 'CommitCrime':
-        print(entry)
         if entry['CrimeType'] == 'murder':
             for y in this.TodayData:
                 if system == this.TodayData[y][0]['System']:
                     for z in range(0, len(this.TodayData[y][0]['Factions'])):
                         if entry['Faction'] == this.TodayData[y][0]['Factions'][z]['Faction']:
                             this.TodayData[y][0]['Factions'][z]['Murdered'] += 1
-                        
+
 
 def version_tuple(version):
     try:
@@ -347,10 +307,7 @@ def display_data():
     form = tk.Toplevel(this.frame)
     form.title("BGS Tally v" + this.VersionNo + " - Data Today")
     form.geometry("800x280")
-    # tk.Label(this.frame, text="BGS Tally v" + this.VersionNo)
-    
     tab_parent = ttk.Notebook(form)
-    
     for i in this.TodayData:
         tab = ttk.Frame(tab_parent)
         tab_parent.add(tab, text=this.TodayData[i][0]['System'])
@@ -363,7 +320,6 @@ def display_data():
         CombatLabel = tk.Label(tab, text="Combat Bonds")
         FailedLabel = tk.Label(tab, text="Mission Failed")
         MurderLabel = tk.Label(tab, text="Murdered")
-        
         FactionLabel.grid(row=0, column=0)
         FactionStateLabel.grid(row=0, column=1)
         MPLabel.grid(row=0, column=2)
@@ -373,7 +329,6 @@ def display_data():
         CombatLabel.grid(row=0, column=6)
         FailedLabel.grid(row=0, column=7)
         MurderLabel.grid(row=0, column=8)
-        
         z = len(this.TodayData[i][0]['Factions'])
         for x in range(0, z):
             FactionName = tk.Label(tab, text=this.TodayData[i][0]['Factions'][x]['Faction'])
@@ -401,9 +356,7 @@ def display_yesterdaydata():
     form = tk.Toplevel(this.frame)
     form.title("BGS Tally v" + this.VersionNo + " - Data Yesterday")
     form.geometry("800x280")
-    
     tab_parent = ttk.Notebook(form)
-    
     for i in this.YesterdayData:
         tab = ttk.Frame(tab_parent)
         tab_parent.add(tab, text=this.YesterdayData[i][0]['System'])
@@ -416,7 +369,6 @@ def display_yesterdaydata():
         CombatLabel = tk.Label(tab, text="Combat Bonds")
         FailedLabel = tk.Label(tab, text="Mission Failed")
         MurderLabel = tk.Label(tab, text="Murdered")
-        
         FactionLabel.grid(row=0, column=0)
         FactionStateLabel.grid(row=0, column=1)
         MPLabel.grid(row=0, column=2)
@@ -426,7 +378,6 @@ def display_yesterdaydata():
         CombatLabel.grid(row=0, column=6)
         FailedLabel.grid(row=0, column=7)
         MurderLabel.grid(row=0, column=8)
-        
         z = len(this.YesterdayData[i][0]['Factions'])
         for x in range(0, z):
             FactionName = tk.Label(tab, text=this.YesterdayData[i][0]['Factions'][x]['Faction'])
@@ -447,7 +398,6 @@ def display_yesterdaydata():
             Failed.grid(row=x + 1, column=7)
             Murder = tk.Label(tab, text=this.YesterdayData[i][0]['Factions'][x]['Murdered'])
             Murder.grid(row=x + 1, column=8)
-            
     tab_parent.pack(expand=1, fill='both')
 
 
@@ -492,15 +442,12 @@ def save_data():
     config.set('XStatus', this.Status.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
-    
     file = os.path.join(this.Dir, "Today Data.txt")
     with open(file, 'w') as outfile:
         json.dump(this.TodayData, outfile)
-    
     file = os.path.join(this.Dir, "Yesterday Data.txt")
     with open(file, 'w') as outfile:
         json.dump(this.YesterdayData, outfile)
-    
     file = os.path.join(this.Dir, "MissionLog.txt")
     with open(file, 'w') as outfile:
         json.dump(this.MissionLog, outfile)
