@@ -18,7 +18,7 @@ except ModuleNotFoundError:
     from tkinter import ttk
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "2.2.1"
+this.VersionNo = "2.2.2"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
