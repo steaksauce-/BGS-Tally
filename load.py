@@ -3,10 +3,12 @@ import sys
 import json
 import requests
 from config import config
+from config import appname
 from theme import theme
 import webbrowser
 import os.path
 from os import path
+import logging
 
 try:
     # Python 2
@@ -16,6 +18,7 @@ except ModuleNotFoundError:
     # Python 3
     import tkinter as tk
     from tkinter import ttk
+
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "2.2.2"
@@ -33,6 +36,29 @@ this.MissionList = ['Mission_Courier_Elections_name', 'Mission_Delivery_name', '
                     'MISSION_Salvage_Refinery_name', 'Mission_Rescue_Elections_name', 'Mission_Sightseeing_name',
                     'Mission_PassengerVIP_Tourist_ELECTION_name', 'Mission_PassengerBulk_AIDWORKER_ARRIVING_name',
                     'Mission_PassengerBulk_name']
+
+
+# This could also be returned from plugin_start3()
+plugin_name = os.path.basename(os.path.dirname(__file__))
+
+# A Logger is used per 'found' plugin to make it easy to include the plugin's
+# folder name in the logging output format.
+# NB: plugin_name here *must* be the plugin's folder name as per the preceding
+#     code, else the logger won't be properly set up.
+logger = logging.getLogger(f'{appname}.{plugin_name}')
+
+# If the Logger has handlers then it was already set up by the core code, else
+# it needs setting up here.
+if not logger.hasHandlers():
+    level = logging.INFO  # So logger.info(...) is equivalent to print()
+
+    logger.setLevel(level)
+    logger_channel = logging.StreamHandler()
+    logger_formatter = logging.Formatter(f'%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s')
+    logger_formatter.default_time_format = '%Y-%m-%d %H:%M:%S'
+    logger_formatter.default_msec_format = '%s.%03d'
+    logger_channel.setFormatter(logger_formatter)
+    logger.addHandler(logger_channel)
 
 
 def plugin_prefs(parent, cmdr, is_beta):
@@ -234,7 +260,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         save_data()
     
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':  # combat bonds collected
-        print('Combat Bond redeemed')
+        logger.info('Combat Bond redeemed')
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for x in range(0, t):
             if entry['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
