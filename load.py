@@ -328,7 +328,7 @@ def human_format(num):
 def display_data():
     form = tk.Toplevel(this.frame)
     form.title("BGS Tally v" + this.VersionNo + " - Data Today")
-    form.geometry("800x500")
+    form.geometry("1000x500")
     tab_parent = ttk.Notebook(form)
     discordData = ""
 
@@ -405,7 +405,7 @@ def display_data():
 def display_yesterdaydata():
     form = tk.Toplevel(this.frame)
     form.title("BGS Tally v" + this.VersionNo + " - Data Yesterday")
-    form.geometry("800x500")
+    form.geometry("1000x500")
     tab_parent = ttk.Notebook(form)
     discordData = ""
 
