@@ -2,6 +2,10 @@
 
 ## v1.x.x - xxxx-xx-xx
 
+### Other changes:
+
+* Changed 'Missions' to 'INF' in Discord text.
+* Removed 'Failed Missions' from Discord text.
 
 
 ## v1.0.0 - 2021-08-27
