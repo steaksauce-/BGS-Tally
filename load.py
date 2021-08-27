@@ -123,7 +123,7 @@ def plugin_start(plugin_dir):
         this.LastTick.set(this.CurrentTick)
         this.YesterdayData = this.TodayData
         this.TodayData = {}
-    return "BGS Tally v2"
+    return "BGS Tally"
 
 
 def plugin_start3(plugin_dir):
