@@ -359,8 +359,7 @@ def display_data():
 
         for x in range(0, z):
             factionDiscordData = ""
-            factionDiscordData += f"_Missions_: {this.TodayData[i][0]['Factions'][x]['MissionPoints']}; " if this.TodayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            factionDiscordData += f"_Failed Missions_: {this.TodayData[i][0]['Factions'][x]['MissionFailed']}; " if this.TodayData[i][0]['Factions'][x]['MissionFailed'] > 0 else ""
+            factionDiscordData += f"_INF_: {this.TodayData[i][0]['Factions'][x]['MissionPoints']}; " if this.TodayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
             factionDiscordData += f"_BVs_: {human_format(this.TodayData[i][0]['Factions'][x]['Bounties'])}; " if this.TodayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
             factionDiscordData += f"_CBs_: {human_format(this.TodayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.TodayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
             factionDiscordData += f"_Trade_: {human_format(this.TodayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.TodayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""
@@ -437,8 +436,7 @@ def display_yesterdaydata():
 
         for x in range(0, z):
             factionDiscordData = ""
-            factionDiscordData += f"_Missions_: {this.YesterdayData[i][0]['Factions'][x]['MissionPoints']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            factionDiscordData += f"_Failed Missions_: {this.YesterdayData[i][0]['Factions'][x]['MissionFailed']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionFailed'] > 0 else ""
+            factionDiscordData += f"_INF_: {this.YesterdayData[i][0]['Factions'][x]['MissionPoints']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
             factionDiscordData += f"_BVs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['Bounties'])}; " if this.YesterdayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
             factionDiscordData += f"_CBs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.YesterdayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
             factionDiscordData += f"_Trade_: {human_format(this.YesterdayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.YesterdayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""
