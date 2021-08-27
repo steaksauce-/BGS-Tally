@@ -3,10 +3,12 @@ import sys
 import json
 import requests
 from config import config
+from config import appname
 from theme import theme
 import webbrowser
 import os.path
 from os import path
+import logging
 
 try:
     # Python 2
@@ -17,8 +19,9 @@ except ModuleNotFoundError:
     import tkinter as tk
     from tkinter import ttk
 
+
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "2.2.2"
+this.VersionNo = "1.0.0"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -35,12 +38,35 @@ this.MissionList = ['Mission_Courier_Elections_name', 'Mission_Delivery_name', '
                     'Mission_PassengerBulk_name']
 
 
+# This could also be returned from plugin_start3()
+plugin_name = os.path.basename(os.path.dirname(__file__))
+
+# A Logger is used per 'found' plugin to make it easy to include the plugin's
+# folder name in the logging output format.
+# NB: plugin_name here *must* be the plugin's folder name as per the preceding
+#     code, else the logger won't be properly set up.
+logger = logging.getLogger(f'{appname}.{plugin_name}')
+
+# If the Logger has handlers then it was already set up by the core code, else
+# it needs setting up here.
+if not logger.hasHandlers():
+    level = logging.INFO  # So logger.info(...) is equivalent to print()
+
+    logger.setLevel(level)
+    logger_channel = logging.StreamHandler()
+    logger_formatter = logging.Formatter(f'%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s')
+    logger_formatter.default_time_format = '%Y-%m-%d %H:%M:%S'
+    logger_formatter.default_msec_format = '%s.%03d'
+    logger_channel.setFormatter(logger_formatter)
+    logger.addHandler(logger_channel)
+
+
 def plugin_prefs(parent, cmdr, is_beta):
     """
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
-    nb.Label(frame, text="BGS Tally v" + this.VersionNo).grid(column=0, sticky=tk.W)
+    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, sticky=tk.W)
     nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
                    offvalue="Paused").grid()
     return frame
@@ -85,7 +111,7 @@ def plugin_start(plugin_dir):
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
-    response = requests.get('https://api.github.com/repos/tezw21/BGS-Tally/releases/latest')  # check latest version
+    response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
     latest = response.json()
     this.GitVersion = latest['tag_name']
     #  tick check and counter reset
@@ -116,12 +142,12 @@ def plugin_app(parent):
     Create a frame for the EDMC main window
     """
     this.frame = tk.Frame(parent)
-    Title = tk.Label(this.frame, text="BGS Tally v" + this.VersionNo)
+    Title = tk.Label(this.frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo)
     Title.grid(row=0, column=0, sticky=tk.W)
     if version_tuple(this.GitVersion) > version_tuple(this.VersionNo):
         title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
         title2.grid(row=0, column=1, sticky=tk.W, )
-        title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/tezw21/BGS-Tally/releases"))
+        title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/aussig/BGS-Tally/releases"))
     tk.Button(this.frame, text='Data Today', command=display_data).grid(row=1, column=0, padx=3)
     tk.Button(this.frame, text='Data Yesterday', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="Status:").grid(row=2, column=0, sticky=tk.W)
@@ -234,7 +260,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         save_data()
     
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':  # combat bonds collected
-        print('Combat Bond redeemed')
+        logger.info('Combat Bond redeemed')
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for x in range(0, t):
             if entry['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
@@ -302,14 +328,18 @@ def human_format(num):
 def display_data():
     form = tk.Toplevel(this.frame)
     form.title("BGS Tally v" + this.VersionNo + " - Data Today")
-    form.geometry("800x280")
+    form.geometry("800x500")
     tab_parent = ttk.Notebook(form)
+    discordData = ""
+
     for i in this.TodayData:
+        systemDiscordData = ""
+
         tab = ttk.Frame(tab_parent)
         tab_parent.add(tab, text=this.TodayData[i][0]['System'])
         FactionLabel = tk.Label(tab, text="Faction")
         FactionStateLabel = tk.Label(tab, text="Faction State")
-        MPLabel = tk.Label(tab, text="Misson Points")
+        MPLabel = tk.Label(tab, text="Mission Points")
         TPLabel = tk.Label(tab, text="Trade Profit")
         BountyLabel = tk.Label(tab, text="Bounties")
         CDLabel = tk.Label(tab, text="Cart Data")
@@ -326,7 +356,19 @@ def display_data():
         FailedLabel.grid(row=0, column=7)
         MurderLabel.grid(row=0, column=8)
         z = len(this.TodayData[i][0]['Factions'])
+
         for x in range(0, z):
+            factionDiscordData = ""
+            factionDiscordData += f"_Missions_: {this.TodayData[i][0]['Factions'][x]['MissionPoints']}; " if this.TodayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
+            factionDiscordData += f"_Failed Missions_: {this.TodayData[i][0]['Factions'][x]['MissionFailed']}; " if this.TodayData[i][0]['Factions'][x]['MissionFailed'] > 0 else ""
+            factionDiscordData += f"_BVs_: {human_format(this.TodayData[i][0]['Factions'][x]['Bounties'])}; " if this.TodayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
+            factionDiscordData += f"_CBs_: {human_format(this.TodayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.TodayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
+            factionDiscordData += f"_Trade_: {human_format(this.TodayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.TodayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""
+            factionDiscordData += f"_Expl_: {human_format(this.TodayData[i][0]['Factions'][x]['CartData'])}; " if this.TodayData[i][0]['Factions'][x]['CartData'] > 0 else ""
+            factionDiscordData += f"_Murders_: {this.TodayData[i][0]['Factions'][x]['Murdered']}; " if this.TodayData[i][0]['Factions'][x]['Murdered'] > 0 else ""
+            
+            systemDiscordData += f"    **{this.TodayData[i][0]['Factions'][x]['Faction']}**: {factionDiscordData}\n" if factionDiscordData != "" else ""
+
             FactionName = tk.Label(tab, text=this.TodayData[i][0]['Factions'][x]['Faction'])
             FactionName.grid(row=x + 1, column=0, sticky=tk.W)
             FactionState = tk.Label(tab, text=this.TodayData[i][0]['Factions'][x]['FactionState'])
@@ -345,20 +387,37 @@ def display_data():
             Combat.grid(row=x + 1, column=6)
             Murder = tk.Label(tab, text=this.TodayData[i][0]['Factions'][x]['Murdered'])
             Murder.grid(row=x + 1, column=8)
-    tab_parent.pack(expand=1, fill='both')
+        
+        discordData += f"**{this.TodayData[i][0]['System']}**: \n{systemDiscordData}\n" if systemDiscordData != "" else ""
+
+    discord_text = tk.Text(form, wrap = tk.WORD, height=12, font = ("Helvetica", 9))
+    discord_text.insert(tk.INSERT, discordData)
+    # Select all text and focus the field
+    discord_text.tag_add('sel', '1.0', 'end')
+    discord_text.focus()
+
+    copy_button = tk.Button(form, text="Copy to Clipboard", command = lambda: copy_to_clipboard(form, discord_text))
+
+    tab_parent.pack(fill='both', expand=1, side='top')
+    copy_button.pack(side='bottom')
+    discord_text.pack(fill='x', side='bottom')
 
 
 def display_yesterdaydata():
     form = tk.Toplevel(this.frame)
     form.title("BGS Tally v" + this.VersionNo + " - Data Yesterday")
-    form.geometry("800x280")
+    form.geometry("800x500")
     tab_parent = ttk.Notebook(form)
+    discordData = ""
+
     for i in this.YesterdayData:
+        systemDiscordData = ""
+
         tab = ttk.Frame(tab_parent)
         tab_parent.add(tab, text=this.YesterdayData[i][0]['System'])
         FactionLabel = tk.Label(tab, text="Faction")
         FactionStateLabel = tk.Label(tab, text="Faction State")
-        MPLabel = tk.Label(tab, text="Misson Points")
+        MPLabel = tk.Label(tab, text="Mission Points")
         TPLabel = tk.Label(tab, text="Trade Profit")
         BountyLabel = tk.Label(tab, text="Bounties")
         CDLabel = tk.Label(tab, text="Cart Data")
@@ -375,7 +434,19 @@ def display_yesterdaydata():
         FailedLabel.grid(row=0, column=7)
         MurderLabel.grid(row=0, column=8)
         z = len(this.YesterdayData[i][0]['Factions'])
+
         for x in range(0, z):
+            factionDiscordData = ""
+            factionDiscordData += f"_Missions_: {this.YesterdayData[i][0]['Factions'][x]['MissionPoints']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
+            factionDiscordData += f"_Failed Missions_: {this.YesterdayData[i][0]['Factions'][x]['MissionFailed']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionFailed'] > 0 else ""
+            factionDiscordData += f"_BVs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['Bounties'])}; " if this.YesterdayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
+            factionDiscordData += f"_CBs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.YesterdayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
+            factionDiscordData += f"_Trade_: {human_format(this.YesterdayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.YesterdayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""
+            factionDiscordData += f"_Expl_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CartData'])}; " if this.YesterdayData[i][0]['Factions'][x]['CartData'] > 0 else ""
+            factionDiscordData += f"_Murders_: {this.YesterdayData[i][0]['Factions'][x]['Murdered']}; " if this.YesterdayData[i][0]['Factions'][x]['Murdered'] > 0 else ""
+            
+            systemDiscordData += f"    **{this.YesterdayData[i][0]['Factions'][x]['Faction']}**: {factionDiscordData}\n" if factionDiscordData != "" else ""
+
             FactionName = tk.Label(tab, text=this.YesterdayData[i][0]['Factions'][x]['Faction'])
             FactionName.grid(row=x + 1, column=0, sticky=tk.W)
             FactionState = tk.Label(tab, text=this.YesterdayData[i][0]['Factions'][x]['FactionState'])
@@ -394,7 +465,27 @@ def display_yesterdaydata():
             Failed.grid(row=x + 1, column=7)
             Murder = tk.Label(tab, text=this.YesterdayData[i][0]['Factions'][x]['Murdered'])
             Murder.grid(row=x + 1, column=8)
-    tab_parent.pack(expand=1, fill='both')
+        
+        discordData += f"**{this.YesterdayData[i][0]['System']}**: \n{systemDiscordData}\n" if systemDiscordData != "" else ""
+
+    discord_text = tk.Text(form, wrap = tk.WORD, height=12, font = ("Helvetica", 9))
+    discord_text.insert(tk.INSERT, discordData)
+    # Select all text and focus the field
+    discord_text.tag_add('sel', '1.0', 'end')
+    discord_text.focus()
+
+    copy_button = tk.Button(form, text="Copy to Clipboard", command = lambda: copy_to_clipboard(form, discord_text))
+
+    tab_parent.pack(fill='both', expand=1, side='top')
+    copy_button.pack(side='bottom')
+    discord_text.pack(fill='x', side='bottom')
+
+
+def copy_to_clipboard(form, discord_text):
+    form.clipboard_clear()
+    form.event_generate("<<TextModified>>")
+    form.clipboard_append(discord_text.get('1.0', 'end-1c'))
+    form.update()
 
 
 def tick_format(ticktime):

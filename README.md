@@ -1,23 +1,34 @@
-# BGS-Tally V2.2.0
+# BGS-Tally (modified by Aussi)
+
 An EDMC plugin to count BGS work
 
-Now compatible with Python 3 release
+Based on BGS-Tally v2.0 by tezw21: [Original tezw21 BGS-Tally-v2.0 Project](https://github.com/tezw21/BGS-Tally-v2.0)
+
+Modified by Aussi to include Discord-ready information and quick Copy to Clipboard function: [aussig BGS-Tally Project](https://github.com/aussig/BGS-Tally)
 
 
 # Installation
-Download the [latest release](https://github.com/tezw21/BGS-Tally-v2.0/releases/tag/2.2.2) of BGS Tally
- - In EDMC, on the Plugins settings tab press the “Open” button. This reveals the plugins folder where this app looks for plugins.
- - Open the .zip archive that you downloaded and move the folder contained inside into the plugins folder.
 
-You will need to re-start EDMC for it to notice the new plugin.
+Download the [latest release](https://github.com/aussig/BGS-Tally/releases/) of BGS Tally
+ - In EDMC, on the Plugins settings tab press the _Open_ button. This reveals the EDMC plugins folder where it looks for plugins.
+ - Extract the .zip archive that you downloaded, which will create a _BGS-Tally_ folder. Move this folder into your EDMC plugins folder.
+ - Re-start EDMC for it to notice the new plugin.
+ - In EDMC, go to _File_ -> _Settings_ -> _BGS Tally v2_ and click _Make BGS Tally Active_ to enable the plugin.
+
 
 # Usage
-BGS Tally v2.0 counts all the BGS work you do for any faction, in any system. 
-It is highly recommended that EDMC is started before ED is launched as Data is recorded at startup and then when you dock at a station. Not doing this can result in missing data.
-The data is shown on a pop up window when the Data Today button on the EDMC main screen is pushed.
-The plugin can paused in the BSG Tally v2.0 tab in settings.
 
-From v2.2 we count the following activities. 
+BGS Tally counts all the BGS work you do for any faction, in any system. 
+
+It is highly recommended that EDMC is started before ED is launched as data is recorded at startup and then when you dock at a station. Not doing this can result in missing data.
+
+The data is shown on a pop up window when the _Data Today_ or _Data Yesterday_ buttons on the EDMC main screen are clicked. The plugin works out what 'Today' and 'Yesterday' are based on the latest tick time as published here: https://elitebgs.app/api/ebgs/v5/ticks and also shows the latest tick time and date on the main EDMC window.
+
+The plugin also generates a nicely formatted 'Discord Ready' text string which can be copied and pasted into a Discord chat. Or just click the handy 'Copy to Clipboard' button.
+
+The plugin can paused / restarted in the BSG Tally tab in settings.
+
+The following activities are counted: 
 - Mission inf +
 - Total trade profit sold to Faction controlled station
 - Cartographic data sold to Faction controlled station
