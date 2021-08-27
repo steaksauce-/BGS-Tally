@@ -7,6 +7,8 @@
 * Changed 'Missions' to 'INF' in Discord text.
 * Removed 'Failed Missions' from Discord text.
 * Made windows a bit wider to accommodate longer faction names.
+* Changed plugin name to just 'BGS Tally' in settings.
+* Improvements to the usage instructions in README. 
 
 
 ## v1.0.0 - 2021-08-27
