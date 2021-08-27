@@ -21,7 +21,7 @@ except ModuleNotFoundError:
 
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "2.2.2"
+this.VersionNo = "1.0.0"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -66,7 +66,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
-    nb.Label(frame, text="BGS Tally v" + this.VersionNo).grid(column=0, sticky=tk.W)
+    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, sticky=tk.W)
     nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
                    offvalue="Paused").grid()
     return frame
@@ -111,7 +111,7 @@ def plugin_start(plugin_dir):
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
-    response = requests.get('https://api.github.com/repos/tezw21/BGS-Tally/releases/latest')  # check latest version
+    response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
     latest = response.json()
     this.GitVersion = latest['tag_name']
     #  tick check and counter reset
@@ -142,12 +142,12 @@ def plugin_app(parent):
     Create a frame for the EDMC main window
     """
     this.frame = tk.Frame(parent)
-    Title = tk.Label(this.frame, text="BGS Tally v" + this.VersionNo)
+    Title = tk.Label(this.frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo)
     Title.grid(row=0, column=0, sticky=tk.W)
     if version_tuple(this.GitVersion) > version_tuple(this.VersionNo):
         title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
         title2.grid(row=0, column=1, sticky=tk.W, )
-        title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/tezw21/BGS-Tally/releases"))
+        title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/aussig/BGS-Tally/releases"))
     tk.Button(this.frame, text='Data Today', command=display_data).grid(row=1, column=0, padx=3)
     tk.Button(this.frame, text='Data Yesterday', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="Status:").grid(row=2, column=0, sticky=tk.W)
