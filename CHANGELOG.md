@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.x.x - xxxx-xx-xx
+
+
+
 ## v1.0.0 - 2021-08-27
 
 Initial release, based on original [BGS-Tally-v2.0 project by tezw21](https://github.com/tezw21/BGS-Tally-v2.0)
