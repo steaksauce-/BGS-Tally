@@ -2,6 +2,12 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes:
+
+* Various improvements to README:
+    * Improved installation instructions.
+    * Added instructions for upgrading from previous version.
+    * Added personal data and privacy section.
 
 
 ## v1.1.0 - 2021-08-31
