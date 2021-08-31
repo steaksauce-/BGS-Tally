@@ -1,5 +1,9 @@
 # Change Log
 
+## vx.x.x - xxxx-xx-xx
+
+
+
 ## v1.1.1 - 2021-08-31
 
 ### Bug Fixes
@@ -9,10 +13,6 @@
 ### Changes:
 
 * Report both +INF and -INF in Discord message.
-
-
-### Changes:
-
 * Various improvements to README:
     * Improved installation instructions.
     * Added instructions for upgrading from previous version.
