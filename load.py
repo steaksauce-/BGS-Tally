@@ -224,12 +224,16 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             if i['Influence'] != []:
                 fe6 = i['Influence'][0]['SystemAddress']
                 inf = len(i['Influence'][0]['Influence'])
+                inftrend = i['Influence'][0]['Trend']
                 for y in this.TodayData:
                     if fe6 == this.TodayData[y][0]['SystemAddress']:
                         t = len(this.TodayData[y][0]['Factions'])
                         for z in range(0, t):
                             if fe3 == this.TodayData[y][0]['Factions'][z]['Faction']:
+                                if inftrend == "UpGood" or inftrend == "DownGood":
                                 this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
+            else:
+                                    this.TodayData[y][0]['Factions'][z]['MissionPoints'] -= inf
             else:
                 for p in range(len(this.MissionLog)):
                     if this.MissionLog[p]["MissionID"] == entry["MissionID"]:

@@ -2,6 +2,11 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Bug Fixes
+
+* Now honour the 'Trend' for mission Influence rewards: `UpGood` and `DownGood` are now treated as *+INF* while `UpBad` and `DownBad` are treated as *-INF*.
+
+
 ### Changes:
 
 * Various improvements to README:
