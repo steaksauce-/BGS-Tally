@@ -330,17 +330,14 @@ def human_format(num):
 
 
 def display_data(title, data):
-    form = tk.Toplevel(this.frame)
-    form.title("BGS Tally v" + this.VersionNo + " - " + title)
-    form.geometry("1000x500")
-    tab_parent = ttk.Notebook(form)
-    discordData = ""
+    Form = tk.Toplevel(this.frame)
+    Form.title("BGS Tally v" + this.VersionNo + " - " + title)
+    Form.geometry("1000x500")
+    TabParent = ttk.Notebook(Form)
 
     for i in data:
-        systemDiscordData = ""
-
-        tab = ttk.Frame(tab_parent)
-        tab_parent.add(tab, text=data[i][0]['System'])
+        tab = ttk.Frame(TabParent)
+        TabParent.add(tab, text=data[i][0]['System'])
         FactionLabel = tk.Label(tab, text="Faction")
         FactionStateLabel = tk.Label(tab, text="Faction State")
         MPLabel = tk.Label(tab, text="Mission Points")
@@ -362,16 +359,6 @@ def display_data(title, data):
         z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
-            factionDiscordData = ""
-            factionDiscordData += f"_INF_: {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
-            factionDiscordData += f"_BVs_: {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
-            factionDiscordData += f"_CBs_: {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
-            factionDiscordData += f"_Trade_: {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
-            factionDiscordData += f"_Expl_: {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
-            factionDiscordData += f"_Murders_: {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
-            
-            systemDiscordData += f"    **{data[i][0]['Factions'][x]['Faction']}**: {factionDiscordData}\n" if factionDiscordData != "" else ""
-
             FactionName = tk.Label(tab, text=data[i][0]['Factions'][x]['Faction'])
             FactionName.grid(row=x + 1, column=0, sticky=tk.W)
             FactionState = tk.Label(tab, text=data[i][0]['Factions'][x]['FactionState'])
@@ -391,20 +378,42 @@ def display_data(title, data):
             Murder = tk.Label(tab, text=data[i][0]['Factions'][x]['Murdered'])
             Murder.grid(row=x + 1, column=8)
         
-        discordData += f"**{data[i][0]['System']}**: \n{systemDiscordData}\n" if systemDiscordData != "" else ""
-
-    discord_text = tk.Text(form, wrap = tk.WORD, height=12, font = ("Helvetica", 9))
-    discord_text.insert(tk.INSERT, discordData)
+    Discord = tk.Text(Form, wrap = tk.WORD, height=12, font = ("Helvetica", 9))
+    Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
-    discord_text.tag_add('sel', '1.0', 'end')
-    discord_text.focus()
+    Discord.tag_add('sel', '1.0', 'end')
+    Discord.focus()
 
-    copy_button = tk.Button(form, text="Copy to Clipboard", command = lambda: copy_to_clipboard(form, discord_text))
+    CopyButton = tk.Button(Form, text="Copy to Clipboard", command = lambda: copy_to_clipboard(Form, Discord))
 
-    tab_parent.pack(fill='both', expand=1, side='top')
-    copy_button.pack(side='bottom')
-    discord_text.pack(fill='x', side='bottom')
+    TabParent.pack(fill='both', expand=1, side='top')
+    CopyButton.pack(side='bottom')
+    Discord.pack(fill='x', side='bottom')
 
+
+def generate_discord_text(data):
+    discord_text = ""
+
+    for i in data:
+        system_discord_text = ""
+        z = len(data[i][0]['Factions'])
+
+        for x in range(0, z):
+            faction_discord_text = ""
+            faction_discord_text += f"_INF_: {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
+            faction_discord_text += f"_BVs_: {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
+            faction_discord_text += f"_CBs_: {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
+            faction_discord_text += f"_Trade_: {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
+            faction_discord_text += f"_Expl_: {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
+            faction_discord_text += f"_Murders_: {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
+            
+            system_discord_text += f"    **{data[i][0]['Factions'][x]['Faction']}**: {faction_discord_text}\n" if faction_discord_text != "" else ""
+
+        discord_text += f"**{data[i][0]['System']}**: \n{system_discord_text}\n" if system_discord_text != "" else ""
+
+    return discord_text
+
+    
 
 def display_todaydata():
     display_data("Latest Tick Data", this.TodayData)
