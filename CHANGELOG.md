@@ -1,5 +1,24 @@
 # Change Log
 
+## v1.1.1 - 2021-08-31
+
+### Bug Fixes
+
+* Now honour the 'Trend' for mission Influence rewards: `UpGood` and `DownGood` are now treated as *+INF* while `UpBad` and `DownBad` are treated as *-INF*.
+
+### Changes:
+
+* Report both +INF and -INF in Discord message.
+
+
+### Changes:
+
+* Various improvements to README:
+    * Improved installation instructions.
+    * Added instructions for upgrading from previous version.
+    * Added personal data and privacy section.
+
+
 ## v1.1.0 - 2021-08-31
 
 ### Changes:

@@ -21,7 +21,7 @@ except ModuleNotFoundError:
 
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "1.1.0"
+this.VersionNo = "1.1.1"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -224,12 +224,16 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             if i['Influence'] != []:
                 fe6 = i['Influence'][0]['SystemAddress']
                 inf = len(i['Influence'][0]['Influence'])
+                inftrend = i['Influence'][0]['Trend']
                 for y in this.TodayData:
                     if fe6 == this.TodayData[y][0]['SystemAddress']:
                         t = len(this.TodayData[y][0]['Factions'])
                         for z in range(0, t):
                             if fe3 == this.TodayData[y][0]['Factions'][z]['Faction']:
-                                this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
+                                if inftrend == "UpGood" or inftrend == "DownGood":
+                                    this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
+                                else:
+                                    this.TodayData[y][0]['Factions'][z]['MissionPoints'] -= inf
             else:
                 for p in range(len(this.MissionLog)):
                     if this.MissionLog[p]["MissionID"] == entry["MissionID"]:
@@ -359,12 +363,12 @@ def display_data():
 
         for x in range(0, z):
             factionDiscordData = ""
-            factionDiscordData += f"_INF_: {this.TodayData[i][0]['Factions'][x]['MissionPoints']}; " if this.TodayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            factionDiscordData += f"_BVs_: {human_format(this.TodayData[i][0]['Factions'][x]['Bounties'])}; " if this.TodayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
-            factionDiscordData += f"_CBs_: {human_format(this.TodayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.TodayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
-            factionDiscordData += f"_Trade_: {human_format(this.TodayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.TodayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""
-            factionDiscordData += f"_Expl_: {human_format(this.TodayData[i][0]['Factions'][x]['CartData'])}; " if this.TodayData[i][0]['Factions'][x]['CartData'] > 0 else ""
-            factionDiscordData += f"_Murders_: {this.TodayData[i][0]['Factions'][x]['Murdered']}; " if this.TodayData[i][0]['Factions'][x]['Murdered'] > 0 else ""
+            factionDiscordData += f"_INF_: {this.TodayData[i][0]['Factions'][x]['MissionPoints']}; " if this.TodayData[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
+            factionDiscordData += f"_BVs_: {human_format(this.TodayData[i][0]['Factions'][x]['Bounties'])}; " if this.TodayData[i][0]['Factions'][x]['Bounties'] != 0 else ""
+            factionDiscordData += f"_CBs_: {human_format(this.TodayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.TodayData[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
+            factionDiscordData += f"_Trade_: {human_format(this.TodayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.TodayData[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
+            factionDiscordData += f"_Expl_: {human_format(this.TodayData[i][0]['Factions'][x]['CartData'])}; " if this.TodayData[i][0]['Factions'][x]['CartData'] != 0 else ""
+            factionDiscordData += f"_Murders_: {this.TodayData[i][0]['Factions'][x]['Murdered']}; " if this.TodayData[i][0]['Factions'][x]['Murdered'] != 0 else ""
             
             systemDiscordData += f"    **{this.TodayData[i][0]['Factions'][x]['Faction']}**: {factionDiscordData}\n" if factionDiscordData != "" else ""
 
@@ -436,12 +440,12 @@ def display_yesterdaydata():
 
         for x in range(0, z):
             factionDiscordData = ""
-            factionDiscordData += f"_INF_: {this.YesterdayData[i][0]['Factions'][x]['MissionPoints']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            factionDiscordData += f"_BVs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['Bounties'])}; " if this.YesterdayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
-            factionDiscordData += f"_CBs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.YesterdayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
-            factionDiscordData += f"_Trade_: {human_format(this.YesterdayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.YesterdayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""
-            factionDiscordData += f"_Expl_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CartData'])}; " if this.YesterdayData[i][0]['Factions'][x]['CartData'] > 0 else ""
-            factionDiscordData += f"_Murders_: {this.YesterdayData[i][0]['Factions'][x]['Murdered']}; " if this.YesterdayData[i][0]['Factions'][x]['Murdered'] > 0 else ""
+            factionDiscordData += f"_INF_: {this.YesterdayData[i][0]['Factions'][x]['MissionPoints']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
+            factionDiscordData += f"_BVs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['Bounties'])}; " if this.YesterdayData[i][0]['Factions'][x]['Bounties'] != 0 else ""
+            factionDiscordData += f"_CBs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.YesterdayData[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
+            factionDiscordData += f"_Trade_: {human_format(this.YesterdayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.YesterdayData[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
+            factionDiscordData += f"_Expl_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CartData'])}; " if this.YesterdayData[i][0]['Factions'][x]['CartData'] != 0 else ""
+            factionDiscordData += f"_Murders_: {this.YesterdayData[i][0]['Factions'][x]['Murdered']}; " if this.YesterdayData[i][0]['Factions'][x]['Murdered'] != 0 else ""
             
             systemDiscordData += f"    **{this.YesterdayData[i][0]['Factions'][x]['Faction']}**: {factionDiscordData}\n" if factionDiscordData != "" else ""
 
