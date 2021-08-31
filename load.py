@@ -123,7 +123,7 @@ def plugin_start(plugin_dir):
         this.LastTick.set(this.CurrentTick)
         this.YesterdayData = this.TodayData
         this.TodayData = {}
-    return "BGS Tally v2"
+    return "BGS Tally"
 
 
 def plugin_start3(plugin_dir):
@@ -148,8 +148,8 @@ def plugin_app(parent):
         title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
         title2.grid(row=0, column=1, sticky=tk.W, )
         title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/aussig/BGS-Tally/releases"))
-    tk.Button(this.frame, text='Data Today', command=display_data).grid(row=1, column=0, padx=3)
-    tk.Button(this.frame, text='Data Yesterday', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
+    tk.Button(this.frame, text='Latest Tick Data', command=display_data).grid(row=1, column=0, padx=3)
+    tk.Button(this.frame, text='Earlier Tick Data', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, text=this.Status.get())
@@ -327,8 +327,8 @@ def human_format(num):
 
 def display_data():
     form = tk.Toplevel(this.frame)
-    form.title("BGS Tally v" + this.VersionNo + " - Data Today")
-    form.geometry("800x500")
+    form.title("BGS Tally v" + this.VersionNo + " - Latest Tick Data")
+    form.geometry("1000x500")
     tab_parent = ttk.Notebook(form)
     discordData = ""
 
@@ -359,8 +359,7 @@ def display_data():
 
         for x in range(0, z):
             factionDiscordData = ""
-            factionDiscordData += f"_Missions_: {this.TodayData[i][0]['Factions'][x]['MissionPoints']}; " if this.TodayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            factionDiscordData += f"_Failed Missions_: {this.TodayData[i][0]['Factions'][x]['MissionFailed']}; " if this.TodayData[i][0]['Factions'][x]['MissionFailed'] > 0 else ""
+            factionDiscordData += f"_INF_: {this.TodayData[i][0]['Factions'][x]['MissionPoints']}; " if this.TodayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
             factionDiscordData += f"_BVs_: {human_format(this.TodayData[i][0]['Factions'][x]['Bounties'])}; " if this.TodayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
             factionDiscordData += f"_CBs_: {human_format(this.TodayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.TodayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
             factionDiscordData += f"_Trade_: {human_format(this.TodayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.TodayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""
@@ -405,8 +404,8 @@ def display_data():
 
 def display_yesterdaydata():
     form = tk.Toplevel(this.frame)
-    form.title("BGS Tally v" + this.VersionNo + " - Data Yesterday")
-    form.geometry("800x500")
+    form.title("BGS Tally v" + this.VersionNo + " - Earlier Tick Data")
+    form.geometry("1000x500")
     tab_parent = ttk.Notebook(form)
     discordData = ""
 
@@ -437,8 +436,7 @@ def display_yesterdaydata():
 
         for x in range(0, z):
             factionDiscordData = ""
-            factionDiscordData += f"_Missions_: {this.YesterdayData[i][0]['Factions'][x]['MissionPoints']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            factionDiscordData += f"_Failed Missions_: {this.YesterdayData[i][0]['Factions'][x]['MissionFailed']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionFailed'] > 0 else ""
+            factionDiscordData += f"_INF_: {this.YesterdayData[i][0]['Factions'][x]['MissionPoints']}; " if this.YesterdayData[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
             factionDiscordData += f"_BVs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['Bounties'])}; " if this.YesterdayData[i][0]['Factions'][x]['Bounties'] > 0 else ""
             factionDiscordData += f"_CBs_: {human_format(this.YesterdayData[i][0]['Factions'][x]['CombatBonds'])}; " if this.YesterdayData[i][0]['Factions'][x]['CombatBonds'] > 0 else ""
             factionDiscordData += f"_Trade_: {human_format(this.YesterdayData[i][0]['Factions'][x]['TradeProfit'])}; " if this.YesterdayData[i][0]['Factions'][x]['TradeProfit'] > 0 else ""

@@ -2,6 +2,14 @@
 
 ## v1.x.x - xxxx-xx-xx
 
+### Changes:
+
+* Changed 'Missions' to 'INF' in Discord text.
+* Removed 'Failed Missions' from Discord text.
+* Made windows a bit wider to accommodate longer faction names.
+* Changed plugin name to just 'BGS Tally' in settings.
+* Improvements to the usage instructions in README.
+* Renamed buttons to 'Latest Tick Data' and 'Earlier Tick Data' to more clearly describe what each does, avoiding the use of day-based terms 'Yesterday' and 'Today'.
 
 
 ## v1.0.0 - 2021-08-27
