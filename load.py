@@ -148,8 +148,8 @@ def plugin_app(parent):
         title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
         title2.grid(row=0, column=1, sticky=tk.W, )
         title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/aussig/BGS-Tally/releases"))
-    tk.Button(this.frame, text='Data Today', command=display_data).grid(row=1, column=0, padx=3)
-    tk.Button(this.frame, text='Data Yesterday', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
+    tk.Button(this.frame, text='Latest Tick Data', command=display_data).grid(row=1, column=0, padx=3)
+    tk.Button(this.frame, text='Earlier Tick Data', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, text=this.Status.get())
@@ -327,7 +327,7 @@ def human_format(num):
 
 def display_data():
     form = tk.Toplevel(this.frame)
-    form.title("BGS Tally v" + this.VersionNo + " - Data Today")
+    form.title("BGS Tally v" + this.VersionNo + " - Latest Tick Data")
     form.geometry("1000x500")
     tab_parent = ttk.Notebook(form)
     discordData = ""
@@ -404,7 +404,7 @@ def display_data():
 
 def display_yesterdaydata():
     form = tk.Toplevel(this.frame)
-    form.title("BGS Tally v" + this.VersionNo + " - Data Yesterday")
+    form.title("BGS Tally v" + this.VersionNo + " - Earlier Tick Data")
     form.geometry("1000x500")
     tab_parent = ttk.Notebook(form)
     discordData = ""

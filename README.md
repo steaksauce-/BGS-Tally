@@ -22,9 +22,9 @@ Download the [latest release](https://github.com/aussig/BGS-Tally/releases/) of 
 
 It is highly recommended that EDMC is started before ED is launched as data is recorded at startup and then when you dock at a station. Not doing this can result in missing data.
 
-The data is shown on a pop up window when the _Data Today_ or _Data Yesterday_ buttons on the EDMC main screen are clicked. The plugin works out what `Today` and `Yesterday` are based on the latest tick time as published here: https://elitebgs.app/api/ebgs/v5/ticks and also shows the latest tick time and date on the main EDMC window.
+The data is shown on a pop up window when the _Latest Tick Data_ or _Earlier Tick Data_ buttons on the EDMC main screen are clicked - data collected since the latest tick in _Latest Tick Data_ and data from your previous play session before the latest tick in _Earlier Tick Data_. The tick time it uses is published here: https://elitebgs.app/api/ebgs/v5/ticks and the plugin displays this on the main EDMC window for reference.
 
-The plugin also generates a nicely formatted 'Discord Ready' text string which can be copied and pasted into a Discord chat - just click the handy _Copy to Clipboard_ button at the bottom of the _Data Today_ and _Data Yesterday_ windows.
+The plugin also generates a nicely formatted 'Discord Ready' text string which can be copied and pasted into a Discord chat - just click the handy _Copy to Clipboard_ button at the bottom of the _Latest Tick Data_ and _Earlier Tick Data_ windows.
 
 The plugin can be paused / restarted by un-checking / checking the _&#9745; Make BGS Tally Active_ checkbox in _File_ &rarr; _Settings_ &rarr; _BGS Tally_.
 
@@ -41,6 +41,6 @@ The following activities are counted:
 
 _* The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported, certain mission types are still counted as +1 `INF` when a Faction is in Election. Only missions that [tezw21](https://github.com/tezw21/BGS-Tally-v2.0)'s research suggests work during Election are counted, this is a work in progress._
 
-All the above are totalled during the _Today_ session and transfer to _Yesterday_ at server tick.
+All the above are totalled during the _Latest Tick Data_ session and transfer to _Earlier Tick Data_ at server tick.
 
 The `State` column has 3 options, `None`, `War` or `Election` to give an indication on how missions are being counted
