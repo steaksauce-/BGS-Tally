@@ -2,6 +2,13 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New features:
+
+* Ability to manually add High, Medium and Low on-foot and in-space Combat Zone wins to the Discord report by clicking on-screen buttons.
+
+### Changes:
+
+* Improvements to layout of window.
 
 
 ## v1.1.1 - 2021-08-31

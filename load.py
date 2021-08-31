@@ -1,14 +1,16 @@
-import myNotebook as nb
-import sys
 import json
-import requests
-from config import config
-from config import appname
-from theme import theme
-import webbrowser
-import os.path
-from os import path
 import logging
+import os.path
+import sys
+import webbrowser
+from enum import Enum
+from functools import partial
+from os import path
+
+import myNotebook as nb
+import requests
+from config import appname, config
+from theme import theme
 
 try:
     # Python 2
@@ -59,6 +61,15 @@ if not logger.hasHandlers():
     logger_formatter.default_msec_format = '%s.%03d'
     logger_channel.setFormatter(logger_formatter)
     logger.addHandler(logger_channel)
+
+
+class CZs(Enum):
+    SPACE_HIGH = 0
+    SPACE_MED = 1
+    SPACE_LOW = 2
+    GROUND_HIGH = 3
+    GROUND_MED = 4
+    GROUND_LOW = 5
 
 
 def plugin_prefs(parent, cmdr, is_beta):
@@ -190,7 +201,9 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                     {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
                      'MissionPoints': 0,
                      'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
-                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0})
+                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
+                     'SpaceCZ': {},
+                     'GroundCZ': {}})
         else:
             this.TodayData = {
                 1: [{'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions': []}]}
@@ -201,7 +214,9 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                     {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
                      'MissionPoints': 0,
                      'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
-                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0})
+                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
+                     'SpaceCZ': {},
+                     'GroundCZ': {}})
     
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
@@ -329,24 +344,36 @@ def human_format(num):
     return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
 
+def update_faction_data(faction_data):
+    # Update data structures not present in previous versions of plugin
+
+    # From < v1.2.0 to 1.2.0
+    if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
+    if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
+
+
+
 def display_data(title, data):
     Form = tk.Toplevel(this.frame)
     Form.title("BGS Tally v" + this.VersionNo + " - " + title)
     Form.geometry("1000x500")
     TabParent = ttk.Notebook(Form)
+    Discord = tk.Text(Form, wrap = tk.WORD, height=12, font = ("Helvetica", 9))
 
     for i in data:
         tab = ttk.Frame(TabParent)
         TabParent.add(tab, text=data[i][0]['System'])
         FactionLabel = tk.Label(tab, text="Faction")
-        FactionStateLabel = tk.Label(tab, text="Faction State")
-        MPLabel = tk.Label(tab, text="Mission Points")
-        TPLabel = tk.Label(tab, text="Trade Profit")
-        BountyLabel = tk.Label(tab, text="Bounties")
-        CDLabel = tk.Label(tab, text="Cart Data")
-        CombatLabel = tk.Label(tab, text="Combat Bonds")
-        FailedLabel = tk.Label(tab, text="Mission Failed")
-        MurderLabel = tk.Label(tab, text="Murdered")
+        FactionStateLabel = tk.Label(tab, text="State")
+        MPLabel = tk.Label(tab, text="INF")
+        TPLabel = tk.Label(tab, text="Trade")
+        BountyLabel = tk.Label(tab, text="BVs")
+        CDLabel = tk.Label(tab, text="Expl")
+        CombatLabel = tk.Label(tab, text="CBs")
+        FailedLabel = tk.Label(tab, text="Fails")
+        MurderLabel = tk.Label(tab, text="Murders")
+        SpaceCZsLabel = tk.Label(tab, text="Space CZs")
+        GroundCZsLabel = tk.Label(tab, text="On-foot CZs")
         FactionLabel.grid(row=0, column=0)
         FactionStateLabel.grid(row=0, column=1)
         MPLabel.grid(row=0, column=2)
@@ -356,9 +383,13 @@ def display_data(title, data):
         CombatLabel.grid(row=0, column=6)
         FailedLabel.grid(row=0, column=7)
         MurderLabel.grid(row=0, column=8)
+        SpaceCZsLabel.grid(row=0, column=9)
+        GroundCZsLabel.grid(row=0, column=10)
         z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
+            update_faction_data(data[i][0]['Factions'][x])
+
             FactionName = tk.Label(tab, text=data[i][0]['Factions'][x]['Faction'])
             FactionName.grid(row=x + 1, column=0, sticky=tk.W)
             FactionState = tk.Label(tab, text=data[i][0]['Factions'][x]['FactionState'])
@@ -377,18 +408,51 @@ def display_data(title, data):
             Combat.grid(row=x + 1, column=6)
             Murder = tk.Label(tab, text=data[i][0]['Factions'][x]['Murdered'])
             Murder.grid(row=x + 1, column=8)
+            CZSpace = tk.Frame(tab)
+            CZSpaceL = tk.Button(CZSpace, text="L", command = partial(log_cz, Form, Discord, CZs.SPACE_LOW, data, i, x))
+            CZSpaceL.pack(side=tk.LEFT, padx=2, pady=2)
+            CZSpaceM = tk.Button(CZSpace, text="M", command = partial(log_cz, Form, Discord, CZs.SPACE_MED, data, i, x))
+            CZSpaceM.pack(side=tk.LEFT, padx=2, pady=2)
+            CZSpaceH = tk.Button(CZSpace, text="H", command = partial(log_cz, Form, Discord, CZs.SPACE_HIGH, data, i, x))
+            CZSpaceH.pack(side=tk.LEFT, padx=2, pady=2)
+            CZSpace.grid(row=x + 1, column=9)
+            CZGround = tk.Frame(tab)
+            CZGroundL = tk.Button(CZGround, text="L", command = partial(log_cz, Form, Discord, CZs.GROUND_LOW, data, i, x))
+            CZGroundL.pack(side=tk.LEFT, padx=2, pady=2)
+            CZGroundM = tk.Button(CZGround, text="M", command = partial(log_cz, Form, Discord, CZs.GROUND_MED, data, i, x))
+            CZGroundM.pack(side=tk.LEFT, padx=2, pady=2)
+            CZGroundH = tk.Button(CZGround, text="H", command = partial(log_cz, Form, Discord, CZs.GROUND_HIGH, data, i, x))
+            CZGroundH.pack(side=tk.LEFT, padx=2, pady=2)
+            CZGround.grid(row=x + 1, column=10)
         
-    Discord = tk.Text(Form, wrap = tk.WORD, height=12, font = ("Helvetica", 9))
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
     Discord.tag_add('sel', '1.0', 'end')
     Discord.focus()
 
-    CopyButton = tk.Button(Form, text="Copy to Clipboard", command = lambda: copy_to_clipboard(Form, Discord))
+    CopyButton = tk.Button(Form, text="Copy to Clipboard", command = partial(copy_to_clipboard, Form, Discord))
 
     TabParent.pack(fill='both', expand=1, side='top')
-    CopyButton.pack(side='bottom')
+    CopyButton.pack(side='bottom', padx=5, pady=5)
     Discord.pack(fill='x', side='bottom')
+
+
+def log_cz(Form, Discord, cz_type, data, system_index, faction_index):
+    if cz_type == CZs.SPACE_LOW:
+        data[system_index][0]['Factions'][faction_index]['SpaceCZ']['l'] = data[system_index][0]['Factions'][faction_index]['SpaceCZ'].get('l', 0) + 1
+    elif cz_type == CZs.SPACE_MED:
+        data[system_index][0]['Factions'][faction_index]['SpaceCZ']['m'] = data[system_index][0]['Factions'][faction_index]['SpaceCZ'].get('m', 0) + 1
+    elif cz_type == CZs.SPACE_HIGH:
+        data[system_index][0]['Factions'][faction_index]['SpaceCZ']['h'] = data[system_index][0]['Factions'][faction_index]['SpaceCZ'].get('h', 0) + 1
+    elif cz_type == CZs.GROUND_LOW:
+        data[system_index][0]['Factions'][faction_index]['GroundCZ']['l'] = data[system_index][0]['Factions'][faction_index]['GroundCZ'].get('l', 0) + 1
+    elif cz_type == CZs.GROUND_MED:
+        data[system_index][0]['Factions'][faction_index]['GroundCZ']['m'] = data[system_index][0]['Factions'][faction_index]['GroundCZ'].get('m', 0) + 1
+    elif cz_type == CZs.GROUND_HIGH:
+        data[system_index][0]['Factions'][faction_index]['GroundCZ']['h'] = data[system_index][0]['Factions'][faction_index]['GroundCZ'].get('h', 0) + 1
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
 def generate_discord_text(data):
@@ -406,14 +470,29 @@ def generate_discord_text(data):
             faction_discord_text += f"_Trade_: {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
             faction_discord_text += f"_Expl_: {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
             faction_discord_text += f"_Murders_: {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
-            
+            space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "Space CZs")
+            faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
+            ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "On-Foot CZs")
+            faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
+
             system_discord_text += f"    **{data[i][0]['Factions'][x]['Faction']}**: {faction_discord_text}\n" if faction_discord_text != "" else ""
 
         discord_text += f"**{data[i][0]['System']}**: \n{system_discord_text}\n" if system_discord_text != "" else ""
 
     return discord_text
 
-    
+
+def build_cz_text(cz_data, prefix):
+    if cz_data == {}: return ""
+
+    text = f"_{prefix}_: "
+
+    if "l" in cz_data: text += f"{cz_data['l']}xLow "
+    if "m" in cz_data: text += f"{cz_data['m']}xMed "
+    if "h" in cz_data: text += f"{cz_data['h']}xHigh "
+
+    return text
+
 
 def display_todaydata():
     display_data("Latest Tick Data", this.TodayData)
@@ -423,11 +502,11 @@ def display_yesterdaydata():
     display_data("Earlier Tick Data", this.YesterdayData)
 
 
-def copy_to_clipboard(form, discord_text):
-    form.clipboard_clear()
-    form.event_generate("<<TextModified>>")
-    form.clipboard_append(discord_text.get('1.0', 'end-1c'))
-    form.update()
+def copy_to_clipboard(Form, Discord):
+    Form.clipboard_clear()
+    Form.event_generate("<<TextModified>>")
+    Form.clipboard_append(Discord.get('1.0', 'end-1c'))
+    Form.update()
 
 
 def tick_format(ticktime):
