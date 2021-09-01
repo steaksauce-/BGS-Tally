@@ -4,7 +4,7 @@ An [EDMC](https://github.com/EDCD/EDMarketConnector) plugin to count Background 
 
 Based on BGS-Tally v2.0 by tezw21: [Original tezw21 BGS-Tally-v2.0 Project](https://github.com/tezw21/BGS-Tally-v2.0)
 
-Modified by Aussi to include Discord-ready information and quick Copy to Clipboard function.
+Modified by Aussi to include manual Combat Zone tracking, Discord-ready information and quick Copy to Clipboard function for the Discord text.
 
 
 # Installation
