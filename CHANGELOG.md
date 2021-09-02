@@ -4,8 +4,8 @@
 
 ### Changes:
 
-* Now include a lot more non-violent mission types when counting missions for a faction in the `Election` state (gathering a full list of non-violent mission types is still a work in progress). 
-* Rename buttons and windows to 'Latest Tally' and 'Previous Tally'.
+* Now include a lot more non-violent mission types when counting missions for a faction in the `Election` state (gathering a full list of non-violent mission types is still a work in progress).
+* Rename buttons and windows to 'Latest BGS Tally' and 'Previous BGS Tally'.
 
 
 ## v1.1.1 - 2021-08-31

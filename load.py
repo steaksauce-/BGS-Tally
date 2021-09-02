@@ -146,8 +146,8 @@ def plugin_app(parent):
         title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
         title2.grid(row=0, column=1, sticky=tk.W, )
         title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/aussig/BGS-Tally/releases"))
-    tk.Button(this.frame, text='Latest Tally', command=display_todaydata).grid(row=1, column=0, padx=3)
-    tk.Button(this.frame, text='Previous Tally', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
+    tk.Button(this.frame, text='Latest BGS Tally', command=display_todaydata).grid(row=1, column=0, padx=3)
+    tk.Button(this.frame, text='Previous BGS Tally', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, text=this.Status.get()).grid(row=2, column=1, sticky=tk.W)
@@ -430,14 +430,14 @@ def display_todaydata():
     """
     Display the latest tally data window
     """
-    display_data("Latest Tally", this.TodayData)
+    display_data("Latest BGS Tally", this.TodayData)
 
 
 def display_yesterdaydata():
     """
     Display the previous tally data window
     """
-    display_data("Previous Tally", this.YesterdayData)
+    display_data("Previous BGS Tally", this.YesterdayData)
 
 
 def copy_to_clipboard(form, discord_text):
