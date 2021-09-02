@@ -1,14 +1,15 @@
-import myNotebook as nb
-import sys
 import json
-import requests
-from config import config
-from config import appname
-from theme import theme
-import webbrowser
-import os.path
-from os import path
 import logging
+import os.path
+import sys
+import webbrowser
+from os import path
+
+import myNotebook as nb
+import requests
+from config import appname, config
+from datetime import datetime
+from theme import theme
 
 try:
     # Python 2
@@ -36,7 +37,7 @@ this.MissionListNonViolent = [
     'Mission_Courier_name', 'Mission_Courier_Boom_name', 'Mission_Courier_Democracy_name', 'Mission_Courier_Elections_name', 'Mission_Courier_Expansion_name',
     'Mission_Delivery_name', 'Mission_Delivery_Agriculture_name', 'Mission_Delivery_Boom_name', 'Mission_Delivery_Confederacy_name', 'Mission_Delivery_Democracy_name',
     'Mission_Mining_name', 'Mission_Mining_Boom_name', 'Mission_Mining_Expansion_name',
-    'Mission_OnFoot_Collect_MB_name', 
+    'Mission_OnFoot_Collect_MB_name',
     'Mission_OnFoot_Salvage_MB_name', 'Mission_OnFoot_Salvage_BS_MB_name',
     'Mission_PassengerBulk_name', 'Mission_PassengerBulk_AIDWORKER_ARRIVING_name', 'Mission_PassengerBulk_BUSINESS_ARRIVING_name', 'Mission_PassengerBulk_POLITICIAN_ARRIVING_name', 'Mission_PassengerBulk_SECURITY_ARRIVING_name',
     'Mission_PassengerVIP_name', 'Mission_PassengerVIP_CEO_BOOM_name', 'Mission_PassengerVIP_CEO_EXPANSION_name', 'Mission_PassengerVIP_Explorer_EXPANSION_name', 'Mission_PassengerVIP_Tourist_ELECTION_name', 'Mission_PassengerVIP_Tourist_BOOM_name',
@@ -136,6 +137,9 @@ def plugin_start(plugin_dir):
 
 
 def plugin_start3(plugin_dir):
+    """
+    Load this plugin into EDMC (Python 3)
+    """
     return plugin_start(plugin_dir)
 
 
@@ -161,13 +165,15 @@ def plugin_app(parent):
     tk.Button(this.frame, text='Previous Tally', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last Tick:").grid(row=3, column=0, sticky=tk.W)
-    this.StatusLabel = tk.Label(this.frame, text=this.Status.get())
-    this.StatusLabel.grid(row=2, column=1, sticky=tk.W)
+    this.StatusLabel = tk.Label(this.frame, text=this.Status.get()).grid(row=2, column=1, sticky=tk.W)
     this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
     return this.frame
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
+    """
+    Parse an incoming journal entry and store the data we need
+    """
     EventList = ['Location', 'FSDJump', 'CarrierJump']
     if this.Status.get() != "Active":
         return
@@ -211,7 +217,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                      'MissionPoints': 0,
                      'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
                      'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0})
-    
+
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
         #  tick check and counter reset
@@ -225,7 +231,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             this.TodayData = {}
             this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
             theme.update(this.frame)
-    
+
     if entry['event'] == 'MissionCompleted':  # get mission influence value
         fe = entry['FactionEffects']
         for i in fe:
@@ -256,14 +262,14 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 this.MissionLog.pop(count)
                 break
         save_data()
-    
+
     if entry['event'] == 'SellExplorationData' or entry['event'] == "MultiSellExplorationData":  # get carto data value
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for z in range(0, t):
             if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
                 this.TodayData[this.DataIndex.get()][0]['Factions'][z]['CartData'] += entry['TotalEarnings']
         save_data()
-    
+
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'bounty':  # bounties collected
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for z in entry['Factions']:
@@ -271,7 +277,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 if z['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
                     this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Bounties'] += z['Amount']
         save_data()
-    
+
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':  # combat bonds collected
         logger.info('Combat Bond redeemed')
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
@@ -279,7 +285,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             if entry['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
                 this.TodayData[this.DataIndex.get()][0]['Factions'][x]['CombatBonds'] += entry['Amount']
         save_data()
-    
+
     if entry['event'] == 'MarketSell':  # Trade Profit
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for z in range(0, t):
@@ -288,12 +294,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 profit = entry['TotalSale'] - cost
                 this.TodayData[this.DataIndex.get()][0]['Factions'][z]['TradeProfit'] += profit
         save_data()
-    
+
     if entry['event'] == 'MissionAccepted':  # mission accpeted
         this.MissionLog.append({"Name": entry["Name"], "Faction": entry["Faction"], "MissionID": entry["MissionID"],
                                 "System": system})
         save_data()
-    
+
     if entry['event'] == 'MissionFailed':  # mission failed
         for x in range(len(this.MissionLog)):
             if this.MissionLog[x]["MissionID"] == entry["MissionID"]:
@@ -305,13 +311,13 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 this.MissionLog.pop(x)
                 break
         save_data()
-    
+
     if entry['event'] == 'MissionAbandoned':
         for x in range(len(this.MissionLog)):
             if this.MissionLog[x]["MissionID"] == entry["MissionID"]:
                 this.MissionLog.pop(x)
         save_data()
-    
+
     if entry['event'] == 'CommitCrime':
         if entry['CrimeType'] == 'murder':
             for y in this.TodayData:
@@ -322,6 +328,9 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
 
 def version_tuple(version):
+    """
+    Parse the plugin version number into a tuple
+    """
     try:
         ret = tuple(map(int, version.split(".")))
     except:
@@ -330,6 +339,9 @@ def version_tuple(version):
 
 
 def human_format(num):
+    """
+    Format a BGS value into shortened human-readable text
+    """
     num = float('{:.3g}'.format(num))
     magnitude = 0
     while abs(num) >= 1000:
@@ -339,6 +351,9 @@ def human_format(num):
 
 
 def display_data(title, data):
+    """
+    Display the data window, using either latest or previous data
+    """
     Form = tk.Toplevel(this.frame)
     Form.title("BGS Tally v" + this.VersionNo + " - " + title)
     Form.geometry("1000x500")
@@ -386,7 +401,7 @@ def display_data(title, data):
             Combat.grid(row=x + 1, column=6)
             Murder = tk.Label(tab, text=data[i][0]['Factions'][x]['Murdered'])
             Murder.grid(row=x + 1, column=8)
-        
+
     Discord = tk.Text(Form, wrap = tk.WORD, height=12, font = ("Helvetica", 9))
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
@@ -401,6 +416,9 @@ def display_data(title, data):
 
 
 def generate_discord_text(data):
+    """
+    Generate the Discord-formatted version of the tally data
+    """
     discord_text = ""
 
     for i in data:
@@ -415,24 +433,32 @@ def generate_discord_text(data):
             faction_discord_text += f"_Trade_: {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
             faction_discord_text += f"_Expl_: {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
             faction_discord_text += f"_Murders_: {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
-            
+
             system_discord_text += f"    **{data[i][0]['Factions'][x]['Faction']}**: {faction_discord_text}\n" if faction_discord_text != "" else ""
 
         discord_text += f"**{data[i][0]['System']}**: \n{system_discord_text}\n" if system_discord_text != "" else ""
 
     return discord_text
 
-    
 
 def display_todaydata():
+    """
+    Display the latest tally data window
+    """
     display_data("Latest Tally", this.TodayData)
 
 
 def display_yesterdaydata():
+    """
+    Display the previous tally data window
+    """
     display_data("Previous Tally", this.YesterdayData)
 
 
 def copy_to_clipboard(form, discord_text):
+    """
+    Get all text from the Discord field and put it in the Copy buffer
+    """
     form.clipboard_clear()
     form.event_generate("<<TextModified>>")
     form.clipboard_append(discord_text.get('1.0', 'end-1c'))
@@ -440,41 +466,17 @@ def copy_to_clipboard(form, discord_text):
 
 
 def tick_format(ticktime):
-    datetime1 = ticktime.split('T')
-    x = datetime1[0]
-    z = datetime1[1]
-    y = x.split('-')
-    if y[1] == "01":
-        month = "Jan"
-    elif y[1] == "02":
-        month = "Feb"
-    elif y[1] == "03":
-        month = "March"
-    elif y[1] == "04":
-        month = "April"
-    elif y[1] == "05":
-        month = "May"
-    elif y[1] == "06":
-        month = "June"
-    elif y[1] == "07":
-        month = "July"
-    elif y[1] == "08":
-        month = "Aug"
-    elif y[1] == "09":
-        month = "Sep"
-    elif y[1] == "10":
-        month = "oct"
-    elif y[1] == "11":
-        month = "nov"
-    elif y[1] == "12":
-        month = "Dec"
-    date1 = y[2] + " " + month
-    time1 = z[0:5]
-    datetimetick = time1 + ' UTC ' + date1
-    return (datetimetick)
+    """
+    Format the tick date/time
+    """
+    datetime_object = datetime.strptime(ticktime, '%Y-%m-%dT%H:%M:%S.%fZ')
+    return datetime_object.strftime("%H:%M:%S UTC %A %d %B")
 
 
 def save_data():
+    """
+    Save all data structures
+    """
     config.set('XLastTick', this.CurrentTick)
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
