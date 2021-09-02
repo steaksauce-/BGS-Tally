@@ -8,12 +8,13 @@
 
 ### Changes:
 
+* Now include a lot more non-violent mission types when counting missions for a faction in the `Election` state (gathering a full list of non-violent mission types is still a work in progress).
 * Improvements to layout of window.
 
 
 ## v1.1.1 - 2021-08-31
 
-### Bug Fixes
+### Bug Fixes:
 
 * Now honour the 'Trend' for mission Influence rewards: `UpGood` and `DownGood` are now treated as *+INF* while `UpBad` and `DownBad` are treated as *-INF*.
 

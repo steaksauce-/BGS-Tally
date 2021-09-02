@@ -32,12 +32,21 @@ this.Status = "Active"
 this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
-this.MissionList = ['Mission_Courier_Elections_name', 'Mission_Delivery_name', 'Mission_AltruismCredits_name',
-                    'Mission_Collect_Industrial_name', 'Mission_Delivery_Confederacy_name',
-                    'Chain_HelpFinishTheOrder_name',
-                    'MISSION_Salvage_Refinery_name', 'Mission_Rescue_Elections_name', 'Mission_Sightseeing_name',
-                    'Mission_PassengerVIP_Tourist_ELECTION_name', 'Mission_PassengerBulk_AIDWORKER_ARRIVING_name',
-                    'Mission_PassengerBulk_name']
+this.MissionListNonViolent = [
+    'Mission_AltruismCredits_name',
+    'Mission_Collect_name', 'Mission_Collect_Industrial_name',
+    'Mission_Courier_name', 'Mission_Courier_Boom_name', 'Mission_Courier_Democracy_name', 'Mission_Courier_Elections_name', 'Mission_Courier_Expansion_name',
+    'Mission_Delivery_name', 'Mission_Delivery_Agriculture_name', 'Mission_Delivery_Boom_name', 'Mission_Delivery_Confederacy_name', 'Mission_Delivery_Democracy_name',
+    'Mission_Mining_name', 'Mission_Mining_Boom_name', 'Mission_Mining_Expansion_name',
+    'Mission_OnFoot_Collect_MB_name', 
+    'Mission_OnFoot_Salvage_MB_name', 'Mission_OnFoot_Salvage_BS_MB_name',
+    'Mission_PassengerBulk_name', 'Mission_PassengerBulk_AIDWORKER_ARRIVING_name', 'Mission_PassengerBulk_BUSINESS_ARRIVING_name', 'Mission_PassengerBulk_POLITICIAN_ARRIVING_name', 'Mission_PassengerBulk_SECURITY_ARRIVING_name',
+    'Mission_PassengerVIP_name', 'Mission_PassengerVIP_CEO_BOOM_name', 'Mission_PassengerVIP_CEO_EXPANSION_name', 'Mission_PassengerVIP_Explorer_EXPANSION_name', 'Mission_PassengerVIP_Tourist_ELECTION_name', 'Mission_PassengerVIP_Tourist_BOOM_name',
+    'Mission_Rescue_Elections_name',
+    'Mission_Salvage_name', 'Mission_Salvage_Planet_name', 'MISSION_Salvage_Refinery_name',
+    'MISSION_Scan_name',
+    'Mission_Sightseeing_name', 'Mission_Sightseeing_Celebrity_ELECTION_name', 'Mission_Sightseeing_Tourist_BOOM_name',
+    'Chain_HelpFinishTheOrder_name']
 
 
 # This could also be returned from plugin_start3()
@@ -255,7 +264,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         for y in this.TodayData:
                             if this.MissionLog[p]['System'] == this.TodayData[y][0]['System']:
                                 for z in range(0, len(this.TodayData[y][0]['Factions'])):
-                                    if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3 and entry['Name'] in this.MissionList:
+                                    if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3 and this.TodayData[y][0]['Factions'][z]['FactionState'] == 'Election' and entry['Name'] in this.MissionListNonViolent:
                                         this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
         for count in range(len(this.MissionLog)):
             if this.MissionLog[count]["MissionID"] == entry["MissionID"]:
