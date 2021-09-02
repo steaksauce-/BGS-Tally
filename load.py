@@ -2,26 +2,18 @@ import json
 import logging
 import os.path
 import sys
+import tkinter as tk
 import webbrowser
 from datetime import datetime
 from enum import Enum
 from functools import partial
 from os import path
+from tkinter import ttk
 
 import myNotebook as nb
 import requests
 from config import appname, config
 from theme import theme
-
-try:
-    # Python 2
-    import Tkinter as tk
-    import ttk
-except ModuleNotFoundError:
-    # Python 3
-    import tkinter as tk
-    from tkinter import ttk
-
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.1.1"
@@ -100,7 +92,7 @@ def prefs_changed(cmdr, is_beta):
     this.StatusLabel["text"] = this.Status.get()
 
 
-def plugin_start(plugin_dir):
+def plugin_start3(plugin_dir):
     """
     Load this plugin into EDMC
     """
@@ -145,13 +137,6 @@ def plugin_start(plugin_dir):
         this.YesterdayData = this.TodayData
         this.TodayData = {}
     return "BGS Tally"
-
-
-def plugin_start3(plugin_dir):
-    """
-    Load this plugin into EDMC (Python 3)
-    """
-    return plugin_start(plugin_dir)
 
 
 def plugin_stop():
