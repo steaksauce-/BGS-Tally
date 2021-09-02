@@ -31,9 +31,9 @@ The plugin writes your activity to three files in the _BGS-Tally_ folder, so if 
 
 It is highly recommended that EDMC is started before ED is launched as data is recorded at startup and then when you dock at a station. Not doing this can result in missing data.
 
-The data is shown on a pop up window when the _Latest Tick Data_ or _Earlier Tick Data_ buttons on the EDMC main screen are clicked - data collected since the latest tick in _Latest Tick Data_ and data from your previous play session before the latest tick in _Earlier Tick Data_. The tick time it uses is published here: https://elitebgs.app/api/ebgs/v5/ticks and the plugin displays this on the main EDMC window for reference.
+The data is shown on a pop up window when the _Latest Tally_ or _Previous Tally_ buttons on the EDMC main screen are clicked - data collected since the latest tick in _Latest Tally_ and data from your previous play session before the latest tick in _Previous Tally_. The tick time it uses is published here: https://elitebgs.app/api/ebgs/v5/ticks and the plugin displays this on the main EDMC window for reference.
 
-The plugin also generates a nicely formatted 'Discord Ready' text string which can be copied and pasted into a Discord chat - just click the handy _Copy to Clipboard_ button at the bottom of the _Latest Tick Data_ and _Earlier Tick Data_ windows.
+The plugin also generates a nicely formatted 'Discord Ready' text string which can be copied and pasted into a Discord chat - just click the handy _Copy to Clipboard_ button at the bottom of the _Latest Tally_ and _Previous Tally_ windows.
 
 The plugin can be paused / restarted by un-checking / checking the _&#9745; Make BGS Tally Active_ checkbox in _File_ &rarr; _Settings_ &rarr; _BGS Tally_.
 
@@ -53,7 +53,7 @@ The following activities are counted:
 
 _* The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported, non-violent mission types are still counted as +1 `INF` when a Faction is in Election. Gathering a full list of non-violent mission types is still a work in progress._
 
-All the above are totalled during the _Latest Tick Data_ session and transfer to _Earlier Tick Data_ at server tick.
+All the above are totalled during the _Latest Tally_ session and transfer to _Previous Tally_ at server tick.
 
 The `State` column has 3 options, `None`, `War` or `Election` to give an indication on how missions are being counted
 
