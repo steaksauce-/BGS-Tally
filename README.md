@@ -51,7 +51,7 @@ The following activities are counted:
 - Ships murdered owned by named Faction
 - Negative trade is counted with a minus sign in trade profit column
 
-_* The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported, certain mission types are still counted as +1 `INF` when a Faction is in Election. Only missions that [tezw21](https://github.com/tezw21/BGS-Tally-v2.0)'s research suggests work during Election are counted, this is a work in progress._
+_* The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported, non-violent mission types are still counted as +1 `INF` when a Faction is in Election. Gathering a full list of non-violent mission types is still a work in progress._
 
 All the above are totalled during the _Latest Tick Data_ session and transfer to _Earlier Tick Data_ at server tick.
 
