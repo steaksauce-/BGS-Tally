@@ -2,9 +2,14 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New features:
+
+* Ability to manually add High, Medium and Low on-foot and in-space Combat Zone wins to the Discord report by clicking on-screen buttons.
+
 ### Changes:
 
 * Now include a lot more non-violent mission types when counting missions for a faction in the `Election` state (gathering a full list of non-violent mission types is still a work in progress).
+* Improvements to layout of window.
 * Rename buttons and windows to 'Latest BGS Tally' and 'Previous BGS Tally'.
 
 

@@ -4,7 +4,7 @@ An [EDMC](https://github.com/EDCD/EDMarketConnector) plugin to count Background 
 
 Based on BGS-Tally v2.0 by tezw21: [Original tezw21 BGS-Tally-v2.0 Project](https://github.com/tezw21/BGS-Tally-v2.0)
 
-Modified by Aussi to include Discord-ready information and quick Copy to Clipboard function.
+Modified by Aussi to include manual Combat Zone tracking, Discord-ready information and quick Copy to Clipboard function for the Discord text.
 
 
 # Installation
@@ -40,7 +40,11 @@ The plugin can be paused / restarted by un-checking / checking the _&#9745; Make
 
 # What is Tracked
 
-The following activities are counted:
+The plugin includes both automatic and manual tracking of data. All automatic and manual data is totalled during the _Latest Tick Data_ session and transferred to _Earlier Tick Data_ at server tick.
+
+## Automatic Stuff
+
+The following activities are automatically collected from your in-game activity:
 
 - Mission INF +++ *
 - Total trade profit sold to Faction controlled station
@@ -53,9 +57,13 @@ The following activities are counted:
 
 _* The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported, non-violent mission types are still counted as +1 `INF` when a Faction is in Election. Gathering a full list of non-violent mission types is still a work in progress._
 
+The `State` column shows each faction state to give an indication on how missions are being counted.
+
 All the above are totalled during the _Latest BGS Tally_ session and transfer to _Previous BGS Tally_ at server tick.
 
-The `State` column has 3 options, `None`, `War` or `Election` to give an indication on how missions are being counted
+## Manual Stuff
+
+The plugin also includes manual tracking of Combat Zones (CZs).  CZs are not included in Elite's Player Journal, so there is no way of automatically working out which CZs you have completed. There are fields for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
 
 
 # Your Personal Activity and Privacy
