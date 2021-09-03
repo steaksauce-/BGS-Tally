@@ -351,8 +351,9 @@ def human_format(num):
 
 
 def update_faction_data(faction_data):
-    # Update data structures not present in previous versions of plugin
-
+    """
+    Update data structures not present in previous versions of plugin
+    """
     # From < v1.2.0 to 1.2.0
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
