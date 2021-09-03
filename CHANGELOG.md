@@ -1,18 +1,27 @@
 # Change Log
 
+## v1.2.0 - 2021-09-03
+
+### New features:
+
+* Ability to manually add High, Medium and Low on-foot and in-space Combat Zone wins to the Discord report by clicking on-screen buttons.
+
+### Changes:
+
+* Now include a lot more non-violent mission types when counting missions for a faction in the `Election` state (gathering a full list of non-violent mission types is still a work in progress).
+* Improvements to layout of window.
+* Rename buttons and windows to 'Latest BGS Tally' and 'Previous BGS Tally'.
+
+
 ## v1.1.1 - 2021-08-31
 
-### Bug Fixes
+### Bug Fixes:
 
 * Now honour the 'Trend' for mission Influence rewards: `UpGood` and `DownGood` are now treated as *+INF* while `UpBad` and `DownBad` are treated as *-INF*.
 
 ### Changes:
 
 * Report both +INF and -INF in Discord message.
-
-
-### Changes:
-
 * Various improvements to README:
     * Improved installation instructions.
     * Added instructions for upgrading from previous version.
