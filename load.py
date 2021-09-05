@@ -47,7 +47,7 @@ this.MissionListNonViolent = [
 this.Status = "Active"
 this.AbbreviateFactionNames = "No"
 
-# States that generate Combat Zones, so we display the CZ UI for factions in these states
+# States that generate Conflict Zones, so we display the CZ UI for factions in these states
 this.CZStates = [
     'War', 'CivilWar'
 ]
@@ -546,7 +546,7 @@ def process_faction_name(faction_name):
 
 def build_cz_text(cz_data, prefix):
     """
-    Create a summary of Combat Zone activity
+    Create a summary of Conflict Zone activity
     """
     if cz_data == {}: return ""
     text = ""
