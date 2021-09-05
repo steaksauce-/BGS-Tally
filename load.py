@@ -21,7 +21,6 @@ this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
-this.Status = "Active"
 this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
@@ -41,6 +40,9 @@ this.MissionListNonViolent = [
     'Mission_Sightseeing_name', 'Mission_Sightseeing_Celebrity_ELECTION_name', 'Mission_Sightseeing_Tourist_BOOM_name',
     'Chain_HelpFinishTheOrder_name']
 
+# Plugin Preferences on settings tab
+this.Status = "Active"
+this.AbbreviateFactionNames = "No"
 
 # This could also be returned from plugin_start3()
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -79,9 +81,12 @@ def plugin_prefs(parent, cmdr, is_beta):
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
-    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, sticky=tk.W)
+    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
-                   offvalue="Paused").grid()
+                   offvalue="Paused").grid(padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes",
+                   offvalue="No").grid(padx=10, sticky=tk.W)
+
     return frame
 
 
@@ -122,6 +127,7 @@ def plugin_start3(plugin_dir):
     this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
+    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
@@ -510,12 +516,22 @@ def generate_discord_text(data):
             faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
             ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "On-Foot CZs")
             faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
-
-            system_discord_text += f"    **{data[i][0]['Factions'][x]['Faction']}**: {faction_discord_text}\n" if faction_discord_text != "" else ""
+            faction_name = process_faction_name(data[i][0]['Factions'][x]['Faction'])
+            system_discord_text += f"    **{faction_name}**: {faction_discord_text}\n" if faction_discord_text != "" else ""
 
         discord_text += f"**{data[i][0]['System']}**: \n{system_discord_text}\n" if system_discord_text != "" else ""
 
     return discord_text
+
+
+def process_faction_name(faction_name):
+    """
+    Shorten the faction name if the user has chosen to
+    """
+    if this.AbbreviateFactionNames.get() == "Yes":
+        return ''.join(i[0] for i in faction_name.split())
+    else:
+        return faction_name
 
 
 def build_cz_text(cz_data, prefix):
@@ -572,6 +588,7 @@ def save_data():
     config.set('XLastTick', this.CurrentTick)
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
+    config.set('XAbbreviate', this.AbbreviateFactionNames.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
     file = os.path.join(this.Dir, "Today Data.txt")
