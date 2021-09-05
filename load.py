@@ -25,6 +25,8 @@ this.Status = "Active"
 this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
+
+# Non violent missions that we count as +1 INF in Elections even if the Journal reports no +INF
 this.MissionListNonViolent = [
     'Mission_AltruismCredits_name',
     'Mission_Collect_name', 'Mission_Collect_Industrial_name',
@@ -39,8 +41,13 @@ this.MissionListNonViolent = [
     'Mission_Salvage_name', 'Mission_Salvage_Planet_name', 'MISSION_Salvage_Refinery_name',
     'MISSION_Scan_name',
     'Mission_Sightseeing_name', 'Mission_Sightseeing_Celebrity_ELECTION_name', 'Mission_Sightseeing_Tourist_BOOM_name',
-    'Chain_HelpFinishTheOrder_name']
+    'Chain_HelpFinishTheOrder_name'
+]
 
+# States that generate Combat Zones, so we display the CZ UI for factions in these states
+this.CZStates = [
+    'War', 'CivilWar'
+]
 
 # This could also be returned from plugin_start3()
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -432,31 +439,33 @@ def display_data(title, data):
             Combat.grid(row=x + header_rows, column=6)
             Murder = ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered'])
             Murder.grid(row=x + header_rows, column=8)
-            CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
-            CZSpaceL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar)
-            CZSpaceL.grid(row=x + header_rows, column=9, padx=2, pady=2)
-            CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
-            CZSpaceM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar)
-            CZSpaceM.grid(row=x + header_rows, column=10, padx=2, pady=2)
-            CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
-            CZSpaceH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar)
-            CZSpaceH.grid(row=x + header_rows, column=11, padx=2, pady=2)
-            CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
-            CZGroundL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar)
-            CZGroundL.grid(row=x + header_rows, column=12, padx=2, pady=2)
-            CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
-            CZGroundM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar)
-            CZGroundM.grid(row=x + header_rows, column=13, padx=2, pady=2)
-            CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
-            CZGroundH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar)
-            CZGroundH.grid(row=x + header_rows, column=14, padx=2, pady=2)
-            # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
-            CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
-            CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
-            CZSpaceHVar.trace('w', partial(cz_change, CZSpaceHVar, Discord, CZs.SPACE_HIGH, data, i, x))
-            CZGroundLVar.trace('w', partial(cz_change, CZGroundLVar, Discord, CZs.GROUND_LOW, data, i, x))
-            CZGroundMVar.trace('w', partial(cz_change, CZGroundMVar, Discord, CZs.GROUND_MED, data, i, x))
-            CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
+
+            if (data[i][0]['Factions'][x]['FactionState'] in this.CZStates):
+                CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
+                CZSpaceL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar)
+                CZSpaceL.grid(row=x + header_rows, column=9, padx=2, pady=2)
+                CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
+                CZSpaceM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar)
+                CZSpaceM.grid(row=x + header_rows, column=10, padx=2, pady=2)
+                CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
+                CZSpaceH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar)
+                CZSpaceH.grid(row=x + header_rows, column=11, padx=2, pady=2)
+                CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
+                CZGroundL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar)
+                CZGroundL.grid(row=x + header_rows, column=12, padx=2, pady=2)
+                CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
+                CZGroundM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar)
+                CZGroundM.grid(row=x + header_rows, column=13, padx=2, pady=2)
+                CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
+                CZGroundH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar)
+                CZGroundH.grid(row=x + header_rows, column=14, padx=2, pady=2)
+                # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
+                CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
+                CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
+                CZSpaceHVar.trace('w', partial(cz_change, CZSpaceHVar, Discord, CZs.SPACE_HIGH, data, i, x))
+                CZGroundLVar.trace('w', partial(cz_change, CZGroundLVar, Discord, CZs.GROUND_LOW, data, i, x))
+                CZGroundMVar.trace('w', partial(cz_change, CZGroundMVar, Discord, CZs.GROUND_MED, data, i, x))
+                CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
 
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
