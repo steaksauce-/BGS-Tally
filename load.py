@@ -293,7 +293,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         save_data()
 
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':  # combat bonds collected
-        logger.info('Combat Bond redeemed')
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for x in range(0, t):
             if entry['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
@@ -371,6 +370,8 @@ def update_faction_data(faction_data):
     # From < v1.2.0 to 1.2.0
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
+    # From < v1.3.0 to 1.3.0
+    if not 'Enabled' in faction_data: faction_data['Enabled'] = 'Yes'
 
 
 def display_data(title, data):
@@ -386,6 +387,7 @@ def display_data(title, data):
     for i in data:
         tab = ttk.Frame(TabParent)
         TabParent.add(tab, text=data[i][0]['System'])
+        AllEnableLabel = ttk.Label(tab, text="Include")
         FactionLabel = ttk.Label(tab, text="Faction")
         FactionStateLabel = ttk.Label(tab, text="State")
         MPLabel = ttk.Label(tab, text="INF")
@@ -404,23 +406,24 @@ def display_data(title, data):
         GroundCZsLabelM = ttk.Label(tab, text="M")
         GroundCZsLabelH = ttk.Label(tab, text="H")
 
-        FactionLabel.grid(row=0, column=0, padx=2, pady=2)
-        FactionStateLabel.grid(row=0, column=1, padx=2, pady=2)
-        MPLabel.grid(row=0, column=2, padx=2, pady=2)
-        TPLabel.grid(row=0, column=3, padx=2, pady=2)
-        BountyLabel.grid(row=0, column=4, padx=2, pady=2)
-        CDLabel.grid(row=0, column=5, padx=2, pady=2)
-        CombatLabel.grid(row=0, column=6, padx=2, pady=2)
-        FailedLabel.grid(row=0, column=7, padx=2, pady=2)
-        MurderLabel.grid(row=0, column=8, padx=2, pady=2)
-        SpaceCZsLabel.grid(row=0, column=9, columnspan=3, padx=2)
-        GroundCZsLabel.grid(row=0, column=12, columnspan=3, padx=2)
-        SpaceCZsLabelL.grid(row=1, column=9, padx=2, pady=2)
-        SpaceCZsLabelM.grid(row=1, column=10, padx=2, pady=2)
-        SpaceCZsLabelH.grid(row=1, column=11, padx=2, pady=2)
-        GroundCZsLabelL.grid(row=1, column=12, padx=2, pady=2)
-        GroundCZsLabelM.grid(row=1, column=13, padx=2, pady=2)
-        GroundCZsLabelH.grid(row=1, column=14, padx=2, pady=2)
+        AllEnableLabel.grid(row=0, column=0, padx=2, pady=2)
+        FactionLabel.grid(row=0, column=1, padx=2, pady=2)
+        FactionStateLabel.grid(row=0, column=2, padx=2, pady=2)
+        MPLabel.grid(row=0, column=3, padx=2, pady=2)
+        TPLabel.grid(row=0, column=4, padx=2, pady=2)
+        BountyLabel.grid(row=0, column=5, padx=2, pady=2)
+        CDLabel.grid(row=0, column=6, padx=2, pady=2)
+        CombatLabel.grid(row=0, column=7, padx=2, pady=2)
+        FailedLabel.grid(row=0, column=8, padx=2, pady=2)
+        MurderLabel.grid(row=0, column=9, padx=2, pady=2)
+        SpaceCZsLabel.grid(row=0, column=10, columnspan=3, padx=2)
+        GroundCZsLabel.grid(row=0, column=13, columnspan=3, padx=2)
+        SpaceCZsLabelL.grid(row=1, column=10, padx=2, pady=2)
+        SpaceCZsLabelM.grid(row=1, column=11, padx=2, pady=2)
+        SpaceCZsLabelH.grid(row=1, column=12, padx=2, pady=2)
+        GroundCZsLabelL.grid(row=1, column=13, padx=2, pady=2)
+        GroundCZsLabelM.grid(row=1, column=14, padx=2, pady=2)
+        GroundCZsLabelH.grid(row=1, column=15, padx=2, pady=2)
 
         header_rows = 2
         z = len(data[i][0]['Factions'])
@@ -428,44 +431,49 @@ def display_data(title, data):
         for x in range(0, z):
             update_faction_data(data[i][0]['Factions'][x])
 
+            EnableVar = tk.StringVar(value=data[i][0]['Factions'][x]['Enabled'])
+            EnableLabel = ttk.Checkbutton(tab, variable=EnableVar, onvalue='Yes', offvalue='No')
+            EnableLabel.grid(row=x + header_rows, column=0, padx=2, pady=2)
             FactionName = ttk.Label(tab, text=data[i][0]['Factions'][x]['Faction'])
-            FactionName.grid(row=x + header_rows, column=0, sticky=tk.W, padx=2, pady=2)
+            FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableVar))
+            FactionName.grid(row=x + header_rows, column=1, sticky=tk.W, padx=2, pady=2)
             FactionState = ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState'])
-            FactionState.grid(row=x + header_rows, column=1)
+            FactionState.grid(row=x + header_rows, column=2)
             Missions = ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionPoints'])
-            Missions.grid(row=x + header_rows, column=2)
+            Missions.grid(row=x + header_rows, column=3)
             Trade = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit']))
-            Trade.grid(row=x + header_rows, column=3)
+            Trade.grid(row=x + header_rows, column=4)
             Bounty = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties']))
-            Bounty.grid(row=x + header_rows, column=4)
+            Bounty.grid(row=x + header_rows, column=5)
             CartData = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData']))
-            CartData.grid(row=x + header_rows, column=5)
-            Failed = ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed'])
-            Failed.grid(row=x + header_rows, column=7)
+            CartData.grid(row=x + header_rows, column=6)
             Combat = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds']))
-            Combat.grid(row=x + header_rows, column=6)
+            Combat.grid(row=x + header_rows, column=7)
+            Failed = ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed'])
+            Failed.grid(row=x + header_rows, column=8)
             Murder = ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered'])
-            Murder.grid(row=x + header_rows, column=8)
+            Murder.grid(row=x + header_rows, column=9)
+            EnableVar.trace('w', partial(enable_faction_change, EnableVar, Discord, data, i, x))
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.CZStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
                 CZSpaceL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar)
-                CZSpaceL.grid(row=x + header_rows, column=9, padx=2, pady=2)
+                CZSpaceL.grid(row=x + header_rows, column=10, padx=2, pady=2)
                 CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
                 CZSpaceM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar)
-                CZSpaceM.grid(row=x + header_rows, column=10, padx=2, pady=2)
+                CZSpaceM.grid(row=x + header_rows, column=11, padx=2, pady=2)
                 CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
                 CZSpaceH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar)
-                CZSpaceH.grid(row=x + header_rows, column=11, padx=2, pady=2)
+                CZSpaceH.grid(row=x + header_rows, column=12, padx=2, pady=2)
                 CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
                 CZGroundL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar)
-                CZGroundL.grid(row=x + header_rows, column=12, padx=2, pady=2)
+                CZGroundL.grid(row=x + header_rows, column=13, padx=2, pady=2)
                 CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
                 CZGroundM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar)
-                CZGroundM.grid(row=x + header_rows, column=13, padx=2, pady=2)
+                CZGroundM.grid(row=x + header_rows, column=14, padx=2, pady=2)
                 CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
                 CZGroundH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar)
-                CZGroundH.grid(row=x + header_rows, column=14, padx=2, pady=2)
+                CZGroundH.grid(row=x + header_rows, column=15, padx=2, pady=2)
                 # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
                 CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
                 CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
@@ -487,6 +495,9 @@ def display_data(title, data):
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):
+    """
+    Callback (set as a variable trace) for when a CZ Variable is changed
+    """
     if cz_type == CZs.SPACE_LOW:
         data[system_index][0]['Factions'][faction_index]['SpaceCZ']['l'] = CZVar.get()
     elif cz_type == CZs.SPACE_MED:
@@ -504,6 +515,27 @@ def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args)
     Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
+def enable_faction_change(EnableVar, Discord, data, system_index, faction_index, *args):
+    """
+    Callback (set as a variable trace) for when a Faction Enable Variable is changed
+    """
+    data[system_index][0]['Factions'][faction_index]['Enabled'] = EnableVar.get()
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
+
+
+def faction_name_clicked(EnableVar, *args):
+    """
+    Callback when a faction name is clicked. Toggle enabled state. The EnableVar is watched, so that will
+    automatically trigger enable_faction_change() to update data and Discord text
+    """
+    if EnableVar.get() == 'Yes':
+        EnableVar.set('No')
+    else:
+        EnableVar.set('Yes')
+
+
 def generate_discord_text(data):
     """
     Generate the Discord-formatted version of the tally data
@@ -515,6 +547,8 @@ def generate_discord_text(data):
         z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
+            if data[i][0]['Factions'][x]['Enabled'] != 'Yes': continue
+
             faction_discord_text = ""
             faction_discord_text += f"_INF_: {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
             faction_discord_text += f"_BVs_: {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
