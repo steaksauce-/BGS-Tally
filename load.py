@@ -550,20 +550,20 @@ def generate_discord_text(data):
             if data[i][0]['Factions'][x]['Enabled'] != 'Yes': continue
 
             faction_discord_text = ""
-            faction_discord_text += f"_INF_: {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
-            faction_discord_text += f"_BVs_: {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
-            faction_discord_text += f"_CBs_: {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
-            faction_discord_text += f"_Trade_: {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
-            faction_discord_text += f"_Expl_: {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
-            faction_discord_text += f"_Murders_: {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
-            space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "Space CZs")
+            faction_discord_text += f".INF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
+            faction_discord_text += f".BVs {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
+            faction_discord_text += f".CBs {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
+            faction_discord_text += f".Trade {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
+            faction_discord_text += f".Expl {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
+            faction_discord_text += f".Murders {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
+            space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "SpaceCZs")
             faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
-            ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "On-Foot CZs")
+            ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "GroundCZs")
             faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
             faction_name = process_faction_name(data[i][0]['Factions'][x]['Faction'])
-            system_discord_text += f"+ {faction_name}: {faction_discord_text}\n" if faction_discord_text != "" else ""
+            system_discord_text += f"[{faction_name}] - {faction_discord_text}\n" if faction_discord_text != "" else ""
 
-        discord_text += f"```diff\n{data[i][0]['System']}: \n{system_discord_text}```" if system_discord_text != "" else ""
+        discord_text += f"```css\n{data[i][0]['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
 
     return discord_text
 
@@ -585,11 +585,11 @@ def build_cz_text(cz_data, prefix):
     if cz_data == {}: return ""
     text = ""
 
-    if 'l' in cz_data and cz_data['l'] != '0' and cz_data['l'] != '': text += f"{cz_data['l']} x Low "
-    if 'm' in cz_data and cz_data['m'] != '0' and cz_data['m'] != '': text += f"{cz_data['m']} x Med "
-    if 'h' in cz_data and cz_data['h'] != '0' and cz_data['h'] != '': text += f"{cz_data['h']} x High "
+    if 'l' in cz_data and cz_data['l'] != '0' and cz_data['l'] != '': text += f"{cz_data['l']}xL "
+    if 'm' in cz_data and cz_data['m'] != '0' and cz_data['m'] != '': text += f"{cz_data['m']}xM "
+    if 'h' in cz_data and cz_data['h'] != '0' and cz_data['h'] != '': text += f"{cz_data['h']}xH "
 
-    if text != '': text = f"_{prefix}_: {text}"
+    if text != '': text = f".{prefix} {text}"
     return text
 
 
