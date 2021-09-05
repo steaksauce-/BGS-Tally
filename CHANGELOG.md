@@ -2,6 +2,12 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New features:
+
+* Conflict Zone options are now only presented for factions in `CivilWar` or `War` states.
+* The option is now provided to omit individual factions from the report.
+* There is a new option in the settings panel to switch on shortening of faction names to their abbreviations. This makes the report less readable but more concise.
+* As a suggestion from a user (thanks CMDR Strasnylada!), we now use `Diff` formatting blocks in the Discord text, which makes it look cleaner and clearer.
 
 
 ## v1.2.0 - 2021-09-03

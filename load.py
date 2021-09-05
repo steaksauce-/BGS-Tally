@@ -561,9 +561,9 @@ def generate_discord_text(data):
             ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "On-Foot CZs")
             faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
             faction_name = process_faction_name(data[i][0]['Factions'][x]['Faction'])
-            system_discord_text += f"    **{faction_name}**: {faction_discord_text}\n" if faction_discord_text != "" else ""
+            system_discord_text += f"+ {faction_name}: {faction_discord_text}\n" if faction_discord_text != "" else ""
 
-        discord_text += f"**{data[i][0]['System']}**: \n{system_discord_text}\n" if system_discord_text != "" else ""
+        discord_text += f"```diff\n{data[i][0]['System']}: \n{system_discord_text}```" if system_discord_text != "" else ""
 
     return discord_text
 
