@@ -25,7 +25,8 @@ If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
  - OS: [e.g. Windows]
- - Version [e.g. 1.2.0]
+ - Plugin Version [e.g. 1.2.0]
+ - EDMC Version [e.g. 5.1.3]
 
 **Additional context**
 Add any other context about the problem here.
