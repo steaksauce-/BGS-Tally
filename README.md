@@ -4,7 +4,7 @@ An [EDMC](https://github.com/EDCD/EDMarketConnector) plugin to count Background 
 
 Based on BGS-Tally v2.0 by tezw21: [Original tezw21 BGS-Tally-v2.0 Project](https://github.com/tezw21/BGS-Tally-v2.0)
 
-Modified by Aussi to include manual Combat Zone tracking, Discord-ready information and quick Copy to Clipboard function for the Discord text.
+Modified by Aussi to include manual Combat Zone tracking, Discord-ready information, quick Copy to Clipboard function for the Discord text and posting directly to Discord.
 
 
 # Installation
@@ -33,7 +33,7 @@ It is highly recommended that EDMC is started before ED is launched as data is r
 
 The data is shown on a pop up window when the _Latest BGS Tally_ or _Previous BGS Tally_ buttons on the EDMC main screen are clicked - data collected since the latest tick in _Latest BGS Tally_ and data from your previous play session before the latest tick in _Previous BGS Tally_. The tick time it uses is published here: https://elitebgs.app/api/ebgs/v5/ticks and the plugin displays this on the main EDMC window for reference.
 
-The plugin also generates a nicely formatted 'Discord Ready' text string which can be copied and pasted into a Discord chat - just click the handy _Copy to Clipboard_ button at the bottom of the _Latest BGS Tally_ and _Previous BGS Tally_ windows.
+The plugin also generates a nicely formatted 'Discord Ready' text string which can be copied and pasted into a Discord chat, or posted directly to a Discord channel if you wish (see 'Discord Integration' below for instructions).
 
 The plugin can be paused / restarted by un-checking / checking the _&#9745; Make BGS Tally Active_ checkbox in _File_ &rarr; _Settings_ &rarr; _BGS Tally_.
 
@@ -66,9 +66,26 @@ All the above are totalled during the _Latest BGS Tally_ session and transfer to
 The plugin also includes manual tracking of Combat Zones (CZs).  CZs are not included in Elite's Player Journal, so there is no way of automatically working out which CZs you have completed. There are fields for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
 
 
+# Discord Integation
+
+The plugin generates Discord-ready text for copying-and-pasting manually into Discord. However, as of v1.4.0, it also now supports direct posting into Discord using a webhook. You will need to create this webhook on your Discord server first. The steps are as follows:
+
+1. In your Discord server, click the Cog / Gear icon &#9881; alongside the channel name.
+2. In the menu that appears, click _Integrations_.
+3. In the Webhooks panel, click _Create Webhook_.  (If you have any webhooks already set up on the channel, instead click _View Webhooks_ and then _New Webhook_).
+4. In the _Name_ field, give your webhook a name, for example 'BGS Tally' would be sensible.
+5. Click _Copy Webhook URL_.
+6. In EDMC, go to _File_ &rarr; _Settings_ &rarr; _BGS Tally_ and paste the Webhook URL into the _Discord Webhook URL_ field.
+7. Optionally, you can also set a username that the Discord post will appear as - type this into the _Discord Post as User_ field. It would be sensible to type in your Discord username, but you can use anything you like.
+
+Once the connection is configured, a new button will appear on the BGS Tally windows titled _Post to Discord_. This will automatically send your report to your Discord server via the Webhook you have configured.
+
+
 # Your Personal Activity and Privacy
 
-If you're concerned about the privacy of your BGS activity, note that this plugin only tracks your activity locally on your computer - it **does not send your data anywhere else**. It writes the following three files, all in the BGS-Tally folder:
+If you're concerned about the privacy of your BGS activity, note that this plugin **does not send your data anywhere, unless you specifically choose to by configuring the Discord Integration** (see above for instructions).
+
+It writes the following three files, all in the BGS-Tally folder:
 
 1. `Today.txt` - This contains your activity since the last tick.
 2. `Yesterday.txt` - This contains your activity in your previous session before the last tick.
@@ -76,7 +93,8 @@ If you're concerned about the privacy of your BGS activity, note that this plugi
 
 All three of these files use the JSON format, so can be easily viewed in a text editor or JSON viewer.
 
-The plugin makes the following two network connections:
+The plugin makes the following network connections:
 
 1. To [EliteBGS](https://elitebgs.app/api/ebgs/v5/ticks) to grab the date and time of the lastest tick.
 2. To [GitHub](https://api.github.com/repos/aussig/BGS-Tally/releases/latest) to check the version of the plugin to see whether there is a newer version available.
+3. **Only if configured by you** to a specific Discord webhook on a Discord server of your choice, and only when you explicitly click the _Post to Discord_ button.

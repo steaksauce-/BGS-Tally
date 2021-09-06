@@ -43,10 +43,11 @@ this.MissionListNonViolent = [
     'Chain_HelpFinishTheOrder_name'
 ]
 
-# Plugin Preferences on settings tab
-this.Status = "Active"
-this.AbbreviateFactionNames = "No"
-this.DiscordWebhook = ""
+# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
+this.Status = None
+this.AbbreviateFactionNames = None
+this.DiscordWebhook = None
+this.DiscordUsername = None
 
 # States that generate Conflict Zones, so we display the CZ UI for factions in these states
 this.CZStates = [
@@ -95,10 +96,12 @@ def plugin_prefs(parent, cmdr, is_beta):
 
     nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(columnspan=2, padx=10, sticky=tk.W)
     ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
-    nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
     nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=5)
-    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, sticky=tk.EW, row=5)
+    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=5)
+    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=6)
+    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=6)
 
     return frame
 
@@ -142,6 +145,7 @@ def plugin_start3(plugin_dir):
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
     this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
+    this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
@@ -601,7 +605,7 @@ def post_to_discord(Form, Discord):
     Get all text from the Discord field and post it to the webhook
     """
     if (is_webhook_valid()):
-        response = requests.post(url=this.DiscordWebhook.get(), data={'content': Discord.get('1.0', 'end-1c')})
+        response = requests.post(url=this.DiscordWebhook.get(), data={'content': Discord.get('1.0', 'end-1c'), 'username': this.DiscordUsername.get()})
 
 
 def is_webhook_valid():
@@ -628,6 +632,7 @@ def save_data():
     config.set('XStatus', this.Status.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
     config.set('XDiscordWebhook', this.DiscordWebhook.get())
+    config.set('XDiscordUsername', this.DiscordUsername.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
     file = os.path.join(this.Dir, "Today Data.txt")
