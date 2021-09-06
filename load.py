@@ -46,6 +46,7 @@ this.MissionListNonViolent = [
 # Plugin Preferences on settings tab
 this.Status = "Active"
 this.AbbreviateFactionNames = "No"
+this.DiscordWebhook = ""
 
 # States that generate Conflict Zones, so we display the CZ UI for factions in these states
 this.CZStates = [
@@ -89,11 +90,15 @@ def plugin_prefs(parent, cmdr, is_beta):
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
-    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
-                   offvalue="Paused").grid(padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes",
-                   offvalue="No").grid(padx=10, sticky=tk.W)
+    # Make the second column fill available space
+    frame.columnconfigure(1, weight=1)
+
+    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(columnspan=2, padx=10, sticky=tk.W)
+    ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+    nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
+    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=5)
+    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, sticky=tk.EW, row=5)
 
     return frame
 
@@ -136,6 +141,7 @@ def plugin_start3(plugin_dir):
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
+    this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
@@ -616,6 +622,9 @@ def copy_to_clipboard(Form, Discord):
     Form.clipboard_append(Discord.get('1.0', 'end-1c'))
     Form.update()
 
+    if (this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/')):
+        response = requests.post(url=this.DiscordWebhook.get(), data={'content': Discord.get('1.0', 'end-1c')})
+
 
 def tick_format(ticktime):
     """
@@ -633,6 +642,7 @@ def save_data():
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
+    config.set('XDiscordWebhook', this.DiscordWebhook.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
     file = os.path.join(this.Dir, "Today Data.txt")

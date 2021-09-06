@@ -4,6 +4,13 @@
 
 ### New features:
 
+* Can integrate directly with Discord to post messages to a channel, using a user-specified Discord webhook.
+
+
+## vx.x.x - xxxx-xx-xx
+
+### New features:
+
 * Conflict Zone options are now only presented for factions in `CivilWar` or `War` states.
 * The option is now provided to omit individual factions from the report.
 * There is a new option in the settings panel to switch on shortening of faction names to their abbreviations. This makes the report less readable but more concise.
