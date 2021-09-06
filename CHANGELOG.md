@@ -2,6 +2,7 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+* Prefix positive INF with '+'.
 
 
 ## v1.3.0 - 2021-09-06
