@@ -66,7 +66,7 @@ All the above are totalled during the _Latest BGS Tally_ session and transfer to
 The plugin also includes manual tracking of Combat Zones (CZs).  CZs are not included in Elite's Player Journal, so there is no way of automatically working out which CZs you have completed. There are fields for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
 
 
-# Discord Integation
+# Discord Integration
 
 The plugin generates Discord-ready text for copying-and-pasting manually into Discord. However, as of v1.4.0, it also now supports direct posting into Discord using a webhook. You will need to create this webhook on your Discord server first. The steps are as follows:
 
@@ -79,6 +79,8 @@ The plugin generates Discord-ready text for copying-and-pasting manually into Di
 7. Optionally, you can also set a username that the Discord post will appear as - type this into the _Discord Post as User_ field. It would be sensible to type in your Discord username, but you can use anything you like.
 
 Once the connection is configured, a new button will appear on the BGS Tally windows titled _Post to Discord_. This will automatically send your report to your Discord server via the Webhook you have configured.
+
+If you post again within the same tick, the plugin will **update** your previous post, rather than creating a second post.
 
 
 # Your Personal Activity and Privacy
