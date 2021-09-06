@@ -386,6 +386,9 @@ def display_data(title, data):
 
     for i in data:
         tab = ttk.Frame(TabParent)
+        # Make the second column (faction name) fill available space
+        tab.columnconfigure(1, weight=1)
+
         TabParent.add(tab, text=data[i][0]['System'])
         AllEnableLabel = ttk.Label(tab, text="Include")
         FactionLabel = ttk.Label(tab, text="Faction")
