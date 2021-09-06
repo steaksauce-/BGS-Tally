@@ -3,6 +3,7 @@
 ## vx.x.x - xxxx-xx-xx
 
 * Prefix positive INF with '+'.
+* Mission INF is now manually editable as well as automatically updated.
 
 
 ## v1.3.0 - 2021-09-06
