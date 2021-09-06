@@ -5,6 +5,7 @@
 ### New features:
 
 * Can integrate directly with Discord to post messages to a channel, using a user-specified Discord webhook.
+* Prefix positive INF with '+'.
 
 
 ## v1.3.0 - 2021-09-06
