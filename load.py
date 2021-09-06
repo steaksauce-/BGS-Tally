@@ -617,24 +617,31 @@ def post_to_discord(Form, Discord, tick_mode):
     """
     if not is_webhook_valid(): return
 
+    discord_text = Discord.get('1.0', 'end-1c').strip()
+
     # We store a historical discord message ID for the current and previous ticks, so fetch the right one
     if tick_mode == Ticks.TICK_CURRENT: discord_message_id = this.DiscordCurrentMessageID.get()
     else: discord_message_id = this.DiscordPreviousMessageID.get()
 
     if discord_message_id == '' or discord_message_id == None:
         # No previous post
-        logger.info(f"Posting new message")
-        response = requests.post(url=this.DiscordWebhook.get(), params={'wait': 'true'}, data={'content': Discord.get('1.0', 'end-1c'), 'username': this.DiscordUsername.get()})
+        if discord_text != "":
+            response = requests.post(url=this.DiscordWebhook.get(), params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
+            if response.ok:
+                # Store the Message ID
+                response_json = response.json()
+                if tick_mode == Ticks.TICK_CURRENT: this.DiscordCurrentMessageID.set(response_json['id'])
+                else: this.DiscordPreviousMessageID.set(response_json['id'])
     else:
-        # Previous post, amend it
-        logger.info(f"Updating message ID: {discord_message_id}")
-        response = requests.patch(url=f"{this.DiscordWebhook.get()}/messages/{discord_message_id}", data={'content': Discord.get('1.0', 'end-1c'), 'username': this.DiscordUsername.get()})
-
-    if response.ok:
-        # Store the Message ID
-        response_json = response.json()
-        if tick_mode == Ticks.TICK_CURRENT: this.DiscordCurrentMessageID.set(response_json['id'])
-        else: this.DiscordPreviousMessageID.set(response_json['id'])
+        # Previous post, amend or delete it
+        if discord_text != "":
+            response = requests.patch(url=f"{this.DiscordWebhook.get()}/messages/{discord_message_id}", data={'content': discord_text, 'username': this.DiscordUsername.get()})
+        else:
+            response = requests.delete(url=f"{this.DiscordWebhook.get()}/messages/{discord_message_id}")
+            if response.ok:
+                # Clear the Message ID
+                if tick_mode == Ticks.TICK_CURRENT: this.DiscordCurrentMessageID.set('')
+                else: this.DiscordPreviousMessageID.set('')
 
 
 def is_webhook_valid():
