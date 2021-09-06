@@ -465,11 +465,12 @@ def display_data(title, data):
     Discord.tag_add('sel', '1.0', 'end')
     Discord.focus()
 
-    CopyButton = ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord))
+    TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
+    Discord.pack(fill=tk.X, padx=5, pady=5)
 
-    TabParent.pack(fill='both', expand=1, side='top', padx=5, pady=5)
-    CopyButton.pack(side='bottom', padx=5, pady=5)
-    Discord.pack(fill='x', side='bottom', padx=5, pady=5)
+    ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord)).pack(side=tk.LEFT, padx=5, pady=5)
+    if is_webhook_valid(): ttk.Button(Form, text="Post to Discord", command=partial(post_to_discord, Form, Discord)).pack(side=tk.RIGHT, padx=5, pady=5)
+
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):
@@ -594,8 +595,20 @@ def copy_to_clipboard(Form, Discord):
     Form.clipboard_append(Discord.get('1.0', 'end-1c'))
     Form.update()
 
-    if (this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/')):
+
+def post_to_discord(Form, Discord):
+    """
+    Get all text from the Discord field and post it to the webhook
+    """
+    if (is_webhook_valid()):
         response = requests.post(url=this.DiscordWebhook.get(), data={'content': Discord.get('1.0', 'end-1c')})
+
+
+def is_webhook_valid():
+    """
+    Do a basic check on the user specified Discord webhook
+    """
+    return this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/')
 
 
 def tick_format(ticktime):
