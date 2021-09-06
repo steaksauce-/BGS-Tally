@@ -9,6 +9,10 @@
 * There is a new option in the settings panel to switch on shortening of faction names to their abbreviations. This makes the report less readable but more concise.
 * As a suggestion from a user (thanks CMDR Strasnylada!), we now use CSS coloured formatting blocks in the Discord text, which makes it look cleaner and clearer.
 
+### Changes:
+
+* The on-screen layout of the tally table has been improved.
+
 
 ## v1.2.0 - 2021-09-03
 
