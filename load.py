@@ -445,13 +445,15 @@ def display_data(title, data, tick_mode):
             FactionName.grid(row=x + header_rows, column=1, sticky=tk.W, padx=2, pady=2)
             FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableVar))
             ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2)
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionPoints']).grid(row=x + header_rows, column=3)
+            MissionPointsVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPoints'])
+            ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, padx=2, pady=2)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=4)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=5)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=6)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=7)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=8)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=9)
+            MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, Discord, data, i, x))
             EnableVar.trace('w', partial(enable_faction_change, EnableVar, Discord, data, i, x))
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.CZStates):
@@ -528,6 +530,16 @@ def faction_name_clicked(EnableVar, *args):
         EnableVar.set('No')
     else:
         EnableVar.set('Yes')
+
+
+def mission_points_change(MissionPointsVar, Discord, data, system_index, faction_index, *args):
+    """
+    Callback (set as a variable trace) for when a mission points Variable is changed
+    """
+    data[system_index][0]['Factions'][faction_index]['MissionPoints'] = MissionPointsVar.get()
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
 def generate_discord_text(data):

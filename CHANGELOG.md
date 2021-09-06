@@ -6,6 +6,7 @@
 
 * Can integrate directly with Discord to post messages to a channel, using a user-specified Discord webhook.
 * Prefix positive INF with '+'.
+* Mission INF is now manually editable as well as automatically updated.
 
 
 ## v1.3.0 - 2021-09-06
