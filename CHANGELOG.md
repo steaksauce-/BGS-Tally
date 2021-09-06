@@ -1,5 +1,19 @@
 # Change Log
 
+## v1.3.0 - 2021-09-06
+
+### New features:
+
+* Conflict Zone options are now only presented for factions in `CivilWar` or `War` states.
+* The option is now provided to omit individual factions from the report.
+* There is a new option in the settings panel to switch on shortening of faction names to their abbreviations. This makes the report less readable but more concise.
+* As a suggestion from a user (thanks CMDR Strasnylada!), we now use CSS coloured formatting blocks in the Discord text, which makes it look cleaner and clearer.
+
+### Changes:
+
+* The on-screen layout of the tally table has been improved.
+
+
 ## v1.2.0 - 2021-09-03
 
 ### New features:
@@ -11,6 +25,7 @@
 * Now include a lot more non-violent mission types when counting missions for a faction in the `Election` state (gathering a full list of non-violent mission types is still a work in progress).
 * Improvements to layout of window.
 * Rename buttons and windows to 'Latest BGS Tally' and 'Previous BGS Tally'.
+* The last tick date and time presentation has been improved.
 
 
 ## v1.1.1 - 2021-08-31

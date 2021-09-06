@@ -16,15 +16,16 @@ from config import appname, config
 from theme import theme
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "1.2.0"
+this.VersionNo = "1.3.0"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
-this.Status = "Active"
 this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
+
+# Non violent missions that we count as +1 INF in Elections even if the Journal reports no +INF
 this.MissionListNonViolent = [
     'Mission_AltruismCredits_name',
     'Mission_Collect_name', 'Mission_Collect_Industrial_name',
@@ -39,8 +40,17 @@ this.MissionListNonViolent = [
     'Mission_Salvage_name', 'Mission_Salvage_Planet_name', 'MISSION_Salvage_Refinery_name',
     'MISSION_Scan_name',
     'Mission_Sightseeing_name', 'Mission_Sightseeing_Celebrity_ELECTION_name', 'Mission_Sightseeing_Tourist_BOOM_name',
-    'Chain_HelpFinishTheOrder_name']
+    'Chain_HelpFinishTheOrder_name'
+]
 
+# Plugin Preferences on settings tab
+this.Status = "Active"
+this.AbbreviateFactionNames = "No"
+
+# States that generate Conflict Zones, so we display the CZ UI for factions in these states
+this.CZStates = [
+    'War', 'CivilWar'
+]
 
 # This could also be returned from plugin_start3()
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -79,9 +89,12 @@ def plugin_prefs(parent, cmdr, is_beta):
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
-    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, sticky=tk.W)
+    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
-                   offvalue="Paused").grid()
+                   offvalue="Paused").grid(padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes",
+                   offvalue="No").grid(padx=10, sticky=tk.W)
+
     return frame
 
 
@@ -122,6 +135,7 @@ def plugin_start3(plugin_dir):
     this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
+    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
@@ -279,7 +293,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         save_data()
 
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':  # combat bonds collected
-        logger.info('Combat Bond redeemed')
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
         for x in range(0, t):
             if entry['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
@@ -351,17 +364,21 @@ def human_format(num):
 
 
 def update_faction_data(faction_data):
-    # Update data structures not present in previous versions of plugin
-
+    """
+    Update data structures not present in previous versions of plugin
+    """
     # From < v1.2.0 to 1.2.0
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
+    # From < v1.3.0 to 1.3.0
+    if not 'Enabled' in faction_data: faction_data['Enabled'] = 'Yes'
 
 
 def display_data(title, data):
     """
     Display the data window, using either latest or previous data
     """
+    heading_font = ("Helvetica", 11, 'bold')
     Form = tk.Toplevel(this.frame)
     Form.title("BGS Tally v" + this.VersionNo + " - " + title)
     Form.geometry("1000x700")
@@ -370,92 +387,72 @@ def display_data(title, data):
 
     for i in data:
         tab = ttk.Frame(TabParent)
+        # Make the second column (faction name) fill available space
+        tab.columnconfigure(1, weight=1)
+
         TabParent.add(tab, text=data[i][0]['System'])
-        FactionLabel = ttk.Label(tab, text="Faction")
-        FactionStateLabel = ttk.Label(tab, text="State")
-        MPLabel = ttk.Label(tab, text="INF")
-        TPLabel = ttk.Label(tab, text="Trade")
-        BountyLabel = ttk.Label(tab, text="BVs")
-        CDLabel = ttk.Label(tab, text="Expl")
-        CombatLabel = ttk.Label(tab, text="CBs")
-        FailedLabel = ttk.Label(tab, text="Fails")
-        MurderLabel = ttk.Label(tab, text="Murders")
-        SpaceCZsLabel = ttk.Label(tab, text="Space CZs")
-        SpaceCZsLabelL = ttk.Label(tab, text="L")
-        SpaceCZsLabelM = ttk.Label(tab, text="M")
-        SpaceCZsLabelH = ttk.Label(tab, text="H")
-        GroundCZsLabel = ttk.Label(tab, text="On-foot CZs")
-        GroundCZsLabelL = ttk.Label(tab, text="L")
-        GroundCZsLabelM = ttk.Label(tab, text="M")
-        GroundCZsLabelH = ttk.Label(tab, text="H")
+        ttk.Label(tab, text="Include", font=heading_font).grid(row=0, column=0, padx=2, pady=2)
+        ttk.Label(tab, text="Faction", font=heading_font).grid(row=0, column=1, padx=2, pady=2)
+        ttk.Label(tab, text="State", font=heading_font).grid(row=0, column=2, padx=2, pady=2)
+        ttk.Label(tab, text="INF", font=heading_font).grid(row=0, column=3, padx=2, pady=2)
+        ttk.Label(tab, text="Trade", font=heading_font).grid(row=0, column=4, padx=2, pady=2)
+        ttk.Label(tab, text="BVs", font=heading_font).grid(row=0, column=5, padx=2, pady=2)
+        ttk.Label(tab, text="Expl", font=heading_font).grid(row=0, column=6, padx=2, pady=2)
+        ttk.Label(tab, text="CBs", font=heading_font).grid(row=0, column=7, padx=2, pady=2)
+        ttk.Label(tab, text="Fails", font=heading_font).grid(row=0, column=8, padx=2, pady=2)
+        ttk.Label(tab, text="Murders", font=heading_font).grid(row=0, column=9, padx=2, pady=2)
+        ttk.Label(tab, text="Space CZs", font=heading_font).grid(row=0, column=10, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=10, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=11, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=12, padx=2, pady=2)
+        ttk.Label(tab, text="On-foot CZs", font=heading_font).grid(row=0, column=13, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=13, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=14, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
+        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=16, padx=2, pady=5, sticky=tk.EW)
 
-        FactionLabel.grid(row=0, column=0, padx=2, pady=2)
-        FactionStateLabel.grid(row=0, column=1, padx=2, pady=2)
-        MPLabel.grid(row=0, column=2, padx=2, pady=2)
-        TPLabel.grid(row=0, column=3, padx=2, pady=2)
-        BountyLabel.grid(row=0, column=4, padx=2, pady=2)
-        CDLabel.grid(row=0, column=5, padx=2, pady=2)
-        CombatLabel.grid(row=0, column=6, padx=2, pady=2)
-        FailedLabel.grid(row=0, column=7, padx=2, pady=2)
-        MurderLabel.grid(row=0, column=8, padx=2, pady=2)
-        SpaceCZsLabel.grid(row=0, column=9, columnspan=3, padx=2)
-        GroundCZsLabel.grid(row=0, column=12, columnspan=3, padx=2)
-        SpaceCZsLabelL.grid(row=1, column=9, padx=2, pady=2)
-        SpaceCZsLabelM.grid(row=1, column=10, padx=2, pady=2)
-        SpaceCZsLabelH.grid(row=1, column=11, padx=2, pady=2)
-        GroundCZsLabelL.grid(row=1, column=12, padx=2, pady=2)
-        GroundCZsLabelM.grid(row=1, column=13, padx=2, pady=2)
-        GroundCZsLabelH.grid(row=1, column=14, padx=2, pady=2)
-
-        header_rows = 2
+        header_rows = 3
         z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
             update_faction_data(data[i][0]['Factions'][x])
 
+            EnableVar = tk.StringVar(value=data[i][0]['Factions'][x]['Enabled'])
+            EnableLabel = ttk.Checkbutton(tab, variable=EnableVar, onvalue='Yes', offvalue='No')
+            EnableLabel.grid(row=x + header_rows, column=0, padx=2, pady=2)
             FactionName = ttk.Label(tab, text=data[i][0]['Factions'][x]['Faction'])
-            FactionName.grid(row=x + header_rows, column=0, sticky=tk.W, padx=2, pady=2)
-            FactionState = ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState'])
-            FactionState.grid(row=x + header_rows, column=1)
-            Missions = ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionPoints'])
-            Missions.grid(row=x + header_rows, column=2)
-            Trade = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit']))
-            Trade.grid(row=x + header_rows, column=3)
-            Bounty = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties']))
-            Bounty.grid(row=x + header_rows, column=4)
-            CartData = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData']))
-            CartData.grid(row=x + header_rows, column=5)
-            Failed = ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed'])
-            Failed.grid(row=x + header_rows, column=7)
-            Combat = ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds']))
-            Combat.grid(row=x + header_rows, column=6)
-            Murder = ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered'])
-            Murder.grid(row=x + header_rows, column=8)
-            CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
-            CZSpaceL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar)
-            CZSpaceL.grid(row=x + header_rows, column=9, padx=2, pady=2)
-            CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
-            CZSpaceM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar)
-            CZSpaceM.grid(row=x + header_rows, column=10, padx=2, pady=2)
-            CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
-            CZSpaceH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar)
-            CZSpaceH.grid(row=x + header_rows, column=11, padx=2, pady=2)
-            CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
-            CZGroundL = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar)
-            CZGroundL.grid(row=x + header_rows, column=12, padx=2, pady=2)
-            CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
-            CZGroundM = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar)
-            CZGroundM.grid(row=x + header_rows, column=13, padx=2, pady=2)
-            CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
-            CZGroundH = ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar)
-            CZGroundH.grid(row=x + header_rows, column=14, padx=2, pady=2)
-            # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
-            CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
-            CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
-            CZSpaceHVar.trace('w', partial(cz_change, CZSpaceHVar, Discord, CZs.SPACE_HIGH, data, i, x))
-            CZGroundLVar.trace('w', partial(cz_change, CZGroundLVar, Discord, CZs.GROUND_LOW, data, i, x))
-            CZGroundMVar.trace('w', partial(cz_change, CZGroundMVar, Discord, CZs.GROUND_MED, data, i, x))
-            CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
+            FactionName.grid(row=x + header_rows, column=1, sticky=tk.W, padx=2, pady=2)
+            FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableVar))
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionPoints']).grid(row=x + header_rows, column=3)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=4)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=5)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=6)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=7)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=8)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=9)
+            EnableVar.trace('w', partial(enable_faction_change, EnableVar, Discord, data, i, x))
+
+            if (data[i][0]['Factions'][x]['FactionState'] in this.CZStates):
+                CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=10, padx=2, pady=2)
+                CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=11, padx=2, pady=2)
+                CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=12, padx=2, pady=2)
+                CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=13, padx=2, pady=2)
+                CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=14, padx=2, pady=2)
+                CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=15, padx=2, pady=2)
+                # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
+                CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
+                CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
+                CZSpaceHVar.trace('w', partial(cz_change, CZSpaceHVar, Discord, CZs.SPACE_HIGH, data, i, x))
+                CZGroundLVar.trace('w', partial(cz_change, CZGroundLVar, Discord, CZs.GROUND_LOW, data, i, x))
+                CZGroundMVar.trace('w', partial(cz_change, CZGroundMVar, Discord, CZs.GROUND_MED, data, i, x))
+                CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
 
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
@@ -470,6 +467,9 @@ def display_data(title, data):
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):
+    """
+    Callback (set as a variable trace) for when a CZ Variable is changed
+    """
     if cz_type == CZs.SPACE_LOW:
         data[system_index][0]['Factions'][faction_index]['SpaceCZ']['l'] = CZVar.get()
     elif cz_type == CZs.SPACE_MED:
@@ -487,6 +487,27 @@ def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args)
     Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
+def enable_faction_change(EnableVar, Discord, data, system_index, faction_index, *args):
+    """
+    Callback (set as a variable trace) for when a Faction Enable Variable is changed
+    """
+    data[system_index][0]['Factions'][faction_index]['Enabled'] = EnableVar.get()
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
+
+
+def faction_name_clicked(EnableVar, *args):
+    """
+    Callback when a faction name is clicked. Toggle enabled state. The EnableVar is watched, so that will
+    automatically trigger enable_faction_change() to update data and Discord text
+    """
+    if EnableVar.get() == 'Yes':
+        EnableVar.set('No')
+    else:
+        EnableVar.set('Yes')
+
+
 def generate_discord_text(data):
     """
     Generate the Discord-formatted version of the tally data
@@ -498,37 +519,49 @@ def generate_discord_text(data):
         z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
+            if data[i][0]['Factions'][x]['Enabled'] != 'Yes': continue
+
             faction_discord_text = ""
-            faction_discord_text += f"_INF_: {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
-            faction_discord_text += f"_BVs_: {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
-            faction_discord_text += f"_CBs_: {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
-            faction_discord_text += f"_Trade_: {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
-            faction_discord_text += f"_Expl_: {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
-            faction_discord_text += f"_Murders_: {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
-            space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "Space CZs")
+            faction_discord_text += f".INF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] != 0 else ""
+            faction_discord_text += f".BVs {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
+            faction_discord_text += f".CBs {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
+            faction_discord_text += f".Trade {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
+            faction_discord_text += f".Expl {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
+            faction_discord_text += f".Murders {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
+            space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "SpaceCZs")
             faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
-            ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "On-Foot CZs")
+            ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "GroundCZs")
             faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
+            faction_name = process_faction_name(data[i][0]['Factions'][x]['Faction'])
+            system_discord_text += f"[{faction_name}] - {faction_discord_text}\n" if faction_discord_text != "" else ""
 
-            system_discord_text += f"    **{data[i][0]['Factions'][x]['Faction']}**: {faction_discord_text}\n" if faction_discord_text != "" else ""
-
-        discord_text += f"**{data[i][0]['System']}**: \n{system_discord_text}\n" if system_discord_text != "" else ""
+        discord_text += f"```css\n{data[i][0]['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
 
     return discord_text
 
 
+def process_faction_name(faction_name):
+    """
+    Shorten the faction name if the user has chosen to
+    """
+    if this.AbbreviateFactionNames.get() == "Yes":
+        return ''.join(i[0] for i in faction_name.split())
+    else:
+        return faction_name
+
+
 def build_cz_text(cz_data, prefix):
     """
-    Create a summary of Combat Zone activity
+    Create a summary of Conflict Zone activity
     """
     if cz_data == {}: return ""
     text = ""
 
-    if 'l' in cz_data and cz_data['l'] != '0' and cz_data['l'] != '': text += f"{cz_data['l']} x Low "
-    if 'm' in cz_data and cz_data['m'] != '0' and cz_data['m'] != '': text += f"{cz_data['m']} x Med "
-    if 'h' in cz_data and cz_data['h'] != '0' and cz_data['h'] != '': text += f"{cz_data['h']} x High "
+    if 'l' in cz_data and cz_data['l'] != '0' and cz_data['l'] != '': text += f"{cz_data['l']}xL "
+    if 'm' in cz_data and cz_data['m'] != '0' and cz_data['m'] != '': text += f"{cz_data['m']}xM "
+    if 'h' in cz_data and cz_data['h'] != '0' and cz_data['h'] != '': text += f"{cz_data['h']}xH "
 
-    if text != '': text = f"_{prefix}_: {text}"
+    if text != '': text = f".{prefix} {text}"
     return text
 
 
@@ -571,6 +604,7 @@ def save_data():
     config.set('XLastTick', this.CurrentTick)
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
+    config.set('XAbbreviate', this.AbbreviateFactionNames.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
     file = os.path.join(this.Dir, "Today Data.txt")
