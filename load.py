@@ -89,6 +89,13 @@ class Ticks(Enum):
     TICK_CURRENT = 0
     TICK_PREVIOUS = 1
 
+# Subclassing from str as well as Enum means json.load and json.dump work seamlessly
+class CheckStates(str, Enum):
+    STATE_OFF = 'No'
+    STATE_ON = 'Yes'
+    STATE_PARTIAL = 'Partial'
+    STATE_PENDING = 'Pending'
+
 
 def plugin_prefs(parent, cmdr, is_beta):
     """
@@ -392,7 +399,7 @@ def update_faction_data(faction_data):
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
     # From < v1.3.0 to 1.3.0
-    if not 'Enabled' in faction_data: faction_data['Enabled'] = 'Yes'
+    if not 'Enabled' in faction_data: faction_data['Enabled'] = CheckStates.STATE_ON
 
 
 def display_data(title, data, tick_mode):
@@ -411,8 +418,13 @@ def display_data(title, data, tick_mode):
         # Make the second column (faction name) fill available space
         tab.columnconfigure(1, weight=1)
 
+        FactionEnableVars = []
+
         TabParent.add(tab, text=data[i][0]['System'])
         ttk.Label(tab, text="Include", font=heading_font).grid(row=0, column=0, padx=2, pady=2)
+        EnableAllVar = tk.StringVar(value=CheckStates.STATE_ON)
+        EnableAllCheckbutton = ttk.Checkbutton(tab, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, variable=EnableAllVar)
+        EnableAllCheckbutton.grid(row=1, column=0, padx=2, pady=2)
         ttk.Label(tab, text="Faction", font=heading_font).grid(row=0, column=1, padx=2, pady=2)
         ttk.Label(tab, text="State", font=heading_font).grid(row=0, column=2, padx=2, pady=2)
         ttk.Label(tab, text="INF", font=heading_font).grid(row=0, column=3, padx=2, pady=2)
@@ -431,6 +443,7 @@ def display_data(title, data, tick_mode):
         ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=14, padx=2, pady=2)
         ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
         ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=16, padx=2, pady=5, sticky=tk.EW)
+        EnableAllVar.trace('w', partial(enable_all_factions_change, EnableAllVar, FactionEnableVars, EnableAllCheckbutton, Discord, data, i))
 
         header_rows = 3
         z = len(data[i][0]['Factions'])
@@ -439,8 +452,9 @@ def display_data(title, data, tick_mode):
             update_faction_data(data[i][0]['Factions'][x])
 
             EnableVar = tk.StringVar(value=data[i][0]['Factions'][x]['Enabled'])
-            EnableLabel = ttk.Checkbutton(tab, variable=EnableVar, onvalue='Yes', offvalue='No')
-            EnableLabel.grid(row=x + header_rows, column=0, padx=2, pady=2)
+            EnableCheckbutton = ttk.Checkbutton(tab, variable=EnableVar, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF)
+            EnableCheckbutton.grid(row=x + header_rows, column=0, padx=2, pady=2)
+            FactionEnableVars.append(EnableVar)
             FactionName = ttk.Label(tab, text=data[i][0]['Factions'][x]['Faction'])
             FactionName.grid(row=x + header_rows, column=1, sticky=tk.W, padx=2, pady=2)
             FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableVar))
@@ -454,7 +468,7 @@ def display_data(title, data, tick_mode):
             ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=8)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=9)
             MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, Discord, data, i, x))
-            EnableVar.trace('w', partial(enable_faction_change, EnableVar, Discord, data, i, x))
+            EnableVar.trace('w', partial(enable_faction_change, EnableVar, EnableAllVar, Discord, data, i, x))
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.CZStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
@@ -477,6 +491,9 @@ def display_data(title, data, tick_mode):
                 CZGroundMVar.trace('w', partial(cz_change, CZGroundMVar, Discord, CZs.GROUND_MED, data, i, x))
                 CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
 
+        # Set pending state on the EnableAllVar so the enable all checkbox is re-calculated
+        EnableAllVar.set(CheckStates.STATE_PENDING)
+
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
     Discord.tag_add('sel', '1.0', 'end')
@@ -487,7 +504,6 @@ def display_data(title, data, tick_mode):
 
     ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord)).pack(side=tk.LEFT, padx=5, pady=5)
     if is_webhook_valid(): ttk.Button(Form, text="Post to Discord", command=partial(post_to_discord, Form, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
-
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):
@@ -511,11 +527,47 @@ def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args)
     Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
-def enable_faction_change(EnableVar, Discord, data, system_index, faction_index, *args):
+def enable_faction_change(EnableVar, EnableAllVar, Discord, data, system_index, faction_index, *args):
     """
     Callback (set as a variable trace) for when a Faction Enable Variable is changed
     """
+    logger.info(f'enable_faction_change: {EnableVar.get()}')
     data[system_index][0]['Factions'][faction_index]['Enabled'] = EnableVar.get()
+
+    # Set the 'Enable all' checkbox Var to pending. This will trigger a call to enable_all_factions_change()
+    EnableAllVar.set(CheckStates.STATE_PENDING)
+
+
+def enable_all_factions_change(EnableAllVar, EnableVars, EnableAllCheckbutton, Discord, data, system_index, *args):
+    """
+    Callback (set as a variable trace) for when the Enable All Factions Variable is changed
+    """
+    logger.info(f'enable_all_factions_change: {EnableAllVar.get()}')
+    if EnableAllVar.get() == CheckStates.STATE_PENDING:
+        # If the enable all variable is 'Pending' then we need to calculate its new state
+        any_off = False
+        any_on = False
+        z = len(EnableVars)
+        for x in range(0, z):
+            if EnableVars[x].get() == CheckStates.STATE_ON: any_on = True
+            if EnableVars[x].get() == CheckStates.STATE_OFF: any_off = True
+
+        if any_on == True:
+            if any_off == True:
+                EnableAllVar.set(CheckStates.STATE_PARTIAL)
+                EnableAllCheckbutton.state(['alternate'])
+            else:
+                EnableAllVar.set(CheckStates.STATE_ON)
+                EnableAllCheckbutton.state(['selected'])
+        else:
+            EnableAllVar.set(CheckStates.STATE_OFF)
+            EnableAllCheckbutton.state(['!selected'])
+    elif EnableAllVar.get() == CheckStates.STATE_ON or EnableAllVar.get() == CheckStates.STATE_OFF:
+        # We're setting to all on or all off
+        z = len(EnableVars)
+        logger.info(f'setting all EnableVars to: {EnableAllVar.get()}')
+        for x in range(0, z):
+            EnableVars[x].set(EnableAllVar.get())
 
     Discord.delete('1.0', 'end-1c')
     Discord.insert(tk.INSERT, generate_discord_text(data))
@@ -526,10 +578,8 @@ def faction_name_clicked(EnableVar, *args):
     Callback when a faction name is clicked. Toggle enabled state. The EnableVar is watched, so that will
     automatically trigger enable_faction_change() to update data and Discord text
     """
-    if EnableVar.get() == 'Yes':
-        EnableVar.set('No')
-    else:
-        EnableVar.set('Yes')
+    if EnableVar.get() == CheckStates.STATE_ON: EnableVar.set(CheckStates.STATE_OFF)
+    else: EnableVar.set(CheckStates.STATE_ON)
 
 
 def mission_points_change(MissionPointsVar, Discord, data, system_index, faction_index, *args):
@@ -553,7 +603,7 @@ def generate_discord_text(data):
         z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
-            if data[i][0]['Factions'][x]['Enabled'] != 'Yes': continue
+            if data[i][0]['Factions'][x]['Enabled'] != CheckStates.STATE_ON: continue
 
             faction_discord_text = ""
             faction_discord_text += f".INF +{data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else f".INF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] < 0 else ""
