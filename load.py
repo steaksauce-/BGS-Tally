@@ -43,9 +43,11 @@ this.MissionListNonViolent = [
     'Chain_HelpFinishTheOrder_name'
 ]
 
-# Plugin Preferences on settings tab
-this.Status = "Active"
-this.AbbreviateFactionNames = "No"
+# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
+this.Status = None
+this.AbbreviateFactionNames = None
+this.DiscordWebhook = None
+this.DiscordUsername = None
 
 # States that generate Conflict Zones, so we display the CZ UI for factions in these states
 this.CZStates = [
@@ -83,17 +85,27 @@ class CZs(Enum):
     GROUND_MED = 4
     GROUND_LOW = 5
 
+class Ticks(Enum):
+    TICK_CURRENT = 0
+    TICK_PREVIOUS = 1
+
 
 def plugin_prefs(parent, cmdr, is_beta):
     """
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
-    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
-                   offvalue="Paused").grid(padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes",
-                   offvalue="No").grid(padx=10, sticky=tk.W)
+    # Make the second column fill available space
+    frame.columnconfigure(1, weight=1)
+
+    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(columnspan=2, padx=10, sticky=tk.W)
+    ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+    nb.Checkbutton(frame, text="BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
+    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=5)
+    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=5)
+    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=6)
+    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=6)
 
     return frame
 
@@ -136,20 +148,17 @@ def plugin_start3(plugin_dir):
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
+    this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
+    this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
+    this.DiscordCurrentMessageID = tk.StringVar(value=config.get_str("XDiscordCurrentMessageID"))
+    this.DiscordPreviousMessageID = tk.StringVar(value=config.get_str("XDiscordPreviousMessageID"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
     latest = response.json()
     this.GitVersion = latest['tag_name']
-    #  tick check and counter reset
-    response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
-    tick = response.json()
-    this.CurrentTick = tick[0]['_id']
-    this.TickTime = tick[0]['time']
-    if this.LastTick.get() != this.CurrentTick:
-        this.LastTick.set(this.CurrentTick)
-        this.YesterdayData = this.TodayData
-        this.TodayData = {}
+    check_tick()
+
     return "BGS Tally"
 
 
@@ -178,6 +187,25 @@ def plugin_app(parent):
     this.StatusLabel = tk.Label(this.frame, text=this.Status.get()).grid(row=2, column=1, sticky=tk.W)
     this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
     return this.frame
+
+
+def check_tick():
+    """
+    Tick check and counter reset
+    """
+    response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
+    tick = response.json()
+    this.CurrentTick = tick[0]['_id']
+    this.TickTime = tick[0]['time']
+    if this.LastTick.get() != this.CurrentTick:
+        this.LastTick.set(this.CurrentTick)
+        this.YesterdayData = this.TodayData
+        this.TodayData = {}
+        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+        this.DiscordCurrentMessageID.set('')
+        return True
+
+    return False
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
@@ -234,15 +262,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
-        #  tick check and counter reset
-        response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
-        tick = response.json()
-        this.CurrentTick = tick[0]['_id']
-        this.TickTime = tick[0]['time']
-        if this.LastTick.get() != this.CurrentTick:
-            this.LastTick.set(this.CurrentTick)
-            this.YesterdayData = this.TodayData
-            this.TodayData = {}
+        # Check for a new tick
+        if check_tick():
             this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
             theme.update(this.frame)
 
@@ -365,7 +386,7 @@ def human_format(num):
 
 def update_faction_data(faction_data):
     """
-    Update data structures not present in previous versions of plugin
+    Update faction data structure for elements not present in previous versions of plugin
     """
     # From < v1.2.0 to 1.2.0
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
@@ -374,7 +395,7 @@ def update_faction_data(faction_data):
     if not 'Enabled' in faction_data: faction_data['Enabled'] = 'Yes'
 
 
-def display_data(title, data):
+def display_data(title, data, tick_mode):
     """
     Display the data window, using either latest or previous data
     """
@@ -461,11 +482,12 @@ def display_data(title, data):
     Discord.tag_add('sel', '1.0', 'end')
     Discord.focus()
 
-    CopyButton = ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord))
+    TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
+    Discord.pack(fill=tk.X, padx=5, pady=5)
 
-    TabParent.pack(fill='both', expand=1, side='top', padx=5, pady=5)
-    CopyButton.pack(side='bottom', padx=5, pady=5)
-    Discord.pack(fill='x', side='bottom', padx=5, pady=5)
+    ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord)).pack(side=tk.LEFT, padx=5, pady=5)
+    if is_webhook_valid(): ttk.Button(Form, text="Post to Discord", command=partial(post_to_discord, Form, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
+
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):
@@ -581,14 +603,14 @@ def display_todaydata():
     """
     Display the latest tally data window
     """
-    display_data("Latest BGS Tally", this.TodayData)
+    display_data("Latest BGS Tally", this.TodayData, Ticks.TICK_CURRENT)
 
 
 def display_yesterdaydata():
     """
     Display the previous tally data window
     """
-    display_data("Previous BGS Tally", this.YesterdayData)
+    display_data("Previous BGS Tally", this.YesterdayData, Ticks.TICK_PREVIOUS)
 
 
 def copy_to_clipboard(Form, Discord):
@@ -599,6 +621,46 @@ def copy_to_clipboard(Form, Discord):
     Form.event_generate("<<TextModified>>")
     Form.clipboard_append(Discord.get('1.0', 'end-1c'))
     Form.update()
+
+
+def post_to_discord(Form, Discord, tick_mode):
+    """
+    Get all text from the Discord field and post it to the webhook
+    """
+    if not is_webhook_valid(): return
+
+    discord_text = Discord.get('1.0', 'end-1c').strip()
+
+    # We store a historical discord message ID for the current and previous ticks, so fetch the right one
+    if tick_mode == Ticks.TICK_CURRENT: discord_message_id = this.DiscordCurrentMessageID.get()
+    else: discord_message_id = this.DiscordPreviousMessageID.get()
+
+    if discord_message_id == '' or discord_message_id == None:
+        # No previous post
+        if discord_text != "":
+            response = requests.post(url=this.DiscordWebhook.get(), params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
+            if response.ok:
+                # Store the Message ID
+                response_json = response.json()
+                if tick_mode == Ticks.TICK_CURRENT: this.DiscordCurrentMessageID.set(response_json['id'])
+                else: this.DiscordPreviousMessageID.set(response_json['id'])
+    else:
+        # Previous post, amend or delete it
+        if discord_text != "":
+            response = requests.patch(url=f"{this.DiscordWebhook.get()}/messages/{discord_message_id}", data={'content': discord_text, 'username': this.DiscordUsername.get()})
+        else:
+            response = requests.delete(url=f"{this.DiscordWebhook.get()}/messages/{discord_message_id}")
+            if response.ok:
+                # Clear the Message ID
+                if tick_mode == Ticks.TICK_CURRENT: this.DiscordCurrentMessageID.set('')
+                else: this.DiscordPreviousMessageID.set('')
+
+
+def is_webhook_valid():
+    """
+    Do a basic check on the user specified Discord webhook
+    """
+    return this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/')
 
 
 def tick_format(ticktime):
@@ -617,6 +679,10 @@ def save_data():
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
+    config.set('XDiscordWebhook', this.DiscordWebhook.get())
+    config.set('XDiscordUsername', this.DiscordUsername.get())
+    config.set('XDiscordCurrentMessageID', this.DiscordCurrentMessageID.get())
+    config.set('XDiscordPreviousMessageID', this.DiscordPreviousMessageID.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
     file = os.path.join(this.Dir, "Today Data.txt")

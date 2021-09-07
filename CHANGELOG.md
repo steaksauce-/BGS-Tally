@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New features:
+
+* Can integrate directly with Discord to post messages to a channel, using a user-specified Discord webhook.
 * Prefix positive INF with '+'.
 * Mission INF is now manually editable as well as automatically updated.
 
