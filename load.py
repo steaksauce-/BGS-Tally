@@ -621,7 +621,7 @@ def generate_discord_text(data):
 
         discord_text += f"```css\n{data[i][0]['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
 
-    return discord_text
+    return discord_text.replace("'", "")
 
 
 def process_faction_name(faction_name):

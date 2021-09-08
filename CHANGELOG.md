@@ -9,6 +9,10 @@
 * Mission INF is now manually editable as well as automatically updated.
 * 'Select all' / 'Select none' checkbox at the top of each system to quickly enable / disable all factions for a system.
 
+## Bug Fixes:
+
+* Apostrophes in faction names no longer break the colouring.
+
 
 ## v1.3.0 - 2021-09-06
 
