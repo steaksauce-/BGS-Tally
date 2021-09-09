@@ -1,5 +1,9 @@
 # Change Log
 
+## vx.x.x - xxxx-xx-xx
+
+
+
 ## v1.4.0 - 2021-09-09
 
 ### New features:
@@ -10,7 +14,7 @@
 * 'Select all' / 'Select none' checkbox at the top of each system to quickly enable / disable all factions for a system.
 * Added 'Failed Missions' to Discord text.
 
-## Bug Fixes:
+### Bug Fixes:
 
 * Apostrophes in faction names no longer break the colouring.
 
