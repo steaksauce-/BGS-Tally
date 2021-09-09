@@ -530,7 +530,6 @@ def enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Disco
     """
     Callback  for when a Faction Enable Checkbutton is changed
     """
-    logger.info(f'enable_faction_change')
     data[system_index][0]['Factions'][faction_index]['Enabled'] = CheckStates.STATE_ON if FactionEnableCheckbuttons[faction_index].instate(['selected']) else CheckStates.STATE_OFF
     update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
 
@@ -542,7 +541,6 @@ def enable_all_factions_change(EnableAllCheckbutton, FactionEnableCheckbuttons, 
     """
     Callback for when the Enable All Factions Checkbutton is changed
     """
-    logger.info(f'enable_all_factions_change: {EnableAllCheckbutton.state()}')
     z = len(FactionEnableCheckbuttons)
     for x in range(0, z):
         if EnableAllCheckbutton.instate(['selected']):
