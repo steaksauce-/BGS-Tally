@@ -562,6 +562,7 @@ def generate_discord_text(data):
             faction_discord_text += f".Trade {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
             faction_discord_text += f".Expl {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
             faction_discord_text += f".Murders {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
+            faction_discord_text += f".Fails {data[i][0]['Factions'][x]['MissionFailed']}; " if data[i][0]['Factions'][x]['MissionFailed'] != 0 else ""
             space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "SpaceCZs")
             faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
             ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "GroundCZs")

@@ -7,6 +7,7 @@
 * Can integrate directly with Discord to post messages to a channel, using a user-specified Discord webhook.
 * Prefix positive INF with '+'.
 * Mission INF is now manually editable as well as automatically updated.
+* Added 'Failed Missions' to Discord text.
 
 ## Bug Fixes:
 
