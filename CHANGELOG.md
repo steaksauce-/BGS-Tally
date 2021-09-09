@@ -4,6 +4,7 @@
 
 * Prefix positive INF with '+'.
 * Mission INF is now manually editable as well as automatically updated.
+* Added 'Failed Missions' to Discord text.
 
 ## Bug Fixes:
 
