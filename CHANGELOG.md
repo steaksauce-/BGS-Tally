@@ -2,8 +2,12 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New features:
+
+* Can integrate directly with Discord to post messages to a channel, using a user-specified Discord webhook.
 * Prefix positive INF with '+'.
 * Mission INF is now manually editable as well as automatically updated.
+* 'Select all' / 'Select none' checkbox at the top of each system to quickly enable / disable all factions for a system.
 * Added 'Failed Missions' to Discord text.
 
 ## Bug Fixes:

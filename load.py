@@ -43,9 +43,11 @@ this.MissionListNonViolent = [
     'Chain_HelpFinishTheOrder_name'
 ]
 
-# Plugin Preferences on settings tab
-this.Status = "Active"
-this.AbbreviateFactionNames = "No"
+# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
+this.Status = None
+this.AbbreviateFactionNames = None
+this.DiscordWebhook = None
+this.DiscordUsername = None
 
 # States that generate Conflict Zones, so we display the CZ UI for factions in these states
 this.CZStates = [
@@ -83,17 +85,34 @@ class CZs(Enum):
     GROUND_MED = 4
     GROUND_LOW = 5
 
+class Ticks(Enum):
+    TICK_CURRENT = 0
+    TICK_PREVIOUS = 1
+
+# Subclassing from str as well as Enum means json.load and json.dump work seamlessly
+class CheckStates(str, Enum):
+    STATE_OFF = 'No'
+    STATE_ON = 'Yes'
+    STATE_PARTIAL = 'Partial'
+    STATE_PENDING = 'Pending'
+
 
 def plugin_prefs(parent, cmdr, is_beta):
     """
     Return a TK Frame for adding to the EDMC settings dialog.
     """
     frame = nb.Frame(parent)
-    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(column=0, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Make BGS Tally Active", variable=this.Status, onvalue="Active",
-                   offvalue="Paused").grid(padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes",
-                   offvalue="No").grid(padx=10, sticky=tk.W)
+    # Make the second column fill available space
+    frame.columnconfigure(1, weight=1)
+
+    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(columnspan=2, padx=10, sticky=tk.W)
+    ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+    nb.Checkbutton(frame, text="BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
+    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=5)
+    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=5)
+    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=6)
+    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=6)
 
     return frame
 
@@ -136,20 +155,17 @@ def plugin_start3(plugin_dir):
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
+    this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
+    this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
+    this.DiscordCurrentMessageID = tk.StringVar(value=config.get_str("XDiscordCurrentMessageID"))
+    this.DiscordPreviousMessageID = tk.StringVar(value=config.get_str("XDiscordPreviousMessageID"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
     latest = response.json()
     this.GitVersion = latest['tag_name']
-    #  tick check and counter reset
-    response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
-    tick = response.json()
-    this.CurrentTick = tick[0]['_id']
-    this.TickTime = tick[0]['time']
-    if this.LastTick.get() != this.CurrentTick:
-        this.LastTick.set(this.CurrentTick)
-        this.YesterdayData = this.TodayData
-        this.TodayData = {}
+    check_tick()
+
     return "BGS Tally"
 
 
@@ -178,6 +194,25 @@ def plugin_app(parent):
     this.StatusLabel = tk.Label(this.frame, text=this.Status.get()).grid(row=2, column=1, sticky=tk.W)
     this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
     return this.frame
+
+
+def check_tick():
+    """
+    Tick check and counter reset
+    """
+    response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
+    tick = response.json()
+    this.CurrentTick = tick[0]['_id']
+    this.TickTime = tick[0]['time']
+    if this.LastTick.get() != this.CurrentTick:
+        this.LastTick.set(this.CurrentTick)
+        this.YesterdayData = this.TodayData
+        this.TodayData = {}
+        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+        this.DiscordCurrentMessageID.set('')
+        return True
+
+    return False
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
@@ -234,15 +269,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
-        #  tick check and counter reset
-        response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
-        tick = response.json()
-        this.CurrentTick = tick[0]['_id']
-        this.TickTime = tick[0]['time']
-        if this.LastTick.get() != this.CurrentTick:
-            this.LastTick.set(this.CurrentTick)
-            this.YesterdayData = this.TodayData
-            this.TodayData = {}
+        # Check for a new tick
+        if check_tick():
             this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
             theme.update(this.frame)
 
@@ -365,16 +393,16 @@ def human_format(num):
 
 def update_faction_data(faction_data):
     """
-    Update data structures not present in previous versions of plugin
+    Update faction data structure for elements not present in previous versions of plugin
     """
     # From < v1.2.0 to 1.2.0
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
     # From < v1.3.0 to 1.3.0
-    if not 'Enabled' in faction_data: faction_data['Enabled'] = 'Yes'
+    if not 'Enabled' in faction_data: faction_data['Enabled'] = CheckStates.STATE_ON
 
 
-def display_data(title, data):
+def display_data(title, data, tick_mode):
     """
     Display the data window, using either latest or previous data
     """
@@ -390,8 +418,14 @@ def display_data(title, data):
         # Make the second column (faction name) fill available space
         tab.columnconfigure(1, weight=1)
 
+        FactionEnableCheckbuttons = []
+
         TabParent.add(tab, text=data[i][0]['System'])
         ttk.Label(tab, text="Include", font=heading_font).grid(row=0, column=0, padx=2, pady=2)
+        EnableAllCheckbutton = ttk.Checkbutton(tab)
+        EnableAllCheckbutton.grid(row=1, column=0, padx=2, pady=2)
+        EnableAllCheckbutton.configure(command=partial(enable_all_factions_change, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, i))
+        EnableAllCheckbutton.state(['!alternate'])
         ttk.Label(tab, text="Faction", font=heading_font).grid(row=0, column=1, padx=2, pady=2)
         ttk.Label(tab, text="State", font=heading_font).grid(row=0, column=2, padx=2, pady=2)
         ttk.Label(tab, text="INF", font=heading_font).grid(row=0, column=3, padx=2, pady=2)
@@ -417,12 +451,14 @@ def display_data(title, data):
         for x in range(0, z):
             update_faction_data(data[i][0]['Factions'][x])
 
-            EnableVar = tk.StringVar(value=data[i][0]['Factions'][x]['Enabled'])
-            EnableLabel = ttk.Checkbutton(tab, variable=EnableVar, onvalue='Yes', offvalue='No')
-            EnableLabel.grid(row=x + header_rows, column=0, padx=2, pady=2)
+            EnableCheckbutton = ttk.Checkbutton(tab)
+            EnableCheckbutton.grid(row=x + header_rows, column=0, padx=2, pady=2)
+            EnableCheckbutton.configure(command=partial(enable_faction_change, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, i, x))
+            EnableCheckbutton.state(['selected', '!alternate'] if data[i][0]['Factions'][x]['Enabled'] == CheckStates.STATE_ON else ['!selected', '!alternate'])
+            FactionEnableCheckbuttons.append(EnableCheckbutton)
             FactionName = ttk.Label(tab, text=data[i][0]['Factions'][x]['Faction'])
             FactionName.grid(row=x + header_rows, column=1, sticky=tk.W, padx=2, pady=2)
-            FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableVar))
+            FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, i, x))
             ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2)
             MissionPointsVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPoints'])
             ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, padx=2, pady=2)
@@ -433,7 +469,6 @@ def display_data(title, data):
             ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=8)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=9)
             MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, Discord, data, i, x))
-            EnableVar.trace('w', partial(enable_faction_change, EnableVar, Discord, data, i, x))
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.CZStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
@@ -456,16 +491,18 @@ def display_data(title, data):
                 CZGroundMVar.trace('w', partial(cz_change, CZGroundMVar, Discord, CZs.GROUND_MED, data, i, x))
                 CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
 
+        update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
+
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
     Discord.tag_add('sel', '1.0', 'end')
     Discord.focus()
 
-    CopyButton = ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord))
+    TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
+    Discord.pack(fill=tk.X, padx=5, pady=5)
 
-    TabParent.pack(fill='both', expand=1, side='top', padx=5, pady=5)
-    CopyButton.pack(side='bottom', padx=5, pady=5)
-    Discord.pack(fill='x', side='bottom', padx=5, pady=5)
+    ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord)).pack(side=tk.LEFT, padx=5, pady=5)
+    if is_webhook_valid(): ttk.Button(Form, text="Post to Discord", command=partial(post_to_discord, Form, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):
@@ -489,25 +526,64 @@ def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args)
     Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
-def enable_faction_change(EnableVar, Discord, data, system_index, faction_index, *args):
+def enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args):
     """
-    Callback (set as a variable trace) for when a Faction Enable Variable is changed
+    Callback  for when a Faction Enable Checkbutton is changed
     """
-    data[system_index][0]['Factions'][faction_index]['Enabled'] = EnableVar.get()
+    logger.info(f'enable_faction_change')
+    data[system_index][0]['Factions'][faction_index]['Enabled'] = CheckStates.STATE_ON if FactionEnableCheckbuttons[faction_index].instate(['selected']) else CheckStates.STATE_OFF
+    update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
 
     Discord.delete('1.0', 'end-1c')
     Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
-def faction_name_clicked(EnableVar, *args):
+def enable_all_factions_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, *args):
+    """
+    Callback for when the Enable All Factions Checkbutton is changed
+    """
+    logger.info(f'enable_all_factions_change: {EnableAllCheckbutton.state()}')
+    z = len(FactionEnableCheckbuttons)
+    for x in range(0, z):
+        if EnableAllCheckbutton.instate(['selected']):
+            FactionEnableCheckbuttons[x].state(['selected'])
+            data[system_index][0]['Factions'][x]['Enabled'] = CheckStates.STATE_ON
+        else:
+            FactionEnableCheckbuttons[x].state(['!selected'])
+            data[system_index][0]['Factions'][x]['Enabled'] = CheckStates.STATE_OFF
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
+
+
+def update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons):
+    """
+    Update the 'Enable all factions' checkbox to the correct state based on which individual factions are enabled
+    """
+    any_on = False
+    any_off = False
+    z = len(FactionEnableCheckbuttons)
+    for x in range(0, z):
+        if FactionEnableCheckbuttons[x].instate(['selected']): any_on = True
+        if FactionEnableCheckbuttons[x].instate(['!selected']): any_off = True
+
+    if any_on == True:
+        if any_off == True:
+            EnableAllCheckbutton.state(['alternate', '!selected'])
+        else:
+            EnableAllCheckbutton.state(['!alternate', 'selected'])
+    else:
+        EnableAllCheckbutton.state(['!alternate', '!selected'])
+
+
+def faction_name_clicked(EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args):
     """
     Callback when a faction name is clicked. Toggle enabled state. The EnableVar is watched, so that will
     automatically trigger enable_faction_change() to update data and Discord text
     """
-    if EnableVar.get() == 'Yes':
-        EnableVar.set('No')
-    else:
-        EnableVar.set('Yes')
+    if EnableCheckbutton.instate(['selected']): EnableCheckbutton.state(['!selected'])
+    else: EnableCheckbutton.state(['selected'])
+    enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args)
 
 
 def mission_points_change(MissionPointsVar, Discord, data, system_index, faction_index, *args):
@@ -531,7 +607,7 @@ def generate_discord_text(data):
         z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
-            if data[i][0]['Factions'][x]['Enabled'] != 'Yes': continue
+            if data[i][0]['Factions'][x]['Enabled'] != CheckStates.STATE_ON: continue
 
             faction_discord_text = ""
             faction_discord_text += f".INF +{data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else f".INF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] < 0 else ""
@@ -582,14 +658,14 @@ def display_todaydata():
     """
     Display the latest tally data window
     """
-    display_data("Latest BGS Tally", this.TodayData)
+    display_data("Latest BGS Tally", this.TodayData, Ticks.TICK_CURRENT)
 
 
 def display_yesterdaydata():
     """
     Display the previous tally data window
     """
-    display_data("Previous BGS Tally", this.YesterdayData)
+    display_data("Previous BGS Tally", this.YesterdayData, Ticks.TICK_PREVIOUS)
 
 
 def copy_to_clipboard(Form, Discord):
@@ -600,6 +676,65 @@ def copy_to_clipboard(Form, Discord):
     Form.event_generate("<<TextModified>>")
     Form.clipboard_append(Discord.get('1.0', 'end-1c'))
     Form.update()
+
+
+def post_to_discord(Form, Discord, tick_mode):
+    """
+    Get all text from the Discord field and post it to the webhook
+    """
+    if not is_webhook_valid(): return
+
+    discord_text = Discord.get('1.0', 'end-1c').strip()
+
+    # We store a historical discord message ID for the current and previous ticks, so fetch the right one
+    if tick_mode == Ticks.TICK_CURRENT: discord_message_id = this.DiscordCurrentMessageID
+    else: discord_message_id = this.DiscordPreviousMessageID
+
+    if discord_message_id.get() == '' or discord_message_id.get() == None:
+        # No previous post
+        if discord_text != '':
+            url = this.DiscordWebhook.get()
+            response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
+            if response.ok:
+                # Store the Message ID
+                response_json = response.json()
+                discord_message_id.set(response_json['id'])
+            else:
+                logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+
+    else:
+        # Previous post, amend or delete it
+        if discord_text != '':
+            url = f"{this.DiscordWebhook.get()}/messages/{discord_message_id.get()}"
+            response = requests.patch(url=url, data={'content': discord_text, 'username': this.DiscordUsername.get()})
+            if not response.ok:
+                discord_message_id.set('')
+                logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+
+                # Try to post new message instead
+                url = this.DiscordWebhook.get()
+                response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
+                if response.ok:
+                    # Store the Message ID
+                    response_json = response.json()
+                    discord_message_id.set(response_json['id'])
+                else:
+                    logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+        else:
+            url = f"{this.DiscordWebhook.get()}/messages/{discord_message_id.get()}"
+            response = requests.delete(url=url)
+            if response.ok:
+                # Clear the Message ID
+                discord_message_id.set('')
+            else:
+                logger.error(f"Unable to delete previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+
+
+def is_webhook_valid():
+    """
+    Do a basic check on the user specified Discord webhook
+    """
+    return this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/')
 
 
 def tick_format(ticktime):
@@ -618,6 +753,10 @@ def save_data():
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
+    config.set('XDiscordWebhook', this.DiscordWebhook.get())
+    config.set('XDiscordUsername', this.DiscordUsername.get())
+    config.set('XDiscordCurrentMessageID', this.DiscordCurrentMessageID.get())
+    config.set('XDiscordPreviousMessageID', this.DiscordPreviousMessageID.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
     file = os.path.join(this.Dir, "Today Data.txt")
