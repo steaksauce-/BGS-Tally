@@ -25,8 +25,13 @@ this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
 
-# Non violent missions that we count as +1 INF in Elections even if the Journal reports no +INF
-this.MissionListNonViolent = [
+# Conflict states, for determining whether we display the CZ UI and count conflict missions for factions in these states
+this.ConflictStates = [
+    'War', 'CivilWar'
+]
+
+# Missions that we count as +1 INF in Elections even if the Journal reports no +INF
+this.MissionListElection = [
     'Mission_AltruismCredits_name',
     'Mission_Collect_name', 'Mission_Collect_Industrial_name',
     'Mission_Courier_name', 'Mission_Courier_Boom_name', 'Mission_Courier_Democracy_name', 'Mission_Courier_Elections_name', 'Mission_Courier_Expansion_name',
@@ -43,16 +48,17 @@ this.MissionListNonViolent = [
     'Chain_HelpFinishTheOrder_name'
 ]
 
+# Missions that we count as +1 INF in conflicts even if the Journal reports no +INF
+this.MissionListConflict = [
+    'Mission_Massacre_Conflict_CivilWar_name'
+]
+
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
 this.Status = None
 this.AbbreviateFactionNames = None
 this.DiscordWebhook = None
 this.DiscordUsername = None
 
-# States that generate Conflict Zones, so we display the CZ UI for factions in these states
-this.CZStates = [
-    'War', 'CivilWar'
-]
 
 # This could also be returned from plugin_start3()
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -297,8 +303,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         for y in this.TodayData:
                             if this.MissionLog[p]['System'] == this.TodayData[y][0]['System']:
                                 for z in range(0, len(this.TodayData[y][0]['Factions'])):
-                                    if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3 and this.TodayData[y][0]['Factions'][z]['FactionState'] == 'Election' and entry['Name'] in this.MissionListNonViolent:
-                                        this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
+                                    if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3:
+                                        if (this.TodayData[y][0]['Factions'][z]['FactionState'] == 'Election' and entry['Name'] in this.MissionListElection) \
+                                        or (this.TodayData[y][0]['Factions'][z]['FactionState'] in this.ConflictStates and entry['Name'] in this.MissionListConflict):
+                                            this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
         for count in range(len(this.MissionLog)):
             if this.MissionLog[count]["MissionID"] == entry["MissionID"]:
                 this.MissionLog.pop(count)
@@ -470,7 +478,7 @@ def display_data(title, data, tick_mode):
             ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=9)
             MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, Discord, data, i, x))
 
-            if (data[i][0]['Factions'][x]['FactionState'] in this.CZStates):
+            if (data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
                 ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=10, padx=2, pady=2)
                 CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))

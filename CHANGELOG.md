@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New features:
+
+* Now count +1 *INF* for certain combat mission types when counting missions for a faction in the `War` or `CivilWar` states (gathering a full list of mission types that count when the faction is in conflict is still a work in progress).
 
 
 ## v1.4.0 - 2021-09-09
