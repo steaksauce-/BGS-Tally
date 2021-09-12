@@ -50,8 +50,10 @@ this.MissionListElection = [
 
 # Missions that we count as +1 INF in conflicts even if the Journal reports no +INF
 this.MissionListConflict = [
+    'Mission_Assassinate_Legal_CivilWar_name',
     'Mission_Assassinate_Legal_War_name',
-    'Mission_Massacre_Conflict_CivilWar_name'
+    'Mission_Massacre_Conflict_CivilWar_name',
+    'Mission_Massacre_Conflict_War_name'
 ]
 
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
