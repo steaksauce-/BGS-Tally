@@ -5,6 +5,7 @@
 ### New features:
 
 * Now count +1 *INF* for certain combat mission types when counting missions for a faction in the `War` or `CivilWar` states (gathering a full list of mission types that count when the faction is in conflict is still a work in progress).
+* If faction is in state `Election`, `War` or `CivilWar`, don't report fake +INF, instead state the number of election / war missions completed, to avoid confusion.
 
 
 ## v1.4.0 - 2021-09-09
