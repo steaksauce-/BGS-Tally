@@ -1,6 +1,6 @@
 # Change Log
 
-## vx.x.x - xxxx-xx-xx
+## v1.5.0 - 2021-09-16
 
 ### New features:
 
