@@ -4,7 +4,7 @@ An [EDMC](https://github.com/EDCD/EDMarketConnector) plugin to count Background 
 
 Based on BGS-Tally v2.0 by tezw21: [Original tezw21 BGS-Tally-v2.0 Project](https://github.com/tezw21/BGS-Tally-v2.0)
 
-Modified by Aussi to include manual Combat Zone tracking, Discord-ready information, quick Copy to Clipboard function for the Discord text and posting directly to Discord.
+This modified version includes manual Combat Zone tracking, Discord-ready information, quick Copy to Clipboard function for the Discord text and posting directly to Discord.
 
 
 # Installation
@@ -47,6 +47,7 @@ The plugin includes both automatic and manual tracking of data. All automatic an
 The following activities are automatically collected from your in-game activity:
 
 - Mission INF +++ *
+- Election / War / CivilWar mission count *
 - Total trade profit sold to Faction controlled station
 - Cartographic data sold to Faction controlled station
 - Bounties issued by named Faction
@@ -55,7 +56,7 @@ The following activities are automatically collected from your in-game activity:
 - Ships murdered owned by named Faction
 - Negative trade is counted with a minus sign in trade profit column
 
-_* The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported, non-violent mission types are still counted as +1 `INF` when a Faction is in Election. Gathering a full list of non-violent mission types is still a work in progress._
+_* The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported and the faction is in Elections, non-violent mission types are counted and reported. Similarly if no `INF` value is reported and the faction is at War or Civil War, violent mission types are counted and reported. Gathering a full list of mission types that count towards victory is still a work in progress._
 
 The `State` column shows each faction state to give an indication on how missions are being counted.
 
