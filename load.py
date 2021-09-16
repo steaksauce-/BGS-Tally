@@ -419,8 +419,12 @@ def display_data(title, data, tick_mode):
     Form = tk.Toplevel(this.frame)
     Form.title("BGS Tally v" + this.VersionNo + " - " + title)
     Form.geometry("1000x700")
-    TabParent = ttk.Notebook(Form)
-    Discord = tk.Text(Form, wrap = tk.WORD, height=20, font = ("Helvetica", 9))
+    ContainerFrame = ttk.Frame(Form)
+    ContainerFrame.pack(fill=tk.BOTH, expand=1)
+    TabParent = ttk.Notebook(ContainerFrame)
+    TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
+    Discord = tk.Text(ContainerFrame, wrap = tk.WORD, height=20, font = ("Helvetica", 9))
+    Discord.pack(fill=tk.X, padx=5, pady=5)
 
     for i in data:
         tab = ttk.Frame(TabParent)
@@ -507,11 +511,10 @@ def display_data(title, data, tick_mode):
     Discord.tag_add('sel', '1.0', 'end')
     Discord.focus()
 
-    TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
-    Discord.pack(fill=tk.X, padx=5, pady=5)
+    ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(copy_to_clipboard, ContainerFrame, Discord)).pack(side=tk.LEFT, padx=5, pady=5)
+    if is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(post_to_discord, ContainerFrame, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
 
-    ttk.Button(Form, text="Copy to Clipboard", command=partial(copy_to_clipboard, Form, Discord)).pack(side=tk.LEFT, padx=5, pady=5)
-    if is_webhook_valid(): ttk.Button(Form, text="Post to Discord", command=partial(post_to_discord, Form, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
+    theme.update(ContainerFrame)
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):

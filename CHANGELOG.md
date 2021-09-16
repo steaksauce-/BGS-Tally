@@ -4,7 +4,7 @@
 
 ### New features:
 
-* Now count and report certain mission types for a faction in the `War` or `CivilWar` states, similarly to how some mission types in `Election` state are counted (gathering a full list of mission types that count when the faction is in conflict is still a work in progress).
+* Now count and report certain mission types for factions in the `War` or `CivilWar` states, similarly to how some mission types in `Election` state are counted (gathering a full list of mission types that count when the faction is in conflict is still a work in progress).
 * If faction is in state `Election`, `War` or `CivilWar`, don't report fake +INF, instead state the number of election / war missions completed, to avoid confusion.
 
 ### Changes
@@ -24,7 +24,7 @@
 
 ### Bug Fixes:
 
-* Apostrophes in faction names no longer break the colouring.
+* Apostrophes in Discord text no longer breaks the colouring.
 
 
 ## v1.3.0 - 2021-09-06
