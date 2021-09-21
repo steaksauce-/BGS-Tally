@@ -259,7 +259,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             for i in range(0, z):
                 this.TodayData[x + 1][0]['Factions'].append(
                     {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0,
+                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
                      'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
                      'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
                      'SpaceCZ': {},
@@ -272,7 +272,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             for i in range(0, z):
                 this.TodayData[1][0]['Factions'].append(
                     {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0,
+                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
                      'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
                      'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
                      'SpaceCZ': {},
@@ -299,12 +299,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         for z in range(0, t):
                             if fe3 == this.TodayData[y][0]['Factions'][z]['Faction']:
                                 if inftrend == "UpGood" or inftrend == "DownGood":
-                                    if fe3 == entry['faction']:
+                                    if fe3 == entry['Faction']:
                                         this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
                                     else:
                                         this.TodayData[y][0]['Factions'][z]['MissionPointsSecondary'] += inf
                                 else:
-                                    if fe3 == entry['faction']:
+                                    if fe3 == entry['Faction']:
                                         this.TodayData[y][0]['Factions'][z]['MissionPoints'] -= inf
                                     else:
                                         this.TodayData[y][0]['Factions'][z]['MissionPointsSecondary'] -= inf
