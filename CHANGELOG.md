@@ -2,10 +2,17 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* Now count primary and secondary mission INF separately: Primary INF is for the original mission giving faction and secondary INF is for any other faction(s) affected by the mission. An option is included to exclude secondary INF from the Discord report *
+* Discord options are now shown on the main tally windows as well as in the settings.
+
 ### Changes
 
 * Added on-foot scavenger missions to those that count when in `War` or `CivilWar` states.
 * Tweaks to window layouts and wording.
+
+_* Note that the plugin only tracks primary and secondary INF from this version onwards - all INF in older reports will still be categorised as primary INF._
 
 
 ## v1.5.0 - 2021-09-16
