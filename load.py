@@ -497,16 +497,17 @@ def display_data(title, data, tick_mode):
             ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2)
             MissionPointsVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPoints'])
             ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, padx=2, pady=2)
-            MissionPointsSecVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPointsSecondary'])
-            ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, padx=2, pady=2)
+            MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, True, Discord, data, i, x))
+            if (data[i][0]['Factions'][x]['FactionState'] not in this.ConflictStates and data[i][0]['Factions'][x]['FactionState'] != 'Election'):
+                MissionPointsSecVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPointsSecondary'])
+                ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, padx=2, pady=2)
+                MissionPointsSecVar.trace('w', partial(mission_points_change, MissionPointsSecVar, False, Discord, data, i, x))
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=5)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=6)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=7)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=8)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=9)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=10)
-            MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, True, Discord, data, i, x))
-            MissionPointsSecVar.trace('w', partial(mission_points_change, MissionPointsSecVar, False, Discord, data, i, x))
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
