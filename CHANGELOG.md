@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes
+
+* Added on-foot scavenger missions to those that count when in `War` or `CivilWar` states.
 
 
 ## v1.5.0 - 2021-09-16
