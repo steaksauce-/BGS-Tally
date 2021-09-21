@@ -424,7 +424,8 @@ def display_data(title, data, tick_mode):
     ContainerFrame.pack(fill=tk.BOTH, expand=1)
     TabParent = ttk.Notebook(ContainerFrame)
     TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
-    Discord = tk.Text(ContainerFrame, wrap = tk.WORD, height=20, font = ("Helvetica", 9))
+    ttk.Label(ContainerFrame, text="Discord Report:", font=heading_font, anchor=tk.W).pack(fill=tk.BOTH, padx=5, pady=5)
+    Discord = tk.Text(ContainerFrame, wrap = tk.WORD, height=17, font = ("Helvetica", 9))
     Discord.pack(fill=tk.X, padx=5, pady=5)
 
     for i in data:
