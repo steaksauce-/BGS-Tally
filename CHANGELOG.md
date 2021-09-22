@@ -6,6 +6,7 @@
 
 * Added on-foot scavenger missions to those that count when in `War` or `CivilWar` states.
 * Tweaks to window layouts and wording.
+* No longer allow mouse wheel to change field values, to help avoid accidental changes.
 
 
 ## v1.5.0 - 2021-09-16
