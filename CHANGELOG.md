@@ -11,6 +11,7 @@
 
 * Added on-foot scavenger missions to those that count when in `War` or `CivilWar` states.
 * Tweaks to window layouts and wording.
+* No longer allow mouse wheel to change field values, to help avoid accidental changes.
 
 _* Note that the plugin only tracks primary and secondary INF from this version onwards - all INF in older reports will still be categorised as primary INF._
 

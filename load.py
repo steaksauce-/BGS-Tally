@@ -431,6 +431,7 @@ def display_data(title, data, tick_mode):
     Form = tk.Toplevel(this.frame)
     Form.title("BGS Tally v" + this.VersionNo + " - " + title)
     Form.geometry("1000x700")
+
     ContainerFrame = ttk.Frame(Form)
     ContainerFrame.pack(fill=tk.BOTH, expand=1)
     TabParent = ttk.Notebook(ContainerFrame)
@@ -541,6 +542,9 @@ def display_data(title, data, tick_mode):
     if is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(post_to_discord, ContainerFrame, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
 
     theme.update(ContainerFrame)
+
+    # Ignore all scroll wheel events on spinboxes, to avoid accidental inputs
+    Form.bind_class('TSpinbox', '<MouseWheel>', lambda event : "break")
 
 
 def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args):
