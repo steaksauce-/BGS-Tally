@@ -628,9 +628,9 @@ def generate_discord_text(data):
             faction_discord_text = ""
 
             if data[i][0]['Factions'][x]['FactionState'] == 'Election':
-                faction_discord_text += f".ElectionMissions {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
+                faction_discord_text += f".ElectionINF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
             elif data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates:
-                faction_discord_text += f".WarMissions {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
+                faction_discord_text += f".WarINF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
             else:
                 faction_discord_text += f".INF +{data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else f".INF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] < 0 else ""
             faction_discord_text += f".BVs {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
