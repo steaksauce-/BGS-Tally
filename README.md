@@ -59,7 +59,7 @@ The following activities are automatically collected from your in-game activity:
 
 _* The plugin tracks primary `INF` (for the mission giving faction) and secondary `INF` (for other factions) separately. Secondary `INF` can be excluded from reports if desired._
 
-_† The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported and the faction is in Elections, non-violent mission types are counted and reported. Similarly if no `INF` value is reported and the faction is at War or Civil War, violent mission types are counted and reported. Gathering a full list of mission types that count towards victory is still a work in progress._
+_† The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported and the faction is in Elections, non-violent mission types are counted and reported. Similarly if no `INF` value is reported and the faction is at War or Civil War, violent mission types are counted and reported. Gathering a full list of mission types that count towards victory is still a work in progress. Note this may all be obsolete since Odyssey patch 7, as it now apparently reports +INF in all circumstances (yet to be fully confirmed)._
 
 The `State` column shows each faction state to give an indication on how missions are being counted.
 
