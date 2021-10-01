@@ -317,7 +317,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                                     if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3:
                                         if (this.TodayData[y][0]['Factions'][z]['FactionState'] == 'Election' and entry['Name'] in this.MissionListElection) \
                                         or (this.TodayData[y][0]['Factions'][z]['FactionState'] in this.ConflictStates and entry['Name'] in this.MissionListConflict) \
-                                            and this.MissionLog[p]["Faction"] == fe3:
+                                            and fe3 == entry['Faction']:
                                                 this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
         for count in range(len(this.MissionLog)):
             if this.MissionLog[count]["MissionID"] == entry["MissionID"]:

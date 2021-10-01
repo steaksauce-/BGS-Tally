@@ -4,8 +4,12 @@
 
 ### New Features:
 
-* Now count primary and secondary mission INF separately: Primary INF is for the original mission giving faction and secondary INF is for any other faction(s) affected by the mission. An option is included to exclude secondary INF from the Discord report *
+* Now count primary and secondary mission INF separately: Primary INF is for the original mission giving faction and secondary INF is for any target faction(s) affected by the mission. An option is included to exclude secondary INF from the Discord report *
 * Discord options are now shown on the main tally windows as well as in the settings.
+
+### Bug Fixes:
+
+* Only count `War` or `Civilwar` missions for the originating faction (thanks @RichardCsiszarik for diagnosing and fixing this).
 
 ### Changes
 
