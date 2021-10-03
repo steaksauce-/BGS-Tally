@@ -1,7 +1,24 @@
 # Change Log
 
-## vx.x.x - xxxx-xx-xx
+## v1.6.0 - 2021-10-03
 
+### New Features:
+
+* Now count primary and secondary mission INF separately: Primary INF is for the original mission giving faction and secondary INF is for any target faction(s) affected by the mission. An option is included to exclude secondary INF from the Discord report *
+* Discord options are now shown on the main tally windows as well as in the settings.
+
+### Bug Fixes:
+
+* Only count `War` or `Civilwar` missions for the originating faction (thanks @RichardCsiszarik for diagnosing and fixing this).
+
+### Changes
+
+* Added on-foot scavenger missions and on-foot covert assassination missions to those that count when in `War` or `CivilWar` states.
+* Tweaks to window layouts and wording.
+* No longer allow mouse wheel to change field values, to help avoid accidental changes.
+* Since Odyssey update 7, +INF is now reported for missions for factions in `Election`, `War` and `CivilWar` states. We still report this +INF separately from normal +INF, but have changed the wording to `ElectionINF` / `WarINF` instead of `ElectionMissions` and `WarMissions`.
+
+_* Note that the plugin only tracks primary and secondary INF from this version onwards - all INF in older reports will still be categorised as primary INF._
 
 
 ## v1.5.0 - 2021-09-16
