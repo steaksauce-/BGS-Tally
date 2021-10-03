@@ -52,6 +52,7 @@ this.MissionListElection = [
 this.MissionListConflict = [
     'Mission_Assassinate_Legal_CivilWar_name', 'Mission_Assassinate_Legal_War_name',
     'Mission_Massacre_Conflict_CivilWar_name', 'Mission_Massacre_Conflict_War_name',
+    'Mission_OnFoot_Assassination_Covert_MB_name',
     'Mission_OnFoot_Onslaught_Offline_MB_name'
 ]
 

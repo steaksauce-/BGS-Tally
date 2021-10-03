@@ -4,7 +4,7 @@
 
 ### Changes
 
-* Added on-foot scavenger missions to those that count when in `War` or `CivilWar` states.
+* Added on-foot scavenger missions and on-foot covert assassination missions to those that count when in `War` or `CivilWar` states.
 * Tweaks to window layouts and wording.
 * No longer allow mouse wheel to change field values, to help avoid accidental changes.
 * Since Odyssey update 7, +INF is now reported for missions for factions in `Election`, `War` and `CivilWar` states. We still report this +INF separately from normal +INF, but have changed the wording to `ElectionINF` / `WarINF` instead of `ElectionMissions` and `WarMissions`.
