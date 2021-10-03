@@ -46,7 +46,8 @@ The plugin includes both automatic and manual tracking of data. All automatic an
 
 The following activities are automatically collected from your in-game activity:
 
-- Mission INF +++ *
+- Primary Mission INF +++
+- Secondary Mission INF +++ *
 - Election / War / CivilWar mission count †
 - Total trade profit sold to Faction controlled station
 - Cartographic data sold to Faction controlled station

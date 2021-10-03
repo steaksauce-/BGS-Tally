@@ -59,6 +59,7 @@ this.MissionListConflict = [
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
 this.Status = None
 this.AbbreviateFactionNames = None
+this.IncludeSecondaryInf = None
 this.DiscordWebhook = None
 this.DiscordUsername = None
 
@@ -118,10 +119,11 @@ def plugin_prefs(parent, cmdr, is_beta):
     ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
     nb.Checkbutton(frame, text="BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
-    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=5)
-    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=5)
-    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=6)
-    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=6)
+    nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
+    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=6)
+    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=6)
+    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=7)
+    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=7)
 
     return frame
 
@@ -164,6 +166,7 @@ def plugin_start3(plugin_dir):
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus"))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
+    this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf"))
     this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
     this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
     this.DiscordCurrentMessageID = tk.StringVar(value=config.get_str("XDiscordCurrentMessageID"))
@@ -257,7 +260,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             for i in range(0, z):
                 this.TodayData[x + 1][0]['Factions'].append(
                     {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0,
+                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
                      'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
                      'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
                      'SpaceCZ': {},
@@ -270,7 +273,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             for i in range(0, z):
                 this.TodayData[1][0]['Factions'].append(
                     {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0,
+                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
                      'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
                      'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
                      'SpaceCZ': {},
@@ -297,9 +300,15 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         for z in range(0, t):
                             if fe3 == this.TodayData[y][0]['Factions'][z]['Faction']:
                                 if inftrend == "UpGood" or inftrend == "DownGood":
-                                    this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
+                                    if fe3 == entry['Faction']:
+                                        this.TodayData[y][0]['Factions'][z]['MissionPoints'] += inf
+                                    else:
+                                        this.TodayData[y][0]['Factions'][z]['MissionPointsSecondary'] += inf
                                 else:
-                                    this.TodayData[y][0]['Factions'][z]['MissionPoints'] -= inf
+                                    if fe3 == entry['Faction']:
+                                        this.TodayData[y][0]['Factions'][z]['MissionPoints'] -= inf
+                                    else:
+                                        this.TodayData[y][0]['Factions'][z]['MissionPointsSecondary'] -= inf
             else:
                 for p in range(len(this.MissionLog)):
                     if this.MissionLog[p]["MissionID"] == entry["MissionID"]:
@@ -308,8 +317,9 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                                 for z in range(0, len(this.TodayData[y][0]['Factions'])):
                                     if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3:
                                         if (this.TodayData[y][0]['Factions'][z]['FactionState'] == 'Election' and entry['Name'] in this.MissionListElection) \
-                                        or (this.TodayData[y][0]['Factions'][z]['FactionState'] in this.ConflictStates and entry['Name'] in this.MissionListConflict):
-                                            this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
+                                        or (this.TodayData[y][0]['Factions'][z]['FactionState'] in this.ConflictStates and entry['Name'] in this.MissionListConflict) \
+                                            and fe3 == entry['Faction']:
+                                                this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
         for count in range(len(this.MissionLog)):
             if this.MissionLog[count]["MissionID"] == entry["MissionID"]:
                 this.MissionLog.pop(count)
@@ -347,7 +357,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 this.TodayData[this.DataIndex.get()][0]['Factions'][z]['TradeProfit'] += profit
         save_data()
 
-    if entry['event'] == 'MissionAccepted':  # mission accpeted
+    if entry['event'] == 'MissionAccepted':  # mission accepted
         this.MissionLog.append({"Name": entry["Name"], "Faction": entry["Faction"], "MissionID": entry["MissionID"],
                                 "System": system})
         save_data()
@@ -411,6 +421,8 @@ def update_faction_data(faction_data):
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
     # From < v1.3.0 to 1.3.0
     if not 'Enabled' in faction_data: faction_data['Enabled'] = CheckStates.STATE_ON
+    # From < v1.6.0 to 1.6.0
+    if not 'MissionPointsSecondary' in faction_data: faction_data['MissionPointsSecondary'] = 0
 
 
 def display_data(title, data, tick_mode):
@@ -426,9 +438,18 @@ def display_data(title, data, tick_mode):
     ContainerFrame.pack(fill=tk.BOTH, expand=1)
     TabParent = ttk.Notebook(ContainerFrame)
     TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
-    ttk.Label(ContainerFrame, text="Discord Report:", font=heading_font, anchor=tk.W).pack(fill=tk.BOTH, padx=5, pady=5)
-    Discord = tk.Text(ContainerFrame, wrap = tk.WORD, height=17, font = ("Helvetica", 9))
-    Discord.pack(fill=tk.X, padx=5, pady=5)
+
+    DiscordFrame = ttk.Frame(ContainerFrame)
+    DiscordFrame.pack(fill=tk.X, padx=5, pady=5)
+    ttk.Label(DiscordFrame, text="Discord Report", font=heading_font).grid(row=0, column=0, pady=2, sticky=tk.W)
+    ttk.Label(DiscordFrame, text="Discord Options", font=heading_font).grid(row=0, column=1, pady=2, sticky=tk.W)
+    Discord = tk.Text(DiscordFrame, wrap = tk.WORD, height=17, font = ("Helvetica", 9))
+    Discord.grid(row=1, column=0, pady=5)
+
+    OptionsFrame = ttk.Frame(DiscordFrame)
+    OptionsFrame.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NW)
+    ttk.Checkbutton(OptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
+    ttk.Checkbutton(OptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
     for i in data:
         tab = ttk.Frame(TabParent)
@@ -445,22 +466,23 @@ def display_data(title, data, tick_mode):
         EnableAllCheckbutton.state(['!alternate'])
         ttk.Label(tab, text="Faction", font=heading_font).grid(row=0, column=1, padx=2, pady=2)
         ttk.Label(tab, text="State", font=heading_font).grid(row=0, column=2, padx=2, pady=2)
-        ttk.Label(tab, text="INF", font=heading_font).grid(row=0, column=3, padx=2, pady=2)
-        ttk.Label(tab, text="Trade", font=heading_font).grid(row=0, column=4, padx=2, pady=2)
-        ttk.Label(tab, text="BVs", font=heading_font).grid(row=0, column=5, padx=2, pady=2)
-        ttk.Label(tab, text="Expl", font=heading_font).grid(row=0, column=6, padx=2, pady=2)
-        ttk.Label(tab, text="CBs", font=heading_font).grid(row=0, column=7, padx=2, pady=2)
-        ttk.Label(tab, text="Fails", font=heading_font).grid(row=0, column=8, padx=2, pady=2)
-        ttk.Label(tab, text="Murders", font=heading_font).grid(row=0, column=9, padx=2, pady=2)
-        ttk.Label(tab, text="Space CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=10, columnspan=3, padx=2)
-        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=10, padx=2, pady=2)
-        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=11, padx=2, pady=2)
-        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=12, padx=2, pady=2)
-        ttk.Label(tab, text="On-foot CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=13, columnspan=3, padx=2)
-        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=13, padx=2, pady=2)
-        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=14, padx=2, pady=2)
-        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
-        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=16, padx=2, pady=5, sticky=tk.EW)
+        ttk.Label(tab, text="INF Pri", font=heading_font).grid(row=0, column=3, padx=2, pady=2)
+        ttk.Label(tab, text="INF Sec", font=heading_font).grid(row=0, column=4, padx=2, pady=2)
+        ttk.Label(tab, text="Trade", font=heading_font).grid(row=0, column=5, padx=2, pady=2)
+        ttk.Label(tab, text="BVs", font=heading_font).grid(row=0, column=6, padx=2, pady=2)
+        ttk.Label(tab, text="Expl", font=heading_font).grid(row=0, column=7, padx=2, pady=2)
+        ttk.Label(tab, text="CBs", font=heading_font).grid(row=0, column=8, padx=2, pady=2)
+        ttk.Label(tab, text="Fails", font=heading_font).grid(row=0, column=9, padx=2, pady=2)
+        ttk.Label(tab, text="Murders", font=heading_font).grid(row=0, column=10, padx=2, pady=2)
+        ttk.Label(tab, text="Space CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=11, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=11, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=12, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=13, padx=2, pady=2)
+        ttk.Label(tab, text="On-foot CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=14, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=14, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=16, padx=2, pady=2)
+        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=17, padx=2, pady=5, sticky=tk.EW)
 
         header_rows = 3
         z = len(data[i][0]['Factions'])
@@ -479,27 +501,31 @@ def display_data(title, data, tick_mode):
             ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2)
             MissionPointsVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPoints'])
             ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, padx=2, pady=2)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=4)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=5)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=6)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=7)
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=8)
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=9)
-            MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, Discord, data, i, x))
+            MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, True, Discord, data, i, x))
+            if (data[i][0]['Factions'][x]['FactionState'] not in this.ConflictStates and data[i][0]['Factions'][x]['FactionState'] != 'Election'):
+                MissionPointsSecVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPointsSecondary'])
+                ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, padx=2, pady=2)
+                MissionPointsSecVar.trace('w', partial(mission_points_change, MissionPointsSecVar, False, Discord, data, i, x))
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=5)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=6)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=7)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=8)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=9)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=10)
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=10, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=11, padx=2, pady=2)
                 CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=11, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=12, padx=2, pady=2)
                 CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=12, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=13, padx=2, pady=2)
                 CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=13, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=14, padx=2, pady=2)
                 CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=14, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=15, padx=2, pady=2)
                 CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=15, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=16, padx=2, pady=2)
                 # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
                 CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
                 CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
@@ -603,12 +629,23 @@ def faction_name_clicked(EnableCheckbutton, EnableAllCheckbutton, FactionEnableC
     enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args)
 
 
-def mission_points_change(MissionPointsVar, Discord, data, system_index, faction_index, *args):
+def mission_points_change(MissionPointsVar, primary, Discord, data, system_index, faction_index, *args):
     """
     Callback (set as a variable trace) for when a mission points Variable is changed
     """
-    data[system_index][0]['Factions'][faction_index]['MissionPoints'] = MissionPointsVar.get()
+    if primary:
+        data[system_index][0]['Factions'][faction_index]['MissionPoints'] = MissionPointsVar.get()
+    else:
+        data[system_index][0]['Factions'][faction_index]['MissionPointsSecondary'] = MissionPointsVar.get()
 
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
+
+
+def option_change(Discord, data):
+    """
+    Callback when one of the Discord options is changed
+    """
     Discord.delete('1.0', 'end-1c')
     Discord.insert(tk.INSERT, generate_discord_text(data))
 
@@ -633,7 +670,10 @@ def generate_discord_text(data):
             elif data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates:
                 faction_discord_text += f".WarINF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
             else:
-                faction_discord_text += f".INF +{data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else f".INF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] < 0 else ""
+                inf = data[i][0]['Factions'][x]['MissionPoints']
+                if this.IncludeSecondaryInf.get() == "Yes": inf += data[i][0]['Factions'][x]['MissionPointsSecondary']
+                faction_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
+
             faction_discord_text += f".BVs {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
             faction_discord_text += f".CBs {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
             faction_discord_text += f".Trade {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
@@ -776,6 +816,7 @@ def save_data():
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
+    config.set('XSecondaryInf', this.IncludeSecondaryInf.get())
     config.set('XDiscordWebhook', this.DiscordWebhook.get())
     config.set('XDiscordUsername', this.DiscordUsername.get())
     config.set('XDiscordCurrentMessageID', this.DiscordCurrentMessageID.get())
