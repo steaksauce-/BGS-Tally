@@ -16,7 +16,7 @@ from config import appname, config
 from theme import theme
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "1.5.0"
+this.VersionNo = "1.6.0"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
