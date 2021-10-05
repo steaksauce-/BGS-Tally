@@ -173,6 +173,7 @@ def plugin_start3(plugin_dir):
     this.DiscordPreviousMessageID = tk.StringVar(value=config.get_str("XDiscordPreviousMessageID"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
+    this.StationType = tk.StringVar(value=config.get_str("XStationType"))
     response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
     latest = response.json()
     this.GitVersion = latest['tag_name']
@@ -281,10 +282,14 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
+        this.StationType.set(entry['StationType'])  # set docked station type
         # Check for a new tick
         if check_tick():
             this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
             theme.update(this.frame)
+
+    if (entry['event'] == 'Location' or entry['event'] == 'StartUp') and entry['Docked'] == True:
+        this.StationType.set(entry['StationType'])  # set docked station type
 
     if entry['event'] == 'MissionCompleted':  # get mission influence value
         fe = entry['FactionEffects']
@@ -338,7 +343,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         for z in entry['Factions']:
             for x in range(0, t):
                 if z['Faction'] == this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Faction']:
-                    this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Bounties'] += z['Amount']
+                    if this.StationType.get() == 'FleetCarrier':
+                        this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Bounties'] += (z['Amount'] / 2)
+                    else:
+                        this.TodayData[this.DataIndex.get()][0]['Factions'][x]['Bounties'] += z['Amount']
         save_data()
 
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':  # combat bonds collected
@@ -823,6 +831,7 @@ def save_data():
     config.set('XDiscordPreviousMessageID', this.DiscordPreviousMessageID.get())
     config.set('XIndex', this.DataIndex.get())
     config.set('XStation', this.StationFaction.get())
+    config.set('XStationType', this.StationType.get())
     file = os.path.join(this.Dir, "Today Data.txt")
     with open(file, 'w') as outfile:
         json.dump(this.TodayData, outfile)

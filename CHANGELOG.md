@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes:
+
+* Bounty vouchers redeemed on Fleet Carriers now count onlt 50% of the value.
 
 
 ## v1.6.0 - 2021-10-03
@@ -15,7 +18,7 @@
 
 * Only count `War` or `Civilwar` missions for the originating faction (thanks @RichardCsiszarik for diagnosing and fixing this).
 
-### Changes
+### Changes:
 
 * Added on-foot scavenger missions and on-foot covert assassination missions to those that count when in `War` or `CivilWar` states.
 * Tweaks to window layouts and wording.
@@ -32,7 +35,7 @@ _* Note that the plugin only tracks primary and secondary INF from this version 
 * Now count and report certain mission types for factions in the `War` or `CivilWar` states, similarly to how some mission types in `Election` state are counted (gathering a full list of mission types that count when the faction is in conflict is still a work in progress).
 * If faction is in state `Election`, `War` or `CivilWar`, don't report fake +INF, instead state the number of election / war missions completed, to avoid confusion.
 
-### Changes
+### Changes:
 
 * Tweaks to window layouts and wording.
 
