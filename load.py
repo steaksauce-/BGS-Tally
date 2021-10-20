@@ -252,31 +252,28 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         if (x >= 1):
             for y in range(1, x + 1):
                 if entry['StarSystem'] == this.TodayData[y][0]['System']:
+                    # System already present in TodayData, set the DataIndex and ensure data structure is updated to latest
                     this.DataIndex.set(y)
+                    z = len(this.TodayData[y][0]['Factions'])
+                    for i in range(0, z):
+                        update_faction_data(this.TodayData[y][0]['Factions'][i])
                     return
+
+            # System not present, add a new system entry
             this.TodayData[x + 1] = [
                 {'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions': []}]
             this.DataIndex.set(x + 1)
             z = len(this.FactionNames)
             for i in range(0, z):
-                this.TodayData[x + 1][0]['Factions'].append(
-                    {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
-                     'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
-                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-                     'SpaceCZ': {}, 'GroundCZ': {}})
+                this.TodayData[x + 1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State']))
         else:
+            # No systems yet, create the first system entry
             this.TodayData = {
                 1: [{'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions': []}]}
             z = len(this.FactionNames)
             this.DataIndex.set(1)
             for i in range(0, z):
-                this.TodayData[1][0]['Factions'].append(
-                    {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
-                     'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
-                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-                     'SpaceCZ': {}, 'GroundCZ': {}})
+                this.TodayData[1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State']))
 
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
@@ -343,7 +340,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 for e in entry['BioData']:
                     this.TodayData[this.DataIndex.get()][0]['Factions'][z]['ExoData'] += e['Value'] + e['Bonus']
         save_data()
-
 
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'bounty':  # bounties collected
         t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
@@ -425,6 +421,17 @@ def human_format(num):
         magnitude += 1
         num /= 1000.0
     return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+
+
+def get_new_faction_data(faction_name, faction_state):
+    """
+    Get a new data structure for storing faction data
+    """
+    return {'Faction': faction_name, 'FactionState': faction_state,
+            'MissionPoints': 0, 'MissionPointsSecondary': 0,
+            'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
+            'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
+            'SpaceCZ': {}, 'GroundCZ': {}}
 
 
 def update_faction_data(faction_data):
