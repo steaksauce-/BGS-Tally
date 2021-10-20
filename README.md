@@ -51,6 +51,7 @@ The following activities are automatically collected from your in-game activity:
 - Election / War / CivilWar mission count †
 - Total trade profit sold to Faction controlled station
 - Cartographic data sold to Faction controlled station
+- Exobiology data sold to Faction controlled station
 - Bounties issued by named Faction
 - Combat Bonds issued by named Faction
 - Missions Failed for named Faction
