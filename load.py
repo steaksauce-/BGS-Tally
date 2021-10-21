@@ -401,17 +401,13 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                             this.TodayData[y][0]['Factions'][z]['Murdered'] += 1
 
     if entry['event'] == 'ApproachSettlement':
-        # { "timestamp":"2021-10-19T13:23:45Z", "event":"ApproachSettlement", "Name":"Ruiz's Conservatory", "MarketID":3838918144, "SystemAddress":4482033193690, "BodyID":6, "BodyName":"Kikua 3 a", "Latitude":73.441818, "Longitude":-98.887627 }
         this.LastSettlementApproached = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'counted': False}
 
     if entry['event'] == 'FactionKillBond':
-        # { "timestamp":"2021-10-19T13:47:50Z", "event":"FactionKillBond", "Reward":4172, "AwardingFaction":"The Sovereign Justice Collective", "VictimFaction":"Kikua Universal Industries" }
         if this.LastSettlementApproached != {}:
             timedifference = datetime.strptime(entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ') - datetime.strptime(this.LastSettlementApproached['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-            logger.info(f"Time difference: {timedifference}")
             if timedifference < timedelta(minutes=5):
                 if this.LastSettlementApproached['counted'] == False:
-                    logger.info(f"Within 5 mins and not already counted")
                     # Bond issued within a short time after approaching settlement, and we haven't already counted this settlement
                     this.LastSettlementApproached['counted'] = True
                     system_factions = this.TodayData[this.DataIndex.get()][0]['Factions']
@@ -421,20 +417,15 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                             # Add settlement to this faction's list, if not already present
                             if this.LastSettlementApproached['name'] not in system_factions[z]['GroundCZSettlements']:
                                 system_factions[z]['GroundCZSettlements'].append(this.LastSettlementApproached['name'])
-                                logger.info(f"Added {this.LastSettlementApproached['name']} to system settlement list")
                             # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on first kill, assuming we'll win the CZ!
                             if entry['Reward'] < 5000:
-                                logger.info(f"Added low CZ")
                                 system_factions[z]['GroundCZ']['l'] = str(int(system_factions[z]['GroundCZ'].get('l', '0')) + 1)
                             elif entry['Reward'] < 50000:
-                                logger.info(f"Added med CZ")
                                 system_factions[z]['GroundCZ']['m'] = str(int(system_factions[z]['GroundCZ'].get('m', '0')) + 1)
                             else:
-                                logger.info(f"Added high CZ")
                                 system_factions[z]['GroundCZ']['h'] = str(int(system_factions[z]['GroundCZ'].get('h', '0')) + 1)
             else:
                 # Too long since we last approached a settlement, we can't be sure we're fighting at that settlement, clear down
-                logger.info(f"Too long before kill, clearing down last settlement")
                 this.LastSettlementApproached = {}
 
 
