@@ -2,9 +2,13 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* Now track Exobiology data sold
+
 ### Changes:
 
-* Bounty vouchers redeemed on Fleet Carriers now count onlt 50% of the value.
+* Bounty vouchers redeemed on Fleet Carriers now count only 50% of the value.
 
 
 ## v1.6.0 - 2021-10-03

@@ -252,33 +252,28 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         if (x >= 1):
             for y in range(1, x + 1):
                 if entry['StarSystem'] == this.TodayData[y][0]['System']:
+                    # System already present in TodayData, set the DataIndex and ensure data structure is updated to latest
                     this.DataIndex.set(y)
+                    z = len(this.TodayData[y][0]['Factions'])
+                    for i in range(0, z):
+                        update_faction_data(this.TodayData[y][0]['Factions'][i])
                     return
+
+            # System not present, add a new system entry
             this.TodayData[x + 1] = [
                 {'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions': []}]
             this.DataIndex.set(x + 1)
             z = len(this.FactionNames)
             for i in range(0, z):
-                this.TodayData[x + 1][0]['Factions'].append(
-                    {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
-                     'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
-                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-                     'SpaceCZ': {},
-                     'GroundCZ': {}})
+                this.TodayData[x + 1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State']))
         else:
+            # No systems yet, create the first system entry
             this.TodayData = {
                 1: [{'System': entry['StarSystem'], 'SystemAddress': entry['SystemAddress'], 'Factions': []}]}
             z = len(this.FactionNames)
             this.DataIndex.set(1)
             for i in range(0, z):
-                this.TodayData[1][0]['Factions'].append(
-                    {'Faction': this.FactionNames[i], 'FactionState': this.FactionStates[i]['State'],
-                     'MissionPoints': 0, 'MissionPointsSecondary': 0,
-                     'TradeProfit': 0, 'Bounties': 0, 'CartData': 0,
-                     'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-                     'SpaceCZ': {},
-                     'GroundCZ': {}})
+                this.TodayData[1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State']))
 
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
@@ -336,6 +331,14 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         for z in range(0, t):
             if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
                 this.TodayData[this.DataIndex.get()][0]['Factions'][z]['CartData'] += entry['TotalEarnings']
+        save_data()
+
+    if entry['event'] == 'SellOrganicData':  # get exobiology data value
+        t = len(this.TodayData[this.DataIndex.get()][0]['Factions'])
+        for z in range(0, t):
+            if this.StationFaction.get() == this.TodayData[this.DataIndex.get()][0]['Factions'][z]['Faction']:
+                for e in entry['BioData']:
+                    this.TodayData[this.DataIndex.get()][0]['Factions'][z]['ExoData'] += e['Value'] + e['Bonus']
         save_data()
 
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'bounty':  # bounties collected
@@ -420,6 +423,17 @@ def human_format(num):
     return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
 
+def get_new_faction_data(faction_name, faction_state):
+    """
+    Get a new data structure for storing faction data
+    """
+    return {'Faction': faction_name, 'FactionState': faction_state,
+            'MissionPoints': 0, 'MissionPointsSecondary': 0,
+            'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
+            'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
+            'SpaceCZ': {}, 'GroundCZ': {}}
+
+
 def update_faction_data(faction_data):
     """
     Update faction data structure for elements not present in previous versions of plugin
@@ -431,6 +445,8 @@ def update_faction_data(faction_data):
     if not 'Enabled' in faction_data: faction_data['Enabled'] = CheckStates.STATE_ON
     # From < v1.6.0 to 1.6.0
     if not 'MissionPointsSecondary' in faction_data: faction_data['MissionPointsSecondary'] = 0
+    # From < v1.7.0 to 1.7.0
+    if not 'ExoData' in faction_data: faction_data['ExoData'] = 0
 
 
 def display_data(title, data, tick_mode):
@@ -479,18 +495,19 @@ def display_data(title, data, tick_mode):
         ttk.Label(tab, text="Trade", font=heading_font).grid(row=0, column=5, padx=2, pady=2)
         ttk.Label(tab, text="BVs", font=heading_font).grid(row=0, column=6, padx=2, pady=2)
         ttk.Label(tab, text="Expl", font=heading_font).grid(row=0, column=7, padx=2, pady=2)
-        ttk.Label(tab, text="CBs", font=heading_font).grid(row=0, column=8, padx=2, pady=2)
-        ttk.Label(tab, text="Fails", font=heading_font).grid(row=0, column=9, padx=2, pady=2)
-        ttk.Label(tab, text="Murders", font=heading_font).grid(row=0, column=10, padx=2, pady=2)
-        ttk.Label(tab, text="Space CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=11, columnspan=3, padx=2)
-        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=11, padx=2, pady=2)
-        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=12, padx=2, pady=2)
-        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=13, padx=2, pady=2)
-        ttk.Label(tab, text="On-foot CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=14, columnspan=3, padx=2)
-        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=14, padx=2, pady=2)
-        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
-        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=16, padx=2, pady=2)
-        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=17, padx=2, pady=5, sticky=tk.EW)
+        ttk.Label(tab, text="Exo", font=heading_font).grid(row=0, column=8, padx=2, pady=2)
+        ttk.Label(tab, text="CBs", font=heading_font).grid(row=0, column=9, padx=2, pady=2)
+        ttk.Label(tab, text="Fails", font=heading_font).grid(row=0, column=10, padx=2, pady=2)
+        ttk.Label(tab, text="Murders", font=heading_font).grid(row=0, column=11, padx=2, pady=2)
+        ttk.Label(tab, text="Space CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=12, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=12, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=13, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=14, padx=2, pady=2)
+        ttk.Label(tab, text="On-foot CZs", font=heading_font, width=18, anchor=tk.CENTER).grid(row=0, column=15, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=16, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=17, padx=2, pady=2)
+        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=18, padx=2, pady=5, sticky=tk.EW)
 
         header_rows = 3
         z = len(data[i][0]['Factions'])
@@ -517,23 +534,24 @@ def display_data(title, data, tick_mode):
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=5)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=6)
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=7)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=8)
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=9)
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=10)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['ExoData'])).grid(row=x + header_rows, column=8)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=9)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=10)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=11)
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=11, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=12, padx=2, pady=2)
                 CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=12, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=13, padx=2, pady=2)
                 CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=13, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=14, padx=2, pady=2)
                 CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=14, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=15, padx=2, pady=2)
                 CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=15, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=16, padx=2, pady=2)
                 CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=16, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=17, padx=2, pady=2)
                 # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
                 CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
                 CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
@@ -686,6 +704,7 @@ def generate_discord_text(data):
             faction_discord_text += f".CBs {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
             faction_discord_text += f".Trade {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
             faction_discord_text += f".Expl {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
+            faction_discord_text += f".Exo {human_format(data[i][0]['Factions'][x]['ExoData'])}; " if data[i][0]['Factions'][x]['ExoData'] != 0 else ""
             faction_discord_text += f".Murders {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
             faction_discord_text += f".Fails {data[i][0]['Factions'][x]['MissionFailed']}; " if data[i][0]['Factions'][x]['MissionFailed'] != 0 else ""
             space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "SpaceCZs")
