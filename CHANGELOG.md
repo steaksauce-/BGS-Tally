@@ -5,6 +5,7 @@
 ### New Features:
 
 * Now track Exobiology data sold
+* Now track (and report) names of on-foot CZs fought at, automatically determine CZ Low / Med / High, and automatically increment counts. Note that we still can't determine whether you've won the CZ, so we count it as a win if you've fought there.
 
 ### Changes:
 

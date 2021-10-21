@@ -4,7 +4,7 @@ import os.path
 import sys
 import tkinter as tk
 import webbrowser
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from functools import partial
 from os import path
@@ -24,6 +24,14 @@ this.DataIndex = 0
 this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
+this.LastSettlementApproached = {}
+
+# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
+this.Status = None
+this.AbbreviateFactionNames = None
+this.IncludeSecondaryInf = None
+this.DiscordWebhook = None
+this.DiscordUsername = None
 
 # Conflict states, for determining whether we display the CZ UI and count conflict missions for factions in these states
 this.ConflictStates = [
@@ -55,13 +63,6 @@ this.MissionListConflict = [
     'Mission_OnFoot_Assassination_Covert_MB_name',
     'Mission_OnFoot_Onslaught_Offline_MB_name'
 ]
-
-# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
-this.Status = None
-this.AbbreviateFactionNames = None
-this.IncludeSecondaryInf = None
-this.DiscordWebhook = None
-this.DiscordUsername = None
 
 
 # This could also be returned from plugin_start3()
@@ -399,6 +400,43 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         if entry['Faction'] == this.TodayData[y][0]['Factions'][z]['Faction']:
                             this.TodayData[y][0]['Factions'][z]['Murdered'] += 1
 
+    if entry['event'] == 'ApproachSettlement':
+        # { "timestamp":"2021-10-19T13:23:45Z", "event":"ApproachSettlement", "Name":"Ruiz's Conservatory", "MarketID":3838918144, "SystemAddress":4482033193690, "BodyID":6, "BodyName":"Kikua 3 a", "Latitude":73.441818, "Longitude":-98.887627 }
+        this.LastSettlementApproached = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'counted': False}
+
+    if entry['event'] == 'FactionKillBond':
+        # { "timestamp":"2021-10-19T13:47:50Z", "event":"FactionKillBond", "Reward":4172, "AwardingFaction":"The Sovereign Justice Collective", "VictimFaction":"Kikua Universal Industries" }
+        if this.LastSettlementApproached != {}:
+            timedifference = datetime.strptime(entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ') - datetime.strptime(this.LastSettlementApproached['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
+            logger.info(f"Time difference: {timedifference}")
+            if timedifference < timedelta(minutes=5):
+                if this.LastSettlementApproached['counted'] == False:
+                    logger.info(f"Within 5 mins and not already counted")
+                    # Bond issued within a short time after approaching settlement, and we haven't already counted this settlement
+                    this.LastSettlementApproached['counted'] = True
+                    system_factions = this.TodayData[this.DataIndex.get()][0]['Factions']
+                    t = len(system_factions)
+                    for z in range(0, t):
+                        if entry['AwardingFaction'] == system_factions[z]['Faction']:
+                            # Add settlement to this faction's list, if not already present
+                            if this.LastSettlementApproached['name'] not in system_factions[z]['GroundCZSettlements']:
+                                system_factions[z]['GroundCZSettlements'].append(this.LastSettlementApproached['name'])
+                                logger.info(f"Added {this.LastSettlementApproached['name']} to system settlement list")
+                            # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on first kill, assuming we'll win the CZ!
+                            if entry['Reward'] < 5000:
+                                logger.info(f"Added low CZ")
+                                system_factions[z]['GroundCZ']['l'] = str(int(system_factions[z]['GroundCZ'].get('l', '0')) + 1)
+                            elif entry['Reward'] < 50000:
+                                logger.info(f"Added med CZ")
+                                system_factions[z]['GroundCZ']['m'] = str(int(system_factions[z]['GroundCZ'].get('m', '0')) + 1)
+                            else:
+                                logger.info(f"Added high CZ")
+                                system_factions[z]['GroundCZ']['h'] = str(int(system_factions[z]['GroundCZ'].get('h', '0')) + 1)
+            else:
+                # Too long since we last approached a settlement, we can't be sure we're fighting at that settlement, clear down
+                logger.info(f"Too long before kill, clearing down last settlement")
+                this.LastSettlementApproached = {}
+
 
 def version_tuple(version):
     """
@@ -431,7 +469,7 @@ def get_new_faction_data(faction_name, faction_state):
             'MissionPoints': 0, 'MissionPointsSecondary': 0,
             'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
             'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-            'SpaceCZ': {}, 'GroundCZ': {}}
+            'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': []}
 
 
 def update_faction_data(faction_data):
@@ -447,6 +485,7 @@ def update_faction_data(faction_data):
     if not 'MissionPointsSecondary' in faction_data: faction_data['MissionPointsSecondary'] = 0
     # From < v1.7.0 to 1.7.0
     if not 'ExoData' in faction_data: faction_data['ExoData'] = 0
+    if not 'GroundCZSettlements' in faction_data: faction_data['GroundCZSettlements'] = []
 
 
 def display_data(title, data, tick_mode):
@@ -684,35 +723,39 @@ def generate_discord_text(data):
 
     for i in data:
         system_discord_text = ""
-        z = len(data[i][0]['Factions'])
+        system_factions = data[i][0]['Factions']
+        z = len(system_factions)
 
         for x in range(0, z):
-            if data[i][0]['Factions'][x]['Enabled'] != CheckStates.STATE_ON: continue
+            if system_factions[x]['Enabled'] != CheckStates.STATE_ON: continue
 
             faction_discord_text = ""
 
-            if data[i][0]['Factions'][x]['FactionState'] == 'Election':
-                faction_discord_text += f".ElectionINF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            elif data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates:
-                faction_discord_text += f".WarINF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
+            if system_factions[x]['FactionState'] == 'Election':
+                faction_discord_text += f".ElectionINF {system_factions[x]['MissionPoints']}; " if system_factions[x]['MissionPoints'] > 0 else ""
+            elif system_factions[x]['FactionState'] in this.ConflictStates:
+                faction_discord_text += f".WarINF {system_factions[x]['MissionPoints']}; " if system_factions[x]['MissionPoints'] > 0 else ""
             else:
-                inf = data[i][0]['Factions'][x]['MissionPoints']
-                if this.IncludeSecondaryInf.get() == "Yes": inf += data[i][0]['Factions'][x]['MissionPointsSecondary']
+                inf = system_factions[x]['MissionPoints']
+                if this.IncludeSecondaryInf.get() == "Yes": inf += system_factions[x]['MissionPointsSecondary']
                 faction_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
 
-            faction_discord_text += f".BVs {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
-            faction_discord_text += f".CBs {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
-            faction_discord_text += f".Trade {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
-            faction_discord_text += f".Expl {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
-            faction_discord_text += f".Exo {human_format(data[i][0]['Factions'][x]['ExoData'])}; " if data[i][0]['Factions'][x]['ExoData'] != 0 else ""
-            faction_discord_text += f".Murders {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
-            faction_discord_text += f".Fails {data[i][0]['Factions'][x]['MissionFailed']}; " if data[i][0]['Factions'][x]['MissionFailed'] != 0 else ""
-            space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "SpaceCZs")
+            faction_discord_text += f".BVs {human_format(system_factions[x]['Bounties'])}; " if system_factions[x]['Bounties'] != 0 else ""
+            faction_discord_text += f".CBs {human_format(system_factions[x]['CombatBonds'])}; " if system_factions[x]['CombatBonds'] != 0 else ""
+            faction_discord_text += f".Trade {human_format(system_factions[x]['TradeProfit'])}; " if system_factions[x]['TradeProfit'] != 0 else ""
+            faction_discord_text += f".Expl {human_format(system_factions[x]['CartData'])}; " if system_factions[x]['CartData'] != 0 else ""
+            faction_discord_text += f".Exo {human_format(system_factions[x]['ExoData'])}; " if system_factions[x]['ExoData'] != 0 else ""
+            faction_discord_text += f".Murders {system_factions[x]['Murdered']}; " if system_factions[x]['Murdered'] != 0 else ""
+            faction_discord_text += f".Fails {system_factions[x]['MissionFailed']}; " if system_factions[x]['MissionFailed'] != 0 else ""
+            space_cz = build_cz_text(system_factions[x].get('SpaceCZ', {}), "SpaceCZs")
             faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
-            ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "GroundCZs")
+            ground_cz = build_cz_text(system_factions[x].get('GroundCZ', {}), "GroundCZs")
             faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
-            faction_name = process_faction_name(data[i][0]['Factions'][x]['Faction'])
+            faction_name = process_faction_name(system_factions[x]['Faction'])
             system_discord_text += f"[{faction_name}] - {faction_discord_text}\n" if faction_discord_text != "" else ""
+
+            for settlement_name in system_factions[x].get('GroundCZSettlements', []):
+                system_discord_text += f"  - {settlement_name}\n"
 
         discord_text += f"```css\n{data[i][0]['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
 
