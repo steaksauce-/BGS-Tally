@@ -416,14 +416,18 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         if entry['AwardingFaction'] == system_factions[z]['Faction']:
                             # Add settlement to this faction's list, if not already present
                             if this.LastSettlementApproached['name'] not in system_factions[z]['GroundCZSettlements']:
-                                system_factions[z]['GroundCZSettlements'].append(this.LastSettlementApproached['name'])
+                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']] = {'count': 0, 'enabled': CheckStates.STATE_ON}
                             # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on first kill, assuming we'll win the CZ!
+                            system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['count'] += 1
                             if entry['Reward'] < 5000:
                                 system_factions[z]['GroundCZ']['l'] = str(int(system_factions[z]['GroundCZ'].get('l', '0')) + 1)
+                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'l'
                             elif entry['Reward'] < 38000:
                                 system_factions[z]['GroundCZ']['m'] = str(int(system_factions[z]['GroundCZ'].get('m', '0')) + 1)
+                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'm'
                             else:
                                 system_factions[z]['GroundCZ']['h'] = str(int(system_factions[z]['GroundCZ'].get('h', '0')) + 1)
+                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'h'
             else:
                 # Too long since we last approached a settlement, we can't be sure we're fighting at that settlement, clear down
                 this.LastSettlementApproached = {}
@@ -460,7 +464,7 @@ def get_new_faction_data(faction_name, faction_state):
             'MissionPoints': 0, 'MissionPointsSecondary': 0,
             'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
             'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-            'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': []}
+            'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': {}}
 
 
 def update_faction_data(faction_data):
@@ -476,7 +480,7 @@ def update_faction_data(faction_data):
     if not 'MissionPointsSecondary' in faction_data: faction_data['MissionPointsSecondary'] = 0
     # From < v1.7.0 to 1.7.0
     if not 'ExoData' in faction_data: faction_data['ExoData'] = 0
-    if not 'GroundCZSettlements' in faction_data: faction_data['GroundCZSettlements'] = []
+    if not 'GroundCZSettlements' in faction_data: faction_data['GroundCZSettlements'] = {}
 
 
 def display_data(title, data, tick_mode):
@@ -557,11 +561,14 @@ def display_data(title, data, tick_mode):
             FactionName.grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=2, pady=2)
             FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, i, x))
             settlement_row_index = 1
-            for settlement_name in data[i][0]['Factions'][x].get('GroundCZSettlements', []):
+            for settlement_name in data[i][0]['Factions'][x].get('GroundCZSettlements', {}):
                 SettlementCheckbutton = ttk.Checkbutton(FactionNameFrame)
                 SettlementCheckbutton.grid(row=settlement_row_index, column=0, padx=2, pady=2)
-                SettlementName = ttk.Label(FactionNameFrame, text=settlement_name)
+                SettlementCheckbutton.configure(command=partial(enable_settlement_change, SettlementCheckbutton, settlement_name, Discord, data, i, x))
+                SettlementCheckbutton.state(['selected', '!alternate'] if data[i][0]['Factions'][x]['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON else ['!selected', '!alternate'])
+                SettlementName = ttk.Label(FactionNameFrame, text=f"{settlement_name} ({data[i][0]['Factions'][x]['GroundCZSettlements'][settlement_name]['type'].upper()})")
                 SettlementName.grid(row=settlement_row_index, column=1, sticky=tk.W, padx=2, pady=2)
+                SettlementName.bind("<Button-1>", partial(settlement_name_clicked, SettlementCheckbutton, settlement_name, Discord, data, i, x))
                 settlement_row_index += 1
 
             ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2, sticky=tk.N)
@@ -640,7 +647,7 @@ def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args)
 
 def enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args):
     """
-    Callback  for when a Faction Enable Checkbutton is changed
+    Callback for when a Faction Enable Checkbutton is changed
     """
     data[system_index][0]['Factions'][faction_index]['Enabled'] = CheckStates.STATE_ON if FactionEnableCheckbuttons[faction_index].instate(['selected']) else CheckStates.STATE_OFF
     update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
@@ -661,6 +668,16 @@ def enable_all_factions_change(EnableAllCheckbutton, FactionEnableCheckbuttons, 
         else:
             FactionEnableCheckbuttons[x].state(['!selected'])
             data[system_index][0]['Factions'][x]['Enabled'] = CheckStates.STATE_OFF
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
+
+
+def enable_settlement_change(SettlementCheckbutton, settlement_name, Discord, data, system_index, faction_index, *args):
+    """
+    Callback for when a Settlement Enable Checkbutton is changed
+    """
+    data[system_index][0]['Factions'][faction_index]['GroundCZSettlements'][settlement_name]['enabled'] = CheckStates.STATE_ON if SettlementCheckbutton.instate(['selected']) else CheckStates.STATE_OFF
 
     Discord.delete('1.0', 'end-1c')
     Discord.insert(tk.INSERT, generate_discord_text(data))
@@ -688,12 +705,20 @@ def update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCh
 
 def faction_name_clicked(EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args):
     """
-    Callback when a faction name is clicked. Toggle enabled state. The EnableVar is watched, so that will
-    automatically trigger enable_faction_change() to update data and Discord text
+    Callback when a faction name is clicked. Toggle enabled state.
     """
     if EnableCheckbutton.instate(['selected']): EnableCheckbutton.state(['!selected'])
     else: EnableCheckbutton.state(['selected'])
     enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args)
+
+
+def settlement_name_clicked(SettlementCheckbutton, settlement_name, Discord, data, system_index, faction_index, *args):
+    """
+    Callback when a settlement name is clicked. Toggle enabled state.
+    """
+    if SettlementCheckbutton.instate(['selected']): SettlementCheckbutton.state(['!selected'])
+    else: SettlementCheckbutton.state(['selected'])
+    enable_settlement_change(SettlementCheckbutton, settlement_name, Discord, data, system_index, faction_index, *args)
 
 
 def mission_points_change(MissionPointsVar, primary, Discord, data, system_index, faction_index, *args):
@@ -756,8 +781,9 @@ def generate_discord_text(data):
             faction_name = process_faction_name(system_factions[x]['Faction'])
             system_discord_text += f"[{faction_name}] - {faction_discord_text}\n" if faction_discord_text != "" else ""
 
-            for settlement_name in system_factions[x].get('GroundCZSettlements', []):
-                system_discord_text += f"  - {settlement_name}\n"
+            for settlement_name in system_factions[x].get('GroundCZSettlements', {}):
+                if system_factions[x]['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON:
+                    system_discord_text += f"  - {settlement_name} ({system_factions[x]['GroundCZSettlements'][settlement_name]['type'].upper()}) x {system_factions[x]['GroundCZSettlements'][settlement_name]['count']}\n"
 
         discord_text += f"```css\n{data[i][0]['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
 
