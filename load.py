@@ -420,7 +420,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                             # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on first kill, assuming we'll win the CZ!
                             if entry['Reward'] < 5000:
                                 system_factions[z]['GroundCZ']['l'] = str(int(system_factions[z]['GroundCZ'].get('l', '0')) + 1)
-                            elif entry['Reward'] < 50000:
+                            elif entry['Reward'] < 38000:
                                 system_factions[z]['GroundCZ']['m'] = str(int(system_factions[z]['GroundCZ'].get('m', '0')) + 1)
                             else:
                                 system_factions[z]['GroundCZ']['h'] = str(int(system_factions[z]['GroundCZ'].get('h', '0')) + 1)
