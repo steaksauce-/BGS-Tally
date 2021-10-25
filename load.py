@@ -783,7 +783,7 @@ def generate_discord_text(data):
 
             for settlement_name in system_factions[x].get('GroundCZSettlements', {}):
                 if system_factions[x]['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON:
-                    system_discord_text += f"  - {settlement_name} ({system_factions[x]['GroundCZSettlements'][settlement_name]['type'].upper()}) x {system_factions[x]['GroundCZSettlements'][settlement_name]['count']}\n"
+                    system_discord_text += f"  - {settlement_name} x {system_factions[x]['GroundCZSettlements'][settlement_name]['count']}\n"
 
         discord_text += f"```css\n{data[i][0]['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
 
