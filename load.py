@@ -401,33 +401,62 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                             this.TodayData[y][0]['Factions'][z]['Murdered'] += 1
 
     if entry['event'] == 'ApproachSettlement':
-        this.LastSettlementApproached = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'counted': False}
+        this.LastSettlementApproached = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'size': None}
 
     if entry['event'] == 'FactionKillBond':
         if this.LastSettlementApproached != {}:
             timedifference = datetime.strptime(entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ') - datetime.strptime(this.LastSettlementApproached['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
             if timedifference < timedelta(minutes=5):
-                if this.LastSettlementApproached['counted'] == False:
-                    # Bond issued within a short time after approaching settlement, and we haven't already counted this settlement
-                    this.LastSettlementApproached['counted'] = True
-                    system_factions = this.TodayData[this.DataIndex.get()][0]['Factions']
-                    t = len(system_factions)
-                    for z in range(0, t):
-                        if entry['AwardingFaction'] == system_factions[z]['Faction']:
-                            # Add settlement to this faction's list, if not already present
-                            if this.LastSettlementApproached['name'] not in system_factions[z]['GroundCZSettlements']:
-                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']] = {'count': 0, 'enabled': CheckStates.STATE_ON}
-                            # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on first kill, assuming we'll win the CZ!
+                # Bond issued within a short time after approaching settlement
+                system_factions = this.TodayData[this.DataIndex.get()][0]['Factions']
+                t = len(system_factions)
+                for z in range(0, t):
+                    if entry['AwardingFaction'] == system_factions[z]['Faction']:
+                        # Add settlement to this faction's list, if not already present
+                        if this.LastSettlementApproached['name'] not in system_factions[z]['GroundCZSettlements']:
+                            system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']] = {'count': 0, 'enabled': CheckStates.STATE_ON}
+
+                        # Store the previously counted size of this settlement
+                        previous_size = this.LastSettlementApproached['size']
+
+                        # Increment this settlement's overall count if this is the first bond counted
+                        if this.LastSettlementApproached['size'] == None:
                             system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['count'] += 1
-                            if entry['Reward'] < 5000:
+
+                        # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on any kill, assuming we'll win the CZ! Also note that we re-calculate on every
+                        # kill because when a kill is made my multiple players in a team, the CBs are split. We just hope that at some point we'll make a solo kill which will
+                        # put this settlement into the correct CZ size category
+                        if entry['Reward'] < 5000:
+                            # Handle as 'Low' if this is the first CB
+                            if this.LastSettlementApproached['size'] == None:
+                                # Increment overall 'Low' count for this faction
                                 system_factions[z]['GroundCZ']['l'] = str(int(system_factions[z]['GroundCZ'].get('l', '0')) + 1)
+                                # Set faction settlement type
                                 system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'l'
-                            elif entry['Reward'] < 38000:
+                                # Store last settlement type
+                                this.LastSettlementApproached['size'] == 'l'
+                        elif entry['Reward'] < 38000:
+                            # Handle as 'Med' if this is either the first CB or we've counted this settlement as a 'Low' before
+                            if this.LastSettlementApproached['size'] == None or this.LastSettlementApproached['size'] == 'l':
+                                # Increment overall 'Med' count for this faction
                                 system_factions[z]['GroundCZ']['m'] = str(int(system_factions[z]['GroundCZ'].get('m', '0')) + 1)
+                                # Decrement overall previous size count if we previously counted it
+                                if previous_size != None: system_factions[z]['GroundCZ'][previous_size] -= 1
+                                # Set faction settlement type
                                 system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'm'
-                            else:
+                                # Store last settlement type
+                                this.LastSettlementApproached['size'] == 'm'
+                        else:
+                            # Handle as 'High' if this is either the first CB or we've counted this settlement as a 'Low' or 'Med' before
+                            if this.LastSettlementApproached['size'] == None or this.LastSettlementApproached['size'] == 'l' or this.LastSettlementApproached['size'] == 'm':
+                                # Increment overall 'High' count for this faction
                                 system_factions[z]['GroundCZ']['h'] = str(int(system_factions[z]['GroundCZ'].get('h', '0')) + 1)
+                                # Decrement overall previous size count if we previously counted it
+                                if previous_size != None: system_factions[z]['GroundCZ'][previous_size] -= 1
+                                # Set faction settlement type
                                 system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'h'
+                                # Store last settlement type
+                                this.LastSettlementApproached['size'] == 'h'
             else:
                 # Too long since we last approached a settlement, we can't be sure we're fighting at that settlement, clear down
                 this.LastSettlementApproached = {}
