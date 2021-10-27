@@ -519,7 +519,7 @@ def display_data(title, data, tick_mode):
     heading_font = ("Helvetica", 11, 'bold')
     Form = tk.Toplevel(this.frame)
     Form.title("BGS Tally v" + this.VersionNo + " - " + title)
-    Form.geometry("1200x700")
+    Form.geometry("1200x800")
 
     ContainerFrame = ttk.Frame(Form)
     ContainerFrame.pack(fill=tk.BOTH, expand=1)
@@ -528,13 +528,14 @@ def display_data(title, data, tick_mode):
 
     DiscordFrame = ttk.Frame(ContainerFrame)
     DiscordFrame.pack(fill=tk.X, padx=5, pady=5)
-    ttk.Label(DiscordFrame, text="Discord Report", font=heading_font).grid(row=0, column=0, pady=2, sticky=tk.W)
-    ttk.Label(DiscordFrame, text="Discord Options", font=heading_font).grid(row=0, column=1, pady=2, sticky=tk.W)
+    ttk.Label(DiscordFrame, text="Discord Report", font=heading_font).grid(row=0, column=0, sticky=tk.W)
+    ttk.Label(DiscordFrame, text="Discord Options", font=heading_font).grid(row=0, column=1, sticky=tk.W)
+    ttk.Label(DiscordFrame, text="Double-check on-ground CZ tallies, sizes are not always correct", foreground='#f00').grid(row=1, column=0, columnspan=2, sticky=tk.W)
     Discord = tk.Text(DiscordFrame, wrap = tk.WORD, height=17, font = ("Helvetica", 9))
-    Discord.grid(row=1, column=0, pady=5)
+    Discord.grid(row=2, column=0, pady=5)
 
     OptionsFrame = ttk.Frame(DiscordFrame)
-    OptionsFrame.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NW)
+    OptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
     ttk.Checkbutton(OptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
     ttk.Checkbutton(OptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
