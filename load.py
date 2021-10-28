@@ -434,7 +434,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                                 # Set faction settlement type
                                 system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'l'
                                 # Store last settlement type
-                                this.LastSettlementApproached['size'] == 'l'
+                                this.LastSettlementApproached['size'] = 'l'
                         elif entry['Reward'] < 38000:
                             # Handle as 'Med' if this is either the first CB or we've counted this settlement as a 'Low' before
                             if this.LastSettlementApproached['size'] == None or this.LastSettlementApproached['size'] == 'l':
@@ -445,7 +445,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                                 # Set faction settlement type
                                 system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'm'
                                 # Store last settlement type
-                                this.LastSettlementApproached['size'] == 'm'
+                                this.LastSettlementApproached['size'] = 'm'
                         else:
                             # Handle as 'High' if this is either the first CB or we've counted this settlement as a 'Low' or 'Med' before
                             if this.LastSettlementApproached['size'] == None or this.LastSettlementApproached['size'] == 'l' or this.LastSettlementApproached['size'] == 'm':
@@ -456,7 +456,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                                 # Set faction settlement type
                                 system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'h'
                                 # Store last settlement type
-                                this.LastSettlementApproached['size'] == 'h'
+                                this.LastSettlementApproached['size'] = 'h'
             else:
                 # Too long since we last approached a settlement, we can't be sure we're fighting at that settlement, clear down
                 this.LastSettlementApproached = {}
