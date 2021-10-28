@@ -10,6 +10,7 @@
 ### Changes:
 
 * Bounty vouchers redeemed on Fleet Carriers now count only 50% of the value.
+* Added scrollbar to Discord report.
 
 
 ## v1.6.0 - 2021-10-03

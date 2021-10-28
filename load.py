@@ -527,17 +527,23 @@ def display_data(title, data, tick_mode):
     TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
 
     DiscordFrame = ttk.Frame(ContainerFrame)
-    DiscordFrame.pack(fill=tk.X, padx=5, pady=5)
+    DiscordFrame.pack(fill=tk.BOTH, padx=5, pady=5)
     ttk.Label(DiscordFrame, text="Discord Report", font=heading_font).grid(row=0, column=0, sticky=tk.W)
     ttk.Label(DiscordFrame, text="Discord Options", font=heading_font).grid(row=0, column=1, sticky=tk.W)
     ttk.Label(DiscordFrame, text="Double-check on-ground CZ tallies, sizes are not always correct", foreground='#f00').grid(row=1, column=0, columnspan=2, sticky=tk.W)
-    Discord = tk.Text(DiscordFrame, wrap = tk.WORD, height=17, font = ("Helvetica", 9))
-    Discord.grid(row=2, column=0, pady=5)
 
-    OptionsFrame = ttk.Frame(DiscordFrame)
-    OptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
-    ttk.Checkbutton(OptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
-    ttk.Checkbutton(OptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
+    DiscordTextFrame = ttk.Frame(DiscordFrame)
+    DiscordTextFrame.grid(row=2, column=0, pady=5, sticky=tk.NSEW)
+    Discord = tk.Text(DiscordTextFrame, wrap=tk.WORD, height=14, font=("Helvetica", 9))
+    DiscordScroll = tk.Scrollbar(DiscordTextFrame, orient=tk.VERTICAL, command=Discord.yview)
+    Discord['yscrollcommand'] = DiscordScroll.set
+    DiscordScroll.pack(fill=tk.Y, side=tk.RIGHT)
+    Discord.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+    DiscordOptionsFrame = ttk.Frame(DiscordFrame)
+    DiscordOptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
+    ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
+    ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
     for i in data:
         tab = ttk.Frame(TabParent)
