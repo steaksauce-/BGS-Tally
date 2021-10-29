@@ -28,6 +28,7 @@ this.LastSettlementApproached = {}
 
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
 this.Status = None
+this.ShowZeroActivitySystems = None
 this.AbbreviateFactionNames = None
 this.IncludeSecondaryInf = None
 this.DiscordWebhook = None
@@ -119,6 +120,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(columnspan=2, padx=10, sticky=tk.W)
     ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
     nb.Checkbutton(frame, text="BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=this.ShowZeroActivitySystems, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
     nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=6)
@@ -165,9 +167,10 @@ def plugin_start3(plugin_dir):
             this.MissionLog = json.load(json_file)
     this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
-    this.Status = tk.StringVar(value=config.get_str("XStatus"))
-    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate"))
-    this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf"))
+    this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
+    this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default="Yes"))
+    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default="No"))
+    this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf", default="Yes"))
     this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
     this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
     this.DiscordCurrentMessageID = tk.StringVar(value=config.get_str("XDiscordCurrentMessageID"))
@@ -512,6 +515,16 @@ def update_faction_data(faction_data):
     if not 'GroundCZSettlements' in faction_data: faction_data['GroundCZSettlements'] = {}
 
 
+def is_faction_data_zero(faction_data):
+    """
+    Check whether all information is empty or zero for a faction
+    """
+    return faction_data['MissionPoints'] == 0 and faction_data['MissionPointsSecondary'] == 0 and \
+            faction_data['TradeProfit'] == 0 and faction_data['Bounties'] == 0 and faction_data['CartData'] == 0 and faction_data['ExoData'] == 0 and \
+            faction_data['CombatBonds'] == 0 and faction_data['MissionFailed'] == 0 and faction_data['Murdered'] == 0 and \
+            faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {}
+
+
 def display_data(title, data, tick_mode):
     """
     Display the data window, using either latest or previous data
@@ -546,6 +559,17 @@ def display_data(title, data, tick_mode):
     ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
     for i in data:
+        z = len(data[i][0]['Factions'])
+        zero_system_activity = True
+        for x in range(0, z):
+            update_faction_data(data[i][0]['Factions'][x])
+            if not is_faction_data_zero(data[i][0]['Factions'][x]):
+                zero_system_activity = False
+                break
+
+        if this.ShowZeroActivitySystems.get() == "No" and zero_system_activity:
+            continue
+
         tab = ttk.Frame(TabParent)
         # Make the second column (faction name) fill available space
         tab.columnconfigure(1, weight=1)
@@ -580,11 +604,8 @@ def display_data(title, data, tick_mode):
         ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=18, padx=2, pady=5, sticky=tk.EW)
 
         header_rows = 3
-        z = len(data[i][0]['Factions'])
 
         for x in range(0, z):
-            update_faction_data(data[i][0]['Factions'][x])
-
             EnableCheckbutton = ttk.Checkbutton(tab)
             EnableCheckbutton.grid(row=x + header_rows, column=0, sticky=tk.N, padx=2, pady=2)
             EnableCheckbutton.configure(command=partial(enable_faction_change, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, i, x))
@@ -949,6 +970,7 @@ def save_data():
     config.set('XLastTick', this.CurrentTick)
     config.set('XTickTime', this.TickTime)
     config.set('XStatus', this.Status.get())
+    config.set('XShowZeroActivity', this.ShowZeroActivitySystems.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
     config.set('XSecondaryInf', this.IncludeSecondaryInf.get())
     config.set('XDiscordWebhook', this.DiscordWebhook.get())
