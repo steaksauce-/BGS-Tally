@@ -4,11 +4,13 @@
 
 ### New Features:
 
-* Now track Exobiology data sold
+* Now track Exobiology data sold.
+* New setting to hide tabs for systems that have no BGS activity, default to show.
 
 ### Changes:
 
 * Bounty vouchers redeemed on Fleet Carriers now count only 50% of the value.
+* When plugin is launched for the very first time, default it to 'Enabled' so it's immediately active.
 
 
 ## v1.6.0 - 2021-10-03
