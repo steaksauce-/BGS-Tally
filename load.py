@@ -204,9 +204,7 @@ def plugin_app(parent):
     Title = tk.Label(this.frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo)
     Title.grid(row=0, column=0, sticky=tk.W)
     if version_tuple(this.GitVersion) > version_tuple(this.VersionNo):
-        title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
-        title2.grid(row=0, column=1, sticky=tk.W, )
-        title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/aussig/BGS-Tally/releases"))
+        HyperlinkLabel(this.frame, text="New version available", background=nb.Label().cget("background"), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
     tk.Button(this.frame, text='Latest BGS Tally', command=display_todaydata).grid(row=1, column=0, padx=3)
     tk.Button(this.frame, text='Previous BGS Tally', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
