@@ -4,13 +4,16 @@
 
 ### New Features:
 
+* Now track (and report) names of on-foot CZs fought at, automatically determine CZ Low / Med / High, and automatically increment counts. Note that we still can't determine whether you've won the CZ, so we count it as a **win** if you've fought there.
 * Now track Exobiology data sold.
-* New setting to hide tabs for systems that have no BGS activity, default to show.
+* New setting to show/hide tabs for systems that have no BGS activity, default to show.
 
 ### Changes:
 
 * Bounty vouchers redeemed on Fleet Carriers now count only 50% of the value.
+* Added scrollbar to Discord report.
 * When plugin is launched for the very first time, default it to 'Enabled' so it's immediately active.
+* Reorganisation and tidy up of settings panel, and add link to help pages.
 
 
 ## v1.6.0 - 2021-10-03

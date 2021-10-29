@@ -4,7 +4,7 @@ import os.path
 import sys
 import tkinter as tk
 import webbrowser
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from functools import partial
 from os import path
@@ -14,6 +14,7 @@ import myNotebook as nb
 import requests
 from config import appname, config
 from theme import theme
+from ttkHyperlinkLabel import HyperlinkLabel
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.6.0"
@@ -24,6 +25,15 @@ this.DataIndex = 0
 this.TickTime = ""
 this.State = tk.IntVar()
 this.MissionLog = []
+this.LastSettlementApproached = {}
+
+# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
+this.Status = None
+this.ShowZeroActivitySystems = None
+this.AbbreviateFactionNames = None
+this.IncludeSecondaryInf = None
+this.DiscordWebhook = None
+this.DiscordUsername = None
 
 # Conflict states, for determining whether we display the CZ UI and count conflict missions for factions in these states
 this.ConflictStates = [
@@ -55,14 +65,6 @@ this.MissionListConflict = [
     'Mission_OnFoot_Assassination_Covert_MB_name',
     'Mission_OnFoot_Onslaught_Offline_MB_name'
 ]
-
-# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
-this.Status = None
-this.ShowZeroActivitySystems = None
-this.AbbreviateFactionNames = None
-this.IncludeSecondaryInf = None
-this.DiscordWebhook = None
-this.DiscordUsername = None
 
 
 # This could also be returned from plugin_start3()
@@ -116,16 +118,18 @@ def plugin_prefs(parent, cmdr, is_beta):
     # Make the second column fill available space
     frame.columnconfigure(1, weight=1)
 
-    nb.Label(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo).grid(columnspan=2, padx=10, sticky=tk.W)
+    HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo, background=nb.Label().cget("background"), url="https://github.com/aussig/BGS-Tally/wiki", underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
     ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
     nb.Checkbutton(frame, text="BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=this.ShowZeroActivitySystems, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
-    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=6)
-    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=6)
-    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=7)
-    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=7)
+    nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=this.ShowZeroActivitySystems, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+    nb.Label(frame, text="Discord Settings").grid(column=0, padx=10, sticky=tk.W)
+    ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=9)
+    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
+    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
+    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
 
     return frame
 
@@ -167,9 +171,9 @@ def plugin_start3(plugin_dir):
     this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
-    this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default="Yes"))
-    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default="No"))
-    this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf", default="Yes"))
+    this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default=CheckStates.STATE_ON))
+    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default=CheckStates.STATE_OFF))
+    this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf", default=CheckStates.STATE_ON))
     this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
     this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
     this.DiscordCurrentMessageID = tk.StringVar(value=config.get_str("XDiscordCurrentMessageID"))
@@ -200,9 +204,7 @@ def plugin_app(parent):
     Title = tk.Label(this.frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo)
     Title.grid(row=0, column=0, sticky=tk.W)
     if version_tuple(this.GitVersion) > version_tuple(this.VersionNo):
-        title2 = tk.Label(this.frame, text="New version available", fg="blue", cursor="hand2")
-        title2.grid(row=0, column=1, sticky=tk.W, )
-        title2.bind("<Button-1>", lambda e: webbrowser.open_new("https://github.com/aussig/BGS-Tally/releases"))
+        HyperlinkLabel(this.frame, text="New version available", background=nb.Label().cget("background"), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
     tk.Button(this.frame, text='Latest BGS Tally', command=display_todaydata).grid(row=1, column=0, padx=3)
     tk.Button(this.frame, text='Previous BGS Tally', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
@@ -402,6 +404,67 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                         if entry['Faction'] == this.TodayData[y][0]['Factions'][z]['Faction']:
                             this.TodayData[y][0]['Factions'][z]['Murdered'] += 1
 
+    if entry['event'] == 'ApproachSettlement':
+        this.LastSettlementApproached = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'size': None}
+
+    if entry['event'] == 'FactionKillBond':
+        if this.LastSettlementApproached != {}:
+            timedifference = datetime.strptime(entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ') - datetime.strptime(this.LastSettlementApproached['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
+            if timedifference < timedelta(minutes=5):
+                # Bond issued within a short time after approaching settlement
+                system_factions = this.TodayData[this.DataIndex.get()][0]['Factions']
+                t = len(system_factions)
+                for z in range(0, t):
+                    if entry['AwardingFaction'] == system_factions[z]['Faction']:
+                        # Add settlement to this faction's list, if not already present
+                        if this.LastSettlementApproached['name'] not in system_factions[z]['GroundCZSettlements']:
+                            system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']] = {'count': 0, 'enabled': CheckStates.STATE_ON}
+
+                        # Store the previously counted size of this settlement
+                        previous_size = this.LastSettlementApproached['size']
+
+                        # Increment this settlement's overall count if this is the first bond counted
+                        if this.LastSettlementApproached['size'] == None:
+                            system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['count'] += 1
+
+                        # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on any kill, assuming we'll win the CZ! Also note that we re-calculate on every
+                        # kill because when a kill is made my multiple players in a team, the CBs are split. We just hope that at some point we'll make a solo kill which will
+                        # put this settlement into the correct CZ size category
+                        if entry['Reward'] < 5000:
+                            # Handle as 'Low' if this is the first CB
+                            if this.LastSettlementApproached['size'] == None:
+                                # Increment overall 'Low' count for this faction
+                                system_factions[z]['GroundCZ']['l'] = str(int(system_factions[z]['GroundCZ'].get('l', '0')) + 1)
+                                # Set faction settlement type
+                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'l'
+                                # Store last settlement type
+                                this.LastSettlementApproached['size'] = 'l'
+                        elif entry['Reward'] < 38000:
+                            # Handle as 'Med' if this is either the first CB or we've counted this settlement as a 'Low' before
+                            if this.LastSettlementApproached['size'] == None or this.LastSettlementApproached['size'] == 'l':
+                                # Increment overall 'Med' count for this faction
+                                system_factions[z]['GroundCZ']['m'] = str(int(system_factions[z]['GroundCZ'].get('m', '0')) + 1)
+                                # Decrement overall previous size count if we previously counted it
+                                if previous_size != None: system_factions[z]['GroundCZ'][previous_size] -= 1
+                                # Set faction settlement type
+                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'm'
+                                # Store last settlement type
+                                this.LastSettlementApproached['size'] = 'm'
+                        else:
+                            # Handle as 'High' if this is either the first CB or we've counted this settlement as a 'Low' or 'Med' before
+                            if this.LastSettlementApproached['size'] == None or this.LastSettlementApproached['size'] == 'l' or this.LastSettlementApproached['size'] == 'm':
+                                # Increment overall 'High' count for this faction
+                                system_factions[z]['GroundCZ']['h'] = str(int(system_factions[z]['GroundCZ'].get('h', '0')) + 1)
+                                # Decrement overall previous size count if we previously counted it
+                                if previous_size != None: system_factions[z]['GroundCZ'][previous_size] -= 1
+                                # Set faction settlement type
+                                system_factions[z]['GroundCZSettlements'][this.LastSettlementApproached['name']]['type'] = 'h'
+                                # Store last settlement type
+                                this.LastSettlementApproached['size'] = 'h'
+            else:
+                # Too long since we last approached a settlement, we can't be sure we're fighting at that settlement, clear down
+                this.LastSettlementApproached = {}
+
 
 def version_tuple(version):
     """
@@ -434,7 +497,7 @@ def get_new_faction_data(faction_name, faction_state):
             'MissionPoints': 0, 'MissionPointsSecondary': 0,
             'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
             'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-            'SpaceCZ': {}, 'GroundCZ': {}}
+            'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': {}}
 
 
 def update_faction_data(faction_data):
@@ -450,6 +513,7 @@ def update_faction_data(faction_data):
     if not 'MissionPointsSecondary' in faction_data: faction_data['MissionPointsSecondary'] = 0
     # From < v1.7.0 to 1.7.0
     if not 'ExoData' in faction_data: faction_data['ExoData'] = 0
+    if not 'GroundCZSettlements' in faction_data: faction_data['GroundCZSettlements'] = {}
 
 
 def is_faction_data_zero(faction_data):
@@ -459,7 +523,7 @@ def is_faction_data_zero(faction_data):
     return faction_data['MissionPoints'] == 0 and faction_data['MissionPointsSecondary'] == 0 and \
             faction_data['TradeProfit'] == 0 and faction_data['Bounties'] == 0 and faction_data['CartData'] == 0 and faction_data['ExoData'] == 0 and \
             faction_data['CombatBonds'] == 0 and faction_data['MissionFailed'] == 0 and faction_data['Murdered'] == 0 and \
-            faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {}
+            faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {} and faction_data['GroundCZSettlements'] == {}
 
 
 def display_data(title, data, tick_mode):
@@ -469,7 +533,7 @@ def display_data(title, data, tick_mode):
     heading_font = ("Helvetica", 11, 'bold')
     Form = tk.Toplevel(this.frame)
     Form.title("BGS Tally v" + this.VersionNo + " - " + title)
-    Form.geometry("1000x700")
+    Form.geometry("1200x800")
 
     ContainerFrame = ttk.Frame(Form)
     ContainerFrame.pack(fill=tk.BOTH, expand=1)
@@ -477,16 +541,23 @@ def display_data(title, data, tick_mode):
     TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
 
     DiscordFrame = ttk.Frame(ContainerFrame)
-    DiscordFrame.pack(fill=tk.X, padx=5, pady=5)
-    ttk.Label(DiscordFrame, text="Discord Report", font=heading_font).grid(row=0, column=0, pady=2, sticky=tk.W)
-    ttk.Label(DiscordFrame, text="Discord Options", font=heading_font).grid(row=0, column=1, pady=2, sticky=tk.W)
-    Discord = tk.Text(DiscordFrame, wrap = tk.WORD, height=17, font = ("Helvetica", 9))
-    Discord.grid(row=1, column=0, pady=5)
+    DiscordFrame.pack(fill=tk.BOTH, padx=5, pady=5)
+    ttk.Label(DiscordFrame, text="Discord Report", font=heading_font).grid(row=0, column=0, sticky=tk.W)
+    ttk.Label(DiscordFrame, text="Discord Options", font=heading_font).grid(row=0, column=1, sticky=tk.W)
+    ttk.Label(DiscordFrame, text="Double-check on-ground CZ tallies, sizes are not always correct", foreground='#f00').grid(row=1, column=0, columnspan=2, sticky=tk.W)
 
-    OptionsFrame = ttk.Frame(DiscordFrame)
-    OptionsFrame.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NW)
-    ttk.Checkbutton(OptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
-    ttk.Checkbutton(OptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
+    DiscordTextFrame = ttk.Frame(DiscordFrame)
+    DiscordTextFrame.grid(row=2, column=0, pady=5, sticky=tk.NSEW)
+    Discord = tk.Text(DiscordTextFrame, wrap=tk.WORD, height=14, font=("Helvetica", 9))
+    DiscordScroll = tk.Scrollbar(DiscordTextFrame, orient=tk.VERTICAL, command=Discord.yview)
+    Discord['yscrollcommand'] = DiscordScroll.set
+    DiscordScroll.pack(fill=tk.Y, side=tk.RIGHT)
+    Discord.pack(fill=tk.BOTH, side=tk.LEFT, expand=True)
+
+    DiscordOptionsFrame = ttk.Frame(DiscordFrame)
+    DiscordOptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
+    ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
+    ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
     for i in data:
         z = len(data[i][0]['Factions'])
@@ -497,7 +568,7 @@ def display_data(title, data, tick_mode):
                 zero_system_activity = False
                 break
 
-        if this.ShowZeroActivitySystems.get() == "No" and zero_system_activity:
+        if this.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and zero_system_activity:
             continue
 
         tab = ttk.Frame(TabParent)
@@ -537,42 +608,56 @@ def display_data(title, data, tick_mode):
 
         for x in range(0, z):
             EnableCheckbutton = ttk.Checkbutton(tab)
-            EnableCheckbutton.grid(row=x + header_rows, column=0, padx=2, pady=2)
+            EnableCheckbutton.grid(row=x + header_rows, column=0, sticky=tk.N, padx=2, pady=2)
             EnableCheckbutton.configure(command=partial(enable_faction_change, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, i, x))
             EnableCheckbutton.state(['selected', '!alternate'] if data[i][0]['Factions'][x]['Enabled'] == CheckStates.STATE_ON else ['!selected', '!alternate'])
             FactionEnableCheckbuttons.append(EnableCheckbutton)
-            FactionName = ttk.Label(tab, text=data[i][0]['Factions'][x]['Faction'])
-            FactionName.grid(row=x + header_rows, column=1, sticky=tk.W, padx=2, pady=2)
+
+            FactionNameFrame = ttk.Frame(tab)
+            FactionNameFrame.grid(row=x + header_rows, column=1, sticky=tk.NW)
+            FactionName = ttk.Label(FactionNameFrame, text=data[i][0]['Factions'][x]['Faction'])
+            FactionName.grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=2, pady=2)
             FactionName.bind("<Button-1>", partial(faction_name_clicked, EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, i, x))
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2)
+            settlement_row_index = 1
+            for settlement_name in data[i][0]['Factions'][x].get('GroundCZSettlements', {}):
+                SettlementCheckbutton = ttk.Checkbutton(FactionNameFrame)
+                SettlementCheckbutton.grid(row=settlement_row_index, column=0, padx=2, pady=2)
+                SettlementCheckbutton.configure(command=partial(enable_settlement_change, SettlementCheckbutton, settlement_name, Discord, data, i, x))
+                SettlementCheckbutton.state(['selected', '!alternate'] if data[i][0]['Factions'][x]['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON else ['!selected', '!alternate'])
+                SettlementName = ttk.Label(FactionNameFrame, text=f"{settlement_name} ({data[i][0]['Factions'][x]['GroundCZSettlements'][settlement_name]['type'].upper()})")
+                SettlementName.grid(row=settlement_row_index, column=1, sticky=tk.W, padx=2, pady=2)
+                SettlementName.bind("<Button-1>", partial(settlement_name_clicked, SettlementCheckbutton, settlement_name, Discord, data, i, x))
+                settlement_row_index += 1
+
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['FactionState']).grid(row=x + header_rows, column=2, sticky=tk.N)
             MissionPointsVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPoints'])
-            ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, padx=2, pady=2)
+            ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, sticky=tk.N, padx=2, pady=2)
             MissionPointsVar.trace('w', partial(mission_points_change, MissionPointsVar, True, Discord, data, i, x))
             if (data[i][0]['Factions'][x]['FactionState'] not in this.ConflictStates and data[i][0]['Factions'][x]['FactionState'] != 'Election'):
                 MissionPointsSecVar = tk.IntVar(value=data[i][0]['Factions'][x]['MissionPointsSecondary'])
-                ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, sticky=tk.N, padx=2, pady=2)
                 MissionPointsSecVar.trace('w', partial(mission_points_change, MissionPointsSecVar, False, Discord, data, i, x))
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=5)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=6)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=7)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['ExoData'])).grid(row=x + header_rows, column=8)
-            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=9)
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=10)
-            ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=11)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['TradeProfit'])).grid(row=x + header_rows, column=5, sticky=tk.N)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['Bounties'])).grid(row=x + header_rows, column=6, sticky=tk.N)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CartData'])).grid(row=x + header_rows, column=7, sticky=tk.N)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['ExoData'])).grid(row=x + header_rows, column=8, sticky=tk.N)
+            ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=9, sticky=tk.N)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=10, sticky=tk.N)
+            ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=11, sticky=tk.N)
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=12, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=12, sticky=tk.N, padx=2, pady=2)
                 CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=13, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=13, sticky=tk.N, padx=2, pady=2)
                 CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=14, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=14, sticky=tk.N, padx=2, pady=2)
                 CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=15, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=15, sticky=tk.N, padx=2, pady=2)
                 CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=16, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=16, sticky=tk.N, padx=2, pady=2)
                 CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=17, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=17, sticky=tk.N, padx=2, pady=2)
                 # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
                 CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
                 CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
@@ -620,7 +705,7 @@ def cz_change(CZVar, Discord, cz_type, data, system_index, faction_index, *args)
 
 def enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args):
     """
-    Callback  for when a Faction Enable Checkbutton is changed
+    Callback for when a Faction Enable Checkbutton is changed
     """
     data[system_index][0]['Factions'][faction_index]['Enabled'] = CheckStates.STATE_ON if FactionEnableCheckbuttons[faction_index].instate(['selected']) else CheckStates.STATE_OFF
     update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
@@ -641,6 +726,16 @@ def enable_all_factions_change(EnableAllCheckbutton, FactionEnableCheckbuttons, 
         else:
             FactionEnableCheckbuttons[x].state(['!selected'])
             data[system_index][0]['Factions'][x]['Enabled'] = CheckStates.STATE_OFF
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
+
+
+def enable_settlement_change(SettlementCheckbutton, settlement_name, Discord, data, system_index, faction_index, *args):
+    """
+    Callback for when a Settlement Enable Checkbutton is changed
+    """
+    data[system_index][0]['Factions'][faction_index]['GroundCZSettlements'][settlement_name]['enabled'] = CheckStates.STATE_ON if SettlementCheckbutton.instate(['selected']) else CheckStates.STATE_OFF
 
     Discord.delete('1.0', 'end-1c')
     Discord.insert(tk.INSERT, generate_discord_text(data))
@@ -668,12 +763,20 @@ def update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCh
 
 def faction_name_clicked(EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args):
     """
-    Callback when a faction name is clicked. Toggle enabled state. The EnableVar is watched, so that will
-    automatically trigger enable_faction_change() to update data and Discord text
+    Callback when a faction name is clicked. Toggle enabled state.
     """
     if EnableCheckbutton.instate(['selected']): EnableCheckbutton.state(['!selected'])
     else: EnableCheckbutton.state(['selected'])
     enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, Discord, data, system_index, faction_index, *args)
+
+
+def settlement_name_clicked(SettlementCheckbutton, settlement_name, Discord, data, system_index, faction_index, *args):
+    """
+    Callback when a settlement name is clicked. Toggle enabled state.
+    """
+    if SettlementCheckbutton.instate(['selected']): SettlementCheckbutton.state(['!selected'])
+    else: SettlementCheckbutton.state(['selected'])
+    enable_settlement_change(SettlementCheckbutton, settlement_name, Discord, data, system_index, faction_index, *args)
 
 
 def mission_points_change(MissionPointsVar, primary, Discord, data, system_index, faction_index, *args):
@@ -705,35 +808,40 @@ def generate_discord_text(data):
 
     for i in data:
         system_discord_text = ""
-        z = len(data[i][0]['Factions'])
+        system_factions = data[i][0]['Factions']
+        z = len(system_factions)
 
         for x in range(0, z):
-            if data[i][0]['Factions'][x]['Enabled'] != CheckStates.STATE_ON: continue
+            if system_factions[x]['Enabled'] != CheckStates.STATE_ON: continue
 
             faction_discord_text = ""
 
-            if data[i][0]['Factions'][x]['FactionState'] == 'Election':
-                faction_discord_text += f".ElectionINF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
-            elif data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates:
-                faction_discord_text += f".WarINF {data[i][0]['Factions'][x]['MissionPoints']}; " if data[i][0]['Factions'][x]['MissionPoints'] > 0 else ""
+            if system_factions[x]['FactionState'] == 'Election':
+                faction_discord_text += f".ElectionINF {system_factions[x]['MissionPoints']}; " if system_factions[x]['MissionPoints'] > 0 else ""
+            elif system_factions[x]['FactionState'] in this.ConflictStates:
+                faction_discord_text += f".WarINF {system_factions[x]['MissionPoints']}; " if system_factions[x]['MissionPoints'] > 0 else ""
             else:
-                inf = data[i][0]['Factions'][x]['MissionPoints']
-                if this.IncludeSecondaryInf.get() == "Yes": inf += data[i][0]['Factions'][x]['MissionPointsSecondary']
+                inf = system_factions[x]['MissionPoints']
+                if this.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += system_factions[x]['MissionPointsSecondary']
                 faction_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
 
-            faction_discord_text += f".BVs {human_format(data[i][0]['Factions'][x]['Bounties'])}; " if data[i][0]['Factions'][x]['Bounties'] != 0 else ""
-            faction_discord_text += f".CBs {human_format(data[i][0]['Factions'][x]['CombatBonds'])}; " if data[i][0]['Factions'][x]['CombatBonds'] != 0 else ""
-            faction_discord_text += f".Trade {human_format(data[i][0]['Factions'][x]['TradeProfit'])}; " if data[i][0]['Factions'][x]['TradeProfit'] != 0 else ""
-            faction_discord_text += f".Expl {human_format(data[i][0]['Factions'][x]['CartData'])}; " if data[i][0]['Factions'][x]['CartData'] != 0 else ""
-            faction_discord_text += f".Exo {human_format(data[i][0]['Factions'][x]['ExoData'])}; " if data[i][0]['Factions'][x]['ExoData'] != 0 else ""
-            faction_discord_text += f".Murders {data[i][0]['Factions'][x]['Murdered']}; " if data[i][0]['Factions'][x]['Murdered'] != 0 else ""
-            faction_discord_text += f".Fails {data[i][0]['Factions'][x]['MissionFailed']}; " if data[i][0]['Factions'][x]['MissionFailed'] != 0 else ""
-            space_cz = build_cz_text(data[i][0]['Factions'][x].get('SpaceCZ', {}), "SpaceCZs")
+            faction_discord_text += f".BVs {human_format(system_factions[x]['Bounties'])}; " if system_factions[x]['Bounties'] != 0 else ""
+            faction_discord_text += f".CBs {human_format(system_factions[x]['CombatBonds'])}; " if system_factions[x]['CombatBonds'] != 0 else ""
+            faction_discord_text += f".Trade {human_format(system_factions[x]['TradeProfit'])}; " if system_factions[x]['TradeProfit'] != 0 else ""
+            faction_discord_text += f".Expl {human_format(system_factions[x]['CartData'])}; " if system_factions[x]['CartData'] != 0 else ""
+            faction_discord_text += f".Exo {human_format(system_factions[x]['ExoData'])}; " if system_factions[x]['ExoData'] != 0 else ""
+            faction_discord_text += f".Murders {system_factions[x]['Murdered']}; " if system_factions[x]['Murdered'] != 0 else ""
+            faction_discord_text += f".Fails {system_factions[x]['MissionFailed']}; " if system_factions[x]['MissionFailed'] != 0 else ""
+            space_cz = build_cz_text(system_factions[x].get('SpaceCZ', {}), "SpaceCZs")
             faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
-            ground_cz = build_cz_text(data[i][0]['Factions'][x].get('GroundCZ', {}), "GroundCZs")
+            ground_cz = build_cz_text(system_factions[x].get('GroundCZ', {}), "GroundCZs")
             faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
-            faction_name = process_faction_name(data[i][0]['Factions'][x]['Faction'])
+            faction_name = process_faction_name(system_factions[x]['Faction'])
             system_discord_text += f"[{faction_name}] - {faction_discord_text}\n" if faction_discord_text != "" else ""
+
+            for settlement_name in system_factions[x].get('GroundCZSettlements', {}):
+                if system_factions[x]['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON:
+                    system_discord_text += f"  - {settlement_name} x {system_factions[x]['GroundCZSettlements'][settlement_name]['count']}\n"
 
         discord_text += f"```css\n{data[i][0]['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
 
@@ -744,7 +852,7 @@ def process_faction_name(faction_name):
     """
     Shorten the faction name if the user has chosen to
     """
-    if this.AbbreviateFactionNames.get() == "Yes":
+    if this.AbbreviateFactionNames.get() == CheckStates.STATE_ON:
         return ''.join(i[0] for i in faction_name.split())
     else:
         return faction_name
