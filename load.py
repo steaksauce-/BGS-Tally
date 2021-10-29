@@ -121,11 +121,11 @@ def plugin_prefs(parent, cmdr, is_beta):
     HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo, background=nb.Label().cget("background"), url="https://github.com/aussig/BGS-Tally/wiki", underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
     ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
     nb.Checkbutton(frame, text="BGS Tally Active", variable=this.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=this.ShowZeroActivitySystems, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=this.ShowZeroActivitySystems, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
     nb.Label(frame, text="Discord Settings").grid(column=0, padx=10, sticky=tk.W)
     ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
-    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
-    nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No").grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+    nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
     nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=9)
     nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
     nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
@@ -171,9 +171,9 @@ def plugin_start3(plugin_dir):
     this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
-    this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default="Yes"))
-    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default="No"))
-    this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf", default="Yes"))
+    this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default=CheckStates.STATE_ON))
+    this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default=CheckStates.STATE_OFF))
+    this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf", default=CheckStates.STATE_ON))
     this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
     this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
     this.DiscordCurrentMessageID = tk.StringVar(value=config.get_str("XDiscordCurrentMessageID"))
@@ -525,7 +525,7 @@ def is_faction_data_zero(faction_data):
     return faction_data['MissionPoints'] == 0 and faction_data['MissionPointsSecondary'] == 0 and \
             faction_data['TradeProfit'] == 0 and faction_data['Bounties'] == 0 and faction_data['CartData'] == 0 and faction_data['ExoData'] == 0 and \
             faction_data['CombatBonds'] == 0 and faction_data['MissionFailed'] == 0 and faction_data['Murdered'] == 0 and \
-            faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {}
+            faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {} and faction_data['GroundCZSettlements'] == {}
 
 
 def display_data(title, data, tick_mode):
@@ -558,8 +558,8 @@ def display_data(title, data, tick_mode):
 
     DiscordOptionsFrame = ttk.Frame(DiscordFrame)
     DiscordOptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
-    ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
-    ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue="Yes", offvalue="No", command=partial(option_change, Discord, data)).grid(sticky=tk.W)
+    ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
+    ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
     for i in data:
         z = len(data[i][0]['Factions'])
@@ -570,7 +570,7 @@ def display_data(title, data, tick_mode):
                 zero_system_activity = False
                 break
 
-        if this.ShowZeroActivitySystems.get() == "No" and zero_system_activity:
+        if this.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and zero_system_activity:
             continue
 
         tab = ttk.Frame(TabParent)
@@ -824,7 +824,7 @@ def generate_discord_text(data):
                 faction_discord_text += f".WarINF {system_factions[x]['MissionPoints']}; " if system_factions[x]['MissionPoints'] > 0 else ""
             else:
                 inf = system_factions[x]['MissionPoints']
-                if this.IncludeSecondaryInf.get() == "Yes": inf += system_factions[x]['MissionPointsSecondary']
+                if this.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += system_factions[x]['MissionPointsSecondary']
                 faction_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
 
             faction_discord_text += f".BVs {human_format(system_factions[x]['Bounties'])}; " if system_factions[x]['Bounties'] != 0 else ""
@@ -854,7 +854,7 @@ def process_faction_name(faction_name):
     """
     Shorten the faction name if the user has chosen to
     """
-    if this.AbbreviateFactionNames.get() == "Yes":
+    if this.AbbreviateFactionNames.get() == CheckStates.STATE_ON:
         return ''.join(i[0] for i in faction_name.split())
     else:
         return faction_name

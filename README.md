@@ -57,7 +57,7 @@ The following activities are automatically collected from your in-game activity:
 - Missions Failed for named Faction
 - Ships murdered owned by named Faction
 - Negative trade is counted with a minus sign in trade profit column
-- On-foot Conflict Zones ‡
+- On-foot Conflict Zones and settlement names fought at ‡
 
 _* The plugin tracks primary `INF` (for the mission giving faction) and secondary `INF` (for other factions) separately. Secondary `INF` can be excluded from reports if desired._
 
