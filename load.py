@@ -493,7 +493,7 @@ def get_new_faction_data(faction_name, faction_state):
     """
     Get a new data structure for storing faction data
     """
-    return {'Faction': faction_name, 'FactionState': faction_state,
+    return {'Faction': faction_name, 'FactionState': faction_state, 'Enabled': CheckStates.STATE_ON,
             'MissionPoints': 0, 'MissionPointsSecondary': 0,
             'TradeProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
             'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
@@ -566,7 +566,6 @@ def display_data(title, data, tick_mode):
             update_faction_data(data[i][0]['Factions'][x])
             if not is_faction_data_zero(data[i][0]['Factions'][x]):
                 zero_system_activity = False
-                break
 
         if this.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and zero_system_activity:
             continue
