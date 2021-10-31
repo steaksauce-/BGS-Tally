@@ -14,6 +14,7 @@
 * Added scrollbar to Discord report.
 * When plugin is launched for the very first time, default it to 'Enabled' so it's immediately active.
 * Reorganisation and tidy up of settings panel, and add link to help pages.
+* The Discord text field and fields in the settings panel now have right-click context menus to Copy, Paste etc.
 
 
 ## v1.6.0 - 2021-10-03
