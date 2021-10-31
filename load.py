@@ -127,9 +127,9 @@ def plugin_prefs(parent, cmdr, is_beta):
     nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
     nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=9)
-    nb.Entry(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
+    EntryPlus(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
     nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
-    nb.Entry(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
+    EntryPlus(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
 
     return frame
 
@@ -548,7 +548,7 @@ def display_data(title, data, tick_mode):
 
     DiscordTextFrame = ttk.Frame(DiscordFrame)
     DiscordTextFrame.grid(row=2, column=0, pady=5, sticky=tk.NSEW)
-    Discord = tk.Text(DiscordTextFrame, wrap=tk.WORD, height=14, font=("Helvetica", 9))
+    Discord = TextPlus(DiscordTextFrame, wrap=tk.WORD, height=14, font=("Helvetica", 9))
     DiscordScroll = tk.Scrollbar(DiscordTextFrame, orient=tk.VERTICAL, command=Discord.yview)
     Discord['yscrollcommand'] = DiscordScroll.set
     DiscordScroll.pack(fill=tk.Y, side=tk.RIGHT)
@@ -989,3 +989,59 @@ def save_data():
     file = os.path.join(this.Dir, "MissionLog.txt")
     with open(file, 'w') as outfile:
         json.dump(this.MissionLog, outfile)
+
+
+
+class EntryPlus(ttk.Entry):
+    """
+    Subclass of ttk.Entry to install a context-sensitive menu on right-click
+    """
+    def __init__(self, *args, **kwargs):
+        ttk.Entry.__init__(self, *args, **kwargs)
+        _rc_menu_install(self)
+        # overwrite default class binding so we don't need to return "break"
+        self.bind_class("Entry", "<Control-a>", self.event_select_all)
+        self.bind("<Button-3><ButtonRelease-3>", self.show_menu)
+
+    def event_select_all(self, *args):
+        self.focus_force()
+        self.selection_range(0, tk.END)
+
+    def show_menu(self, e):
+        self.menu.tk_popup(e.x_root, e.y_root)
+
+
+class TextPlus(tk.Text):
+    """
+    Subclass of tk.Text to install a context-sensitive menu on right-click
+    """
+    def __init__(self, *args, **kwargs):
+        tk.Text.__init__(self, *args, **kwargs)
+        _rc_menu_install(self)
+        # overwrite default class binding so we don't need to return "break"
+        self.bind_class("Text", "<Control-a>", self.event_select_all)
+        self.bind("<Button-3><ButtonRelease-3>", self.show_menu)
+
+    def event_select_all(self, *args):
+        self.focus_force()
+        self.tag_add("sel","1.0","end")
+
+    def show_menu(self, e):
+        self.menu.tk_popup(e.x_root, e.y_root)
+
+
+def _rc_menu_install(w):
+    """
+    Create a context sensitive menu for a text widget
+    """
+    w.menu = tk.Menu(w, tearoff=0)
+    w.menu.add_command(label="Cut")
+    w.menu.add_command(label="Copy")
+    w.menu.add_command(label="Paste")
+    w.menu.add_separator()
+    w.menu.add_command(label="Select all")
+
+    w.menu.entryconfigure("Cut", command=lambda: w.focus_force() or w.event_generate("<<Cut>>"))
+    w.menu.entryconfigure("Copy", command=lambda: w.focus_force() or w.event_generate("<<Copy>>"))
+    w.menu.entryconfigure("Paste", command=lambda: w.focus_force() or w.event_generate("<<Paste>>"))
+    w.menu.entryconfigure("Select all", command=w.event_select_all)
