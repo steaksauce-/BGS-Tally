@@ -1,10 +1,10 @@
 # Change Log
 
-## vx.x.x - xxxx-xx-xx
+## v1.7.0 - 2021-11-01
 
 ### New Features:
 
-* Now track (and report) names of on-foot CZs fought at, automatically determine CZ Low / Med / High, and automatically increment counts. Note that we still can't determine whether you've won the CZ, so we count it as a **win** if you've fought there.
+* Now track (and report) names of on-foot CZs fought at, automatically determine CZ Low / Med / High, and automatically increment counts. Note that we still can't determine whether you've actually _won_ the CZ, so we count it as a win if you've fought there.
 * Now track Exobiology data sold.
 * New setting to show/hide tabs for systems that have no BGS activity, default to show.
 
