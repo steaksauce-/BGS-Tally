@@ -1,5 +1,22 @@
 # Change Log
 
+## v1.7.0 - 2021-11-01
+
+### New Features:
+
+* Now track (and report) names of on-foot CZs fought at, automatically determine CZ Low / Med / High, and automatically increment counts. Note that we still can't determine whether you've actually _won_ the CZ, so we count it as a win if you've fought there.
+* Now track Exobiology data sold.
+* New setting to show/hide tabs for systems that have no BGS activity, default to show.
+
+### Changes:
+
+* Bounty vouchers redeemed on Fleet Carriers now count only 50% of the value.
+* Added scrollbar to Discord report.
+* When plugin is launched for the very first time, default it to 'Enabled' so it's immediately active.
+* Reorganisation and tidy up of settings panel, and add link to help pages.
+* The Discord text field and fields in the settings panel now have right-click context menus to Copy, Paste etc.
+
+
 ## v1.6.0 - 2021-10-03
 
 ### New Features:
@@ -11,7 +28,7 @@
 
 * Only count `War` or `Civilwar` missions for the originating faction (thanks @RichardCsiszarik for diagnosing and fixing this).
 
-### Changes
+### Changes:
 
 * Added on-foot scavenger missions and on-foot covert assassination missions to those that count when in `War` or `CivilWar` states.
 * Tweaks to window layouts and wording.
@@ -28,7 +45,7 @@ _* Note that the plugin only tracks primary and secondary INF from this version 
 * Now count and report certain mission types for factions in the `War` or `CivilWar` states, similarly to how some mission types in `Election` state are counted (gathering a full list of mission types that count when the faction is in conflict is still a work in progress).
 * If faction is in state `Election`, `War` or `CivilWar`, don't report fake +INF, instead state the number of election / war missions completed, to avoid confusion.
 
-### Changes
+### Changes:
 
 * Tweaks to window layouts and wording.
 

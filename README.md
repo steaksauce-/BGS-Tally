@@ -51,15 +51,19 @@ The following activities are automatically collected from your in-game activity:
 - Election / War / CivilWar mission count †
 - Total trade profit sold to Faction controlled station
 - Cartographic data sold to Faction controlled station
+- Exobiology data sold to Faction controlled station
 - Bounties issued by named Faction
 - Combat Bonds issued by named Faction
 - Missions Failed for named Faction
 - Ships murdered owned by named Faction
 - Negative trade is counted with a minus sign in trade profit column
+- On-foot Conflict Zones and settlement names fought at ‡
 
 _* The plugin tracks primary `INF` (for the mission giving faction) and secondary `INF` (for other factions) separately. Secondary `INF` can be excluded from reports if desired._
 
 _† The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported and the faction is in Elections, non-violent mission types are counted and reported. Similarly if no `INF` value is reported and the faction is at War or Civil War, violent mission types are counted and reported. Gathering a full list of mission types that count towards victory is still a work in progress. Note this may all be obsolete since Odyssey patch 7, as it now apparently reports +INF in all circumstances (yet to be fully confirmed)._
+
+_‡ The plugin will attempt to automatically determine the type of on-foot CZs and count them. However, there is no way of knowing whether you have won a CZ, so we assume you'll win and count the CZ if you fight there._
 
 The `State` column shows each faction state to give an indication on how missions are being counted.
 
@@ -67,7 +71,7 @@ All the above are totalled during the _Latest BGS Tally_ session and transfer to
 
 ## Manual Stuff
 
-The plugin also includes manual tracking of Combat Zones (CZs).  CZs are not included in Elite's Player Journal, so there is no way of automatically working out which CZs you have completed. There are fields for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
+The plugin also includes manual tracking of in-space Conflict Zones (CZs).  CZs are not included in Elite's Player Journal, so there is no way of automatically working out which CZs you have completed. There are fields for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
 
 
 # Discord Integration
