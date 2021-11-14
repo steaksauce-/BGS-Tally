@@ -241,6 +241,11 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if this.Status.get() != "Active":
         return
     if entry['event'] in EventList:  # get factions and populate today data
+        # Check for a new tick
+        if check_tick():
+            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
+            theme.update(this.frame)
+
         this.FactionNames = []
         this.FactionStates = []
         z = 0
@@ -283,10 +288,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
         this.StationType.set(entry['StationType'])  # set docked station type
-        # Check for a new tick
-        if check_tick():
-            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
-            theme.update(this.frame)
 
     if (entry['event'] == 'Location' or entry['event'] == 'StartUp') and entry['Docked'] == True:
         this.StationType.set(entry['StationType'])  # set docked station type
