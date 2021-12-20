@@ -37,21 +37,22 @@ The following activities are automatically collected from your in-game activity:
 - Primary Mission INF +++
 - Secondary Mission INF +++ *
 - Election / War / CivilWar mission count †
-- Total trade profit sold to Faction controlled station
+- Total trade profit sold to Faction controlled station; negative trade is counted with a minus sign in trade profit column
 - Cartographic data sold to Faction controlled station
-- Exobiology data sold to Faction controlled station
+- Exobiology data sold to Faction controlled station ‡
 - Bounties issued by named Faction
 - Combat Bonds issued by named Faction
 - Missions Failed for named Faction
 - Ships murdered owned by named Faction
-- Negative trade is counted with a minus sign in trade profit column
-- On-foot Conflict Zones and settlement names fought at ‡
+- On-foot Conflict Zones and settlement names fought at ¶
 
-_* The plugin tracks primary `INF` (for the mission giving faction) and secondary `INF` (for other factions) separately. Secondary `INF` can be excluded from reports if desired._
+<span style="font-size:0.75em;">_* The plugin tracks primary `INF` (for the mission giving faction) and secondary `INF` (for other factions) separately. Secondary `INF` can be excluded from reports if desired._</span>
 
-_† The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported and the faction is in Elections, non-violent mission types are counted and reported. Similarly if no `INF` value is reported and the faction is at War or Civil War, violent mission types are counted and reported. Gathering a full list of mission types that count towards victory is still a work in progress. Note this may all be obsolete since Odyssey patch 7, as it now apparently reports +INF in all circumstances (yet to be fully confirmed)._
+<span style="font-size:0.75em;">_† The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported and the faction is in Elections, non-violent mission types are counted and reported. Similarly if no `INF` value is reported and the faction is at War or Civil War, violent mission types are counted and reported. Gathering a full list of mission types that count towards victory is still a work in progress. Note this may all be obsolete since Odyssey patch 7, as it now apparently reports +INF in all circumstances (yet to be fully confirmed)._</span>
 
-_‡ The plugin will attempt to automatically determine the type of on-foot CZs and count them. However, there is no way of knowing whether you have won a CZ, so we assume you'll win and count the CZ if you fight there._
+<span style="font-size:0.75em;">_‡ Exobiology data is not currently thought to have any impact on the BGS, but it's reported for reference and future-proofing._</span>
+
+<span style="font-size:0.75em;">_¶ The plugin will attempt to automatically determine the type of on-foot CZs and count them. However, there is no way of knowing whether you have won a CZ, so we assume you'll win and count the CZ if you fight there._</span>
 
 ## Manual Stuff
 
