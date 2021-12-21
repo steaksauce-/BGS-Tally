@@ -1,5 +1,12 @@
 # Change Log
 
+## v1.7.1 - 2021-12-21
+
+### Bug Fixes:
+
+* Fix plugin failure if tick happens while in-game, and you try to hand in BGS work before jumping to another system.
+
+
 ## v1.7.0 - 2021-11-01
 
 ### New Features:
