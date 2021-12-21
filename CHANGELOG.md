@@ -1,6 +1,6 @@
 # Change Log
 
-## vx.x.x - xxxx-xx-xx
+## v1.7.1 - 2021-12-21
 
 ### Bug Fixes:
 
