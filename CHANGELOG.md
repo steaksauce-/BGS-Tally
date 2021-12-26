@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Bug Fixes:
+
+* Never track on-foot CZs when in Horizons, to help reduce false positives.
 
 
 ## v1.7.1 - 2021-12-21

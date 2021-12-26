@@ -406,10 +406,11 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                             this.TodayData[y][0]['Factions'][z]['Murdered'] += 1
 
     if entry['event'] == 'ApproachSettlement':
-        this.LastSettlementApproached = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'size': None}
+        if state['Odyssey']:
+            this.LastSettlementApproached = {'timestamp': entry['timestamp'], 'name': entry['Name'], 'size': None}
 
     if entry['event'] == 'FactionKillBond':
-        if this.LastSettlementApproached != {}:
+        if state['Odyssey'] and this.LastSettlementApproached != {}:
             timedifference = datetime.strptime(entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ') - datetime.strptime(this.LastSettlementApproached['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
             if timedifference < timedelta(minutes=5):
                 # Bond issued within a short time after approaching settlement
