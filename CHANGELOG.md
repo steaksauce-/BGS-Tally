@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes:
+
+* Faction name abbreviations are slightly better when dealing with numbers, as they are no longer abbreviated. For example `Nobles of LTT 420` is now shortened to `NoL420` instead of `NoL4`.
 
 
 ## v1.7.1 - 2021-12-21

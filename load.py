@@ -853,7 +853,7 @@ def process_faction_name(faction_name):
     Shorten the faction name if the user has chosen to
     """
     if this.AbbreviateFactionNames.get() == CheckStates.STATE_ON:
-        return ''.join(i[0] for i in faction_name.split())
+        return ''.join((i if i.isnumeric() else i[0]) for i in faction_name.split())
     else:
         return faction_name
 
