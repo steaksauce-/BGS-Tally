@@ -240,7 +240,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
         this.FactionNames = []
         this.FactionStates = []
-        z = 0
+        z = 0; conflicts = 0
         try:
             test = entry['Factions']
         except KeyError:
@@ -250,6 +250,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 this.FactionNames.append(i['Name'])
                 this.FactionStates.append({'Faction': i['Name'], 'State': i['FactionState']})
                 z += 1
+                if i['FactionState'] in this.ConflictStates: conflicts += 1
+
         x = len(this.TodayData)
         if (x >= 1):
             for y in range(1, x + 1):
@@ -267,7 +269,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             this.DataIndex.set(x + 1)
             z = len(this.FactionNames)
             for i in range(0, z):
-                this.TodayData[x + 1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State']))
+                # If there is just a single faction in conflict, this is a game bug, override faction state to None in this circumstance
+                this.TodayData[x + 1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State'] if conflicts != 1 else 'None'))
         else:
             # No systems yet, create the first system entry
             this.TodayData = {
@@ -275,7 +278,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             z = len(this.FactionNames)
             this.DataIndex.set(1)
             for i in range(0, z):
-                this.TodayData[1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State']))
+                # If there is just a single faction in conflict, this is a game bug, override faction state to None in this circumstance
+                this.TodayData[1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State'] if conflicts != 1 else 'None'))
 
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
