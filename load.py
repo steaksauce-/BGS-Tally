@@ -23,7 +23,6 @@ this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
 this.TickTime = ""
-this.State = tk.IntVar()
 this.MissionLog = []
 this.LastSettlementApproached = {}
 
@@ -134,13 +133,6 @@ def plugin_prefs(parent, cmdr, is_beta):
     return frame
 
 
-def prefs_changed(cmdr, is_beta):
-    """
-    Save settings.
-    """
-    this.StatusLabel["text"] = this.Status.get()
-
-
 def plugin_start3(plugin_dir):
     """
     Load this plugin into EDMC
@@ -209,7 +201,7 @@ def plugin_app(parent):
     tk.Button(this.frame, text='Previous BGS Tally', command=display_yesterdaydata).grid(row=1, column=1, padx=3)
     tk.Label(this.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
-    this.StatusLabel = tk.Label(this.frame, text=this.Status.get()).grid(row=2, column=1, sticky=tk.W)
+    this.StatusLabel = tk.Label(this.frame, textvariable=this.Status).grid(row=2, column=1, sticky=tk.W)
     this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
     return this.frame
 

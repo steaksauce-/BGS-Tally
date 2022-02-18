@@ -5,6 +5,8 @@
 ### Bug Fixes:
 
 * Never track on-foot CZs when in Horizons, to help reduce false positives.
+* Fix exception being thrown when closing EDMC settings panel.
+
 
 ### Changes:
 
