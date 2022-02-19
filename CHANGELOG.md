@@ -2,6 +2,10 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* Now track Black Market trading separately to normal trading.
+
 ### Bug Fixes:
 
 * Never track on-foot CZs when in Horizons, to help reduce false positives.
