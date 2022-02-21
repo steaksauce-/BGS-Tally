@@ -5,6 +5,7 @@
 ### New Features:
 
 * Now track Black Market trading separately to normal trading.
+* Now track trade purchases at all markets, as buying commodities now affacts the BGS since Odyssey update 10.
 
 ### Bug Fixes:
 
