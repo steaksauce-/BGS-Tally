@@ -1,5 +1,24 @@
 # Change Log
 
+## v1.8.0 - 2022-02-23
+
+### New Features:
+
+* Now track Black Market trading separately to normal trading.
+* Now track trade purchases at all markets, as buying commodities now affacts the BGS since Odyssey update 10.
+
+### Bug Fixes:
+
+* Never track on-foot CZs when in Horizons, to help reduce false positives.
+* Fix error being thrown to the log when closing EDMC settings panel.
+* Add workaround for game bug where factions are incorrectly reported at war - if only a single faction is reported at war in a system, ignore the war.
+
+### Changes:
+
+* Faction name abbreviations are slightly better when dealing with numbers, as they are no longer abbreviated. For example `Nobles of LTT 420` is now shortened to `NoL420` instead of `NoL4`.
+* Layout tweaks to the columns in the report windows.
+
+
 ## v1.7.1 - 2021-12-21
 
 ### Bug Fixes:
