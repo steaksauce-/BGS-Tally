@@ -1,6 +1,6 @@
 # Change Log
 
-## vx.x.x - xxxx-xx-xx
+## v1.8.0 - 2022-02-23
 
 ### New Features:
 
@@ -10,7 +10,7 @@
 ### Bug Fixes:
 
 * Never track on-foot CZs when in Horizons, to help reduce false positives.
-* Fix exception being thrown when closing EDMC settings panel.
+* Fix error being thrown to the log when closing EDMC settings panel.
 * Add workaround for game bug where factions are incorrectly reported at war - if only a single faction is reported at war in a system, ignore the war.
 
 ### Changes:
