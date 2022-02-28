@@ -37,9 +37,11 @@ The following activities are automatically collected from your in-game activity:
 - Primary Mission INF +++
 - Secondary Mission INF +++ *
 - Election / War / CivilWar mission count †
-- Total trade profit sold to Faction controlled station; negative trade is counted with a minus sign in trade profit column
-- Cartographic data sold to Faction controlled station
-- Exobiology data sold to Faction controlled station ‡
+- Total trade purchases
+- Total trade profit; negative trade is counted with a minus sign in trade profit column
+- Black Market trade profit; negative trade is counted with a minus sign in black market trade profit column
+- Cartographic data
+- Exobiology data ‡
 - Bounties issued by named Faction
 - Combat Bonds issued by named Faction
 - Missions Failed for named Faction
