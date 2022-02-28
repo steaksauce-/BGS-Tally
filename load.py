@@ -260,7 +260,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                     this.DataIndex.set(y)
                     z = len(this.TodayData[y][0]['Factions'])
                     for i in range(0, z):
-                        update_faction_data(this.TodayData[y][0]['Factions'][i])
+                        update_faction_data(this.TodayData[y][0]['Factions'][i], this.FactionStates[i]['State'])
                     return
 
             # System not present, add a new system entry
@@ -508,10 +508,13 @@ def get_new_faction_data(faction_name, faction_state):
             'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': {}}
 
 
-def update_faction_data(faction_data):
+def update_faction_data(faction_data, faction_state = None):
     """
     Update faction data structure for elements not present in previous versions of plugin
     """
+    # Update faction state as it can change at any time post-tick
+    if faction_state: faction_data['FactionState'] = faction_state
+
     # From < v1.2.0 to 1.2.0
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
