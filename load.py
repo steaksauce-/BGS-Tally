@@ -11,6 +11,7 @@ from os import path
 from tkinter import ttk
 
 import myNotebook as nb
+import plug
 import requests
 from config import appname, config
 from theme import theme
@@ -18,15 +19,18 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.8.0"
+this.GitVersion = "0.0.0"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
-this.TickTime = ""
 this.MissionLog = []
 this.LastSettlementApproached = {}
 
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
+this.TickTime = None
+this.CurrentTick = None
+this.LastTick = None
 this.Status = None
 this.ShowZeroActivitySystems = None
 this.AbbreviateFactionNames = None
@@ -160,6 +164,7 @@ def plugin_start3(plugin_dir):
     if path.exists(file):
         with open(file) as json_file:
             this.MissionLog = json.load(json_file)
+    this.CurrentTick = tk.StringVar(value="")
     this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
@@ -173,12 +178,15 @@ def plugin_start3(plugin_dir):
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
-    response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
-    latest = response.json()
-    this.GitVersion = latest['tag_name']
-    check_tick()
 
-    return "BGS Tally"
+    version_success = check_version()
+    tick_success = check_tick()
+
+    if tick_success == None:
+        # Cannot continue if we couldn't fetch a tick
+        raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
+    else:
+        return plugin_name
 
 
 def plugin_stop():
@@ -202,25 +210,50 @@ def plugin_app(parent):
     tk.Label(this.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, textvariable=this.Status).grid(row=2, column=1, sticky=tk.W)
-    this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
+    this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
     return this.frame
+
+
+def check_version():
+    """
+    Check for a new plugin version
+    """
+    try:
+        response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest', timeout=10)  # check latest version
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"Unable to fetch latest plugin version", exc_info=e)
+        plug.show_error(f"BGS-Tally: Unable to fetch latest plugin version")
+        return None
+    else:
+        latest = response.json()
+        this.GitVersion = latest['tag_name']
+
+    return True
 
 
 def check_tick():
     """
     Tick check and counter reset
     """
-    response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
-    tick = response.json()
-    this.CurrentTick = tick[0]['_id']
-    this.TickTime = tick[0]['time']
-    if this.LastTick.get() != this.CurrentTick:
-        this.LastTick.set(this.CurrentTick)
-        this.YesterdayData = this.TodayData
-        this.TodayData = {}
-        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
-        this.DiscordCurrentMessageID.set('')
-        return True
+    try:
+        response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks', timeout=10)  # get current tick and reset if changed
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Unable to fetch latest tick from elitebgs.app", exc_info=e)
+        plug.show_error(f"BGS-Tally: Unable to fetch latest tick from elitebgs.app")
+        return None
+    else:
+        tick = response.json()
+        this.CurrentTick.set(tick[0]['_id'])
+        this.TickTime.set(tick[0]['time'])
+        if this.LastTick.get() != this.CurrentTick.get():
+            this.LastTick.set(this.CurrentTick.get())
+            this.YesterdayData = this.TodayData
+            this.TodayData = {}
+            this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+            this.DiscordCurrentMessageID.set('')
+            return True
 
     return False
 
@@ -235,7 +268,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry['event'] in EventList:  # get factions and populate today data
         # Check for a new tick
         if check_tick():
-            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
+            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
             theme.update(this.frame)
 
         this.FactionNames = []
@@ -990,8 +1023,8 @@ def save_data():
     """
     Save all data structures
     """
-    config.set('XLastTick', this.CurrentTick)
-    config.set('XTickTime', this.TickTime)
+    config.set('XLastTick', this.CurrentTick.get())
+    config.set('XTickTime', this.TickTime.get())
     config.set('XStatus', this.Status.get())
     config.set('XShowZeroActivity', this.ShowZeroActivitySystems.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
