@@ -1008,7 +1008,7 @@ def is_webhook_valid():
     """
     Do a basic check on the user specified Discord webhook
     """
-    return this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/')
+    return this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://discordapp.com/api/webhooks/')
 
 
 def tick_format(ticktime):

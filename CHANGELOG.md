@@ -4,8 +4,9 @@
 
 ### Bug Fixes:
 
-* If a faction state changed post-tick, this was not spotted by the plugin if you have already visited the system since the tick. Most noticeable case was when a war starts if you were already in the system - no CZ tallies or manual controls appeared.
+* If a faction state changed post-tick, this was not spotted by the plugin if you have already visited the system since the tick. Most noticeable case was when a war starts if you were already in the system - no CZ tallies or manual controls appeared. This is fixed.
 * Better handling of network failures (when plugin version checking and tick checking).
+* Now accepts Discord webhooks that start with either https://discordapp.com/api/webhooks/ or https://discord.com/api/webhooks/
 
 
 ## v1.8.0 - 2022-02-23
