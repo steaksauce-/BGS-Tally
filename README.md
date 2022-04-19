@@ -58,7 +58,7 @@ The following activities are automatically collected from your in-game activity:
 
 ## Manual Stuff
 
-The plugin also includes manual tracking of in-space Conflict Zones (CZs).  CZs are not included in Elite's Player Journal, so there is no way of automatically working out which CZs you have completed. There are fields for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
+The plugin also includes manual tracking of in-space Conflict Zones (CZs) and Megaship / Space Installation Scenarios.  Neither of these are included in Elite's Player Journal, so there is no way of automatically working out whether Scenarios or CZs have been fought at. There are fields for Scenarios and for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
 
 
 # Your Personal Activity and Privacy
