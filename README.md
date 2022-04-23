@@ -28,37 +28,10 @@ The plugin generates Discord-ready text for copying-and-pasting manually into Di
 
 # What is Tracked
 
-The plugin includes both automatic and manual tracking of data. All automatic and manual data is totalled during the _Latest Tick Data_ session and transferred to _Earlier Tick Data_ at server tick.
+The plugin includes both automatic and manual tracking of BGS activity data.
 
-## Automatic Stuff
-
-The following activities are automatically collected from your in-game activity:
-
-- Primary Mission INF +++
-- Secondary Mission INF +++ *
-- Election / War / CivilWar mission count †
-- Total trade purchases
-- Total trade profit; negative trade is counted with a minus sign in trade profit column
-- Black Market trade profit; negative trade is counted with a minus sign in black market trade profit column
-- Cartographic data
-- Exobiology data ‡
-- Bounties issued by named Faction
-- Combat Bonds issued by named Faction
-- Missions Failed for named Faction
-- Ships murdered owned by named Faction
-- On-foot Conflict Zones and settlement names fought at ¶
-
-<span style="font-size:0.75em;">_* The plugin tracks primary `INF` (for the mission giving faction) and secondary `INF` (for other factions) separately. Secondary `INF` can be excluded from reports if desired._</span>
-
-<span style="font-size:0.75em;">_† The plugin will honor `INF` values if they are present for completed missions in the player journal. However, if no `INF` value is reported and the faction is in Elections, non-violent mission types are counted and reported. Similarly if no `INF` value is reported and the faction is at War or Civil War, violent mission types are counted and reported. Gathering a full list of mission types that count towards victory is still a work in progress. Note this may all be obsolete since Odyssey patch 7, as it now apparently reports +INF in all circumstances (yet to be fully confirmed)._</span>
-
-<span style="font-size:0.75em;">_‡ Exobiology data is not currently thought to have any impact on the BGS, but it's reported for reference and future-proofing._</span>
-
-<span style="font-size:0.75em;">_¶ The plugin will attempt to automatically determine the type of on-foot CZs and count them. However, there is no way of knowing whether you have won a CZ, so we assume you'll win and count the CZ if you fight there._</span>
-
-## Manual Stuff
-
-The plugin also includes manual tracking of in-space Conflict Zones (CZs) and Megaship / Space Installation Scenarios.  Neither of these are included in Elite's Player Journal, so there is no way of automatically working out whether Scenarios or CZs have been fought at. There are fields for Scenarios and for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
+* For a basic summary of what is tracked, see the **[Home Page of the wiki &rarr;](https://github.com/aussig/BGS-Tally/wiki#it-tracks-bgs-activity)**.
+* For more detail, see the **[Activity Window section in the wiki &rarr;](https://github.com/aussig/BGS-Tally/wiki/Use#activity-window)**.
 
 
 # Your Personal Activity and Privacy
