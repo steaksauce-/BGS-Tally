@@ -610,7 +610,10 @@ def display_data(title, data, tick_mode):
     ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
     ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
-    for i in data:
+    # Create a list of integer indexes into the data object, sorted by System name
+    sorted_data_indexes = sorted(data, key=lambda x: data[x][0]['System'])
+
+    for i in sorted_data_indexes:
         z = len(data[i][0]['Factions'])
         zero_system_activity = True
         for x in range(0, z):
