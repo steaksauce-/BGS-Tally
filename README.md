@@ -37,9 +37,11 @@ The following activities are automatically collected from your in-game activity:
 - Primary Mission INF +++
 - Secondary Mission INF +++ *
 - Election / War / CivilWar mission count †
-- Total trade profit sold to Faction controlled station; negative trade is counted with a minus sign in trade profit column
-- Cartographic data sold to Faction controlled station
-- Exobiology data sold to Faction controlled station ‡
+- Total trade purchases
+- Total trade profit; negative trade is counted with a minus sign in trade profit column
+- Black Market trade profit; negative trade is counted with a minus sign in black market trade profit column
+- Cartographic data
+- Exobiology data ‡
 - Bounties issued by named Faction
 - Combat Bonds issued by named Faction
 - Missions Failed for named Faction
@@ -56,7 +58,7 @@ The following activities are automatically collected from your in-game activity:
 
 ## Manual Stuff
 
-The plugin also includes manual tracking of in-space Conflict Zones (CZs).  CZs are not included in Elite's Player Journal, so there is no way of automatically working out which CZs you have completed. There are fields for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
+The plugin also includes manual tracking of in-space Conflict Zones (CZs) and Megaship / Space Installation Scenarios.  Neither of these are included in Elite's Player Journal, so there is no way of automatically working out whether Scenarios or CZs have been fought at. There are fields for Scenarios and for each category of CZ that you can manually change, and these values are incorporated into the Discord text report.
 
 
 # Your Personal Activity and Privacy

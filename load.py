@@ -11,6 +11,7 @@ from os import path
 from tkinter import ttk
 
 import myNotebook as nb
+import plug
 import requests
 from config import appname, config
 from theme import theme
@@ -18,15 +19,18 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.8.0"
+this.GitVersion = "0.0.0"
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
-this.TickTime = ""
 this.MissionLog = []
 this.LastSettlementApproached = {}
 
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
+this.TickTime = None
+this.CurrentTick = None
+this.LastTick = None
 this.Status = None
 this.ShowZeroActivitySystems = None
 this.AbbreviateFactionNames = None
@@ -160,6 +164,7 @@ def plugin_start3(plugin_dir):
     if path.exists(file):
         with open(file) as json_file:
             this.MissionLog = json.load(json_file)
+    this.CurrentTick = tk.StringVar(value="")
     this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
     this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
@@ -173,12 +178,15 @@ def plugin_start3(plugin_dir):
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
-    response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest')  # check latest version
-    latest = response.json()
-    this.GitVersion = latest['tag_name']
-    check_tick()
 
-    return "BGS Tally"
+    version_success = check_version()
+    tick_success = check_tick()
+
+    if tick_success == None:
+        # Cannot continue if we couldn't fetch a tick
+        raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
+    else:
+        return plugin_name
 
 
 def plugin_stop():
@@ -202,25 +210,50 @@ def plugin_app(parent):
     tk.Label(this.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, textvariable=this.Status).grid(row=2, column=1, sticky=tk.W)
-    this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
+    this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
     return this.frame
+
+
+def check_version():
+    """
+    Check for a new plugin version
+    """
+    try:
+        response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest', timeout=10)  # check latest version
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"Unable to fetch latest plugin version", exc_info=e)
+        plug.show_error(f"BGS-Tally: Unable to fetch latest plugin version")
+        return None
+    else:
+        latest = response.json()
+        this.GitVersion = latest['tag_name']
+
+    return True
 
 
 def check_tick():
     """
     Tick check and counter reset
     """
-    response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks')  # get current tick and reset if changed
-    tick = response.json()
-    this.CurrentTick = tick[0]['_id']
-    this.TickTime = tick[0]['time']
-    if this.LastTick.get() != this.CurrentTick:
-        this.LastTick.set(this.CurrentTick)
-        this.YesterdayData = this.TodayData
-        this.TodayData = {}
-        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
-        this.DiscordCurrentMessageID.set('')
-        return True
+    try:
+        response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks', timeout=10)  # get current tick and reset if changed
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Unable to fetch latest tick from elitebgs.app", exc_info=e)
+        plug.show_error(f"BGS-Tally: Unable to fetch latest tick from elitebgs.app")
+        return None
+    else:
+        tick = response.json()
+        this.CurrentTick.set(tick[0]['_id'])
+        this.TickTime.set(tick[0]['time'])
+        if this.LastTick.get() != this.CurrentTick.get():
+            this.LastTick.set(this.CurrentTick.get())
+            this.YesterdayData = this.TodayData
+            this.TodayData = {}
+            this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+            this.DiscordCurrentMessageID.set('')
+            return True
 
     return False
 
@@ -235,7 +268,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry['event'] in EventList:  # get factions and populate today data
         # Check for a new tick
         if check_tick():
-            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime)).grid(row=3, column=1, sticky=tk.W)
+            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
             theme.update(this.frame)
 
         this.FactionNames = []
@@ -260,7 +293,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                     this.DataIndex.set(y)
                     z = len(this.TodayData[y][0]['Factions'])
                     for i in range(0, z):
-                        update_faction_data(this.TodayData[y][0]['Factions'][i])
+                        update_faction_data(this.TodayData[y][0]['Factions'][i], this.FactionStates[i]['State'])
                     return
 
             # System not present, add a new system entry
@@ -505,13 +538,16 @@ def get_new_faction_data(faction_name, faction_state):
             'MissionPoints': 0, 'MissionPointsSecondary': 0,
             'TradeProfit': 0, 'TradePurchase': 0, 'BlackMarketProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
             'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-            'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': {}}
+            'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': {}, 'Scenarios': 0}
 
 
-def update_faction_data(faction_data):
+def update_faction_data(faction_data, faction_state = None):
     """
     Update faction data structure for elements not present in previous versions of plugin
     """
+    # Update faction state as it can change at any time post-tick
+    if faction_state: faction_data['FactionState'] = faction_state
+
     # From < v1.2.0 to 1.2.0
     if not 'SpaceCZ' in faction_data: faction_data['SpaceCZ'] = {}
     if not 'GroundCZ' in faction_data: faction_data['GroundCZ'] = {}
@@ -525,6 +561,8 @@ def update_faction_data(faction_data):
     # From < v1.8.0 to 1.8.0
     if not 'BlackMarketProfit' in faction_data: faction_data['BlackMarketProfit'] = 0
     if not 'TradePurchase' in faction_data: faction_data['TradePurchase'] = 0
+    # From < v1.9.0 to 1.9.0
+    if not 'Scenarios' in faction_data: faction_data['Scenarios'] = 0
 
 
 def is_faction_data_zero(faction_data):
@@ -535,7 +573,8 @@ def is_faction_data_zero(faction_data):
             faction_data['TradeProfit'] == 0 and faction_data['TradePurchase'] == 0 and faction_data['BlackMarketProfit'] == 0 and \
             faction_data['Bounties'] == 0 and faction_data['CartData'] == 0 and faction_data['ExoData'] == 0 and \
             faction_data['CombatBonds'] == 0 and faction_data['MissionFailed'] == 0 and faction_data['Murdered'] == 0 and \
-            faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {} and faction_data['GroundCZSettlements'] == {}
+            faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {} and faction_data['GroundCZSettlements'] == {} and \
+            faction_data['Scenarios'] == 0
 
 
 def display_data(title, data, tick_mode):
@@ -609,15 +648,16 @@ def display_data(title, data, tick_mode):
         ttk.Label(tab, text="CBs", font=heading_font).grid(row=0, column=11, padx=2, pady=2)
         ttk.Label(tab, text="Fails", font=heading_font).grid(row=0, column=12, padx=2, pady=2)
         ttk.Label(tab, text="Murders", font=heading_font).grid(row=0, column=13, padx=2, pady=2)
-        ttk.Label(tab, text="Space CZs", font=heading_font, anchor=tk.CENTER).grid(row=0, column=14, columnspan=3, padx=2)
-        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=14, padx=2, pady=2)
-        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
-        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=16, padx=2, pady=2)
-        ttk.Label(tab, text="On-foot CZs", font=heading_font, anchor=tk.CENTER).grid(row=0, column=17, columnspan=3, padx=2)
-        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=17, padx=2, pady=2)
-        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=18, padx=2, pady=2)
-        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=19, padx=2, pady=2)
-        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=20, padx=2, pady=5, sticky=tk.EW)
+        ttk.Label(tab, text="Scens", font=heading_font).grid(row=0, column=14, padx=2, pady=2)
+        ttk.Label(tab, text="Space CZs", font=heading_font, anchor=tk.CENTER).grid(row=0, column=15, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=16, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=17, padx=2, pady=2)
+        ttk.Label(tab, text="On-foot CZs", font=heading_font, anchor=tk.CENTER).grid(row=0, column=18, columnspan=3, padx=2)
+        ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=18, padx=2, pady=2)
+        ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=19, padx=2, pady=2)
+        ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=20, padx=2, pady=2)
+        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=21, padx=2, pady=5, sticky=tk.EW)
 
         header_rows = 3
 
@@ -661,20 +701,23 @@ def display_data(title, data, tick_mode):
             ttk.Label(tab, text=human_format(data[i][0]['Factions'][x]['CombatBonds'])).grid(row=x + header_rows, column=11, sticky=tk.N)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['MissionFailed']).grid(row=x + header_rows, column=12, sticky=tk.N)
             ttk.Label(tab, text=data[i][0]['Factions'][x]['Murdered']).grid(row=x + header_rows, column=13, sticky=tk.N)
+            ScenariosVar = tk.IntVar(value=data[i][0]['Factions'][x]['Scenarios'])
+            ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=ScenariosVar).grid(row=x + header_rows, column=14, sticky=tk.N, padx=2, pady=2)
+            ScenariosVar.trace('w', partial(scenarios_change, ScenariosVar, Discord, data, i, x))
 
             if (data[i][0]['Factions'][x]['FactionState'] in this.ConflictStates):
                 CZSpaceLVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=14, sticky=tk.N, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=15, sticky=tk.N, padx=2, pady=2)
                 CZSpaceMVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=15, sticky=tk.N, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceMVar).grid(row=x + header_rows, column=16, sticky=tk.N, padx=2, pady=2)
                 CZSpaceHVar = tk.StringVar(value=data[i][0]['Factions'][x]['SpaceCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=16, sticky=tk.N, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceHVar).grid(row=x + header_rows, column=17, sticky=tk.N, padx=2, pady=2)
                 CZGroundLVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('l', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=17, sticky=tk.N, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundLVar).grid(row=x + header_rows, column=18, sticky=tk.N, padx=2, pady=2)
                 CZGroundMVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('m', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=18, sticky=tk.N, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundMVar).grid(row=x + header_rows, column=19, sticky=tk.N, padx=2, pady=2)
                 CZGroundHVar = tk.StringVar(value=data[i][0]['Factions'][x]['GroundCZ'].get('h', '0'))
-                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=19, sticky=tk.N, padx=2, pady=2)
+                ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=20, sticky=tk.N, padx=2, pady=2)
                 # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
                 CZSpaceLVar.trace('w', partial(cz_change, CZSpaceLVar, Discord, CZs.SPACE_LOW, data, i, x))
                 CZSpaceMVar.trace('w', partial(cz_change, CZSpaceMVar, Discord, CZs.SPACE_MED, data, i, x))
@@ -809,6 +852,16 @@ def mission_points_change(MissionPointsVar, primary, Discord, data, system_index
     Discord.insert(tk.INSERT, generate_discord_text(data))
 
 
+def scenarios_change(ScenariosVar, Discord, data, system_index, faction_index, *args):
+    """
+    Callback (set as a variable trace) for when the scenarios Variable is changed
+    """
+    data[system_index][0]['Factions'][faction_index]['Scenarios'] = ScenariosVar.get()
+
+    Discord.delete('1.0', 'end-1c')
+    Discord.insert(tk.INSERT, generate_discord_text(data))
+
+
 def option_change(Discord, data):
     """
     Callback when one of the Discord options is changed
@@ -850,6 +903,7 @@ def generate_discord_text(data):
             faction_discord_text += f".Expl {human_format(system_factions[x]['CartData'])}; " if system_factions[x]['CartData'] != 0 else ""
             faction_discord_text += f".Exo {human_format(system_factions[x]['ExoData'])}; " if system_factions[x]['ExoData'] != 0 else ""
             faction_discord_text += f".Murders {system_factions[x]['Murdered']}; " if system_factions[x]['Murdered'] != 0 else ""
+            faction_discord_text += f".Scenarios {system_factions[x]['Scenarios']}; " if system_factions[x]['Scenarios'] != 0 else ""
             faction_discord_text += f".Fails {system_factions[x]['MissionFailed']}; " if system_factions[x]['MissionFailed'] != 0 else ""
             space_cz = build_cz_text(system_factions[x].get('SpaceCZ', {}), "SpaceCZs")
             faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
@@ -972,6 +1026,7 @@ def is_webhook_valid():
     """
     Do a basic check on the user specified Discord webhook
     """
+
     return this.DiscordWebhook.get().startswith('https://discordapp.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://ptb.discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://canary.discord.com/api/webhooks/')
 
 
@@ -987,8 +1042,8 @@ def save_data():
     """
     Save all data structures
     """
-    config.set('XLastTick', this.CurrentTick)
-    config.set('XTickTime', this.TickTime)
+    config.set('XLastTick', this.CurrentTick.get())
+    config.set('XTickTime', this.TickTime.get())
     config.set('XStatus', this.Status.get())
     config.set('XShowZeroActivity', this.ShowZeroActivitySystems.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
