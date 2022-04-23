@@ -2,7 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes:
 
+* Now use an automated GitHub action to build the zip file on every new release.
 
 
 ## v1.9.0 - 2022-04-23
@@ -17,7 +19,7 @@
 * Better handling of network failures (when plugin version checking and tick checking).
 * Now accepts Discord webhooks that reference more domains: `discord.com`, `discordapp.com`, `ptb.discord.com`, `canary.discord.com`. This was stopping the _Post to Discord_ button from appearing for some users (thank you @Sakurax64 for this fix).
 
-### Changes
+### Changes:
 
 * Simplified the `README`, moving more information into the wiki.
 
