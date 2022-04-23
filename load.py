@@ -18,7 +18,7 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "1.8.0"
+this.VersionNo = "1.9.0"
 this.GitVersion = "0.0.0"
 this.FactionNames = []
 this.TodayData = {}
