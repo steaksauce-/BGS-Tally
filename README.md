@@ -14,11 +14,7 @@ Full instructions for **installation and use are [here in the wiki &rarr;](https
 
 # Updating from a Previous Version
 
-The plugin writes your activity to three files in the _BGS-Tally_ folder, so if you want it to keep your progress, before replacing your old _BGS-Tally_ folder with the new one,  move these three files across from old to new:
-
-1. `Today.txt`
-2. `Yesterday.txt`
-3. `MissionLog.txt`
+Full instructions for **upgrading from a previous version are [here in the wiki &rarr;](https://github.com/aussig/BGS-Tally/wiki/Upgrade)**.
 
 
 # Discord Integration
