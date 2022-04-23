@@ -2,7 +2,10 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
 
+* Tabs for systems are now sorted alphabetically by name.
+* Now use scrollable tabs and a drop-down tab selector.
 
 
 ## v1.9.0 - 2022-04-23

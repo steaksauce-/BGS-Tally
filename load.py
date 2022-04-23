@@ -17,6 +17,8 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+from ScrollableNotebook import *
+
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.9.0"
 this.GitVersion = "0.0.0"
@@ -588,7 +590,8 @@ def display_data(title, data, tick_mode):
 
     ContainerFrame = ttk.Frame(Form)
     ContainerFrame.pack(fill=tk.BOTH, expand=1)
-    TabParent = ttk.Notebook(ContainerFrame)
+    TabParent=ScrollableNotebook(ContainerFrame, wheelscroll=False, tabmenu=True)
+    #TabParent = ttk.Notebook(ContainerFrame)
     TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
 
     DiscordFrame = ttk.Frame(ContainerFrame)
@@ -730,6 +733,8 @@ def display_data(title, data, tick_mode):
                 CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
 
         update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
+
+        tab.pack_forget()
 
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
