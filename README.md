@@ -2,7 +2,7 @@
 
 [![CodeQL](https://github.com/aussig/BGS-Tally/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/aussig/BGS-Tally/actions/workflows/codeql-analysis.yml)
 [![GitHub Latest Version](https://img.shields.io/github/v/release/aussig/BGS-Tally)](https://github.com/aussig/BGS-Tally/releases/latest)
-[![Github All Releases](https://img.shields.io/github/downloads/aussig/BGS-Tally/total.svg)]()
+[![Github All Releases](https://img.shields.io/github/downloads/aussig/BGS-Tally/total.svg)](https://github.com/aussig/BGS-Tally/releases/latest)
 
 A tool to track and report your Background Simulation (BGS) activity in Elite Dangerous, implemented as an [EDMC](https://github.com/EDCD/EDMarketConnector) plugin. BGS Tally counts all the BGS work you do for any faction, in any system.
 
