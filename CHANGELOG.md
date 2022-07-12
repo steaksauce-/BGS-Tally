@@ -2,6 +2,11 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* Tabs for systems are now sorted alphabetically by name, prioritising systems that have any BGS activity first.
+* Now use scrollable tabs and a drop-down tab selector.
+
 ### Changes:
 
 * Now use an automated GitHub action to build the zip file on every new release.
