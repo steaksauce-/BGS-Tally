@@ -613,18 +613,23 @@ def display_data(title, data, tick_mode):
     ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
     ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
-    # Create a list of integer indexes into the data object, sorted by System name
-    sorted_data_indexes = sorted(data, key=lambda x: data[x][0]['System'])
-
-    for i in sorted_data_indexes:
+    # Calculate whether each system has had any activity and store in data structure
+    for i in data:
         z = len(data[i][0]['Factions'])
-        zero_system_activity = True
+        data[i][0]['zero_system_activity'] = True
         for x in range(0, z):
             update_faction_data(data[i][0]['Factions'][x])
             if not is_faction_data_zero(data[i][0]['Factions'][x]):
-                zero_system_activity = False
+                data[i][0]['zero_system_activity'] = False
+                break
 
-        if this.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and zero_system_activity:
+    # Create a list of integer indexes into the data object, sorted by System name, prioritising systems with activity first
+    sorted_data_indexes = sorted(data, key=lambda x: ("1_" if data[x][0]['zero_system_activity'] else "0_") + data[x][0]['System'])
+
+    for i in sorted_data_indexes:
+        z = len(data[i][0]['Factions'])
+
+        if this.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and data[i][0]['zero_system_activity']:
             continue
 
         tab = ttk.Frame(TabParent)
