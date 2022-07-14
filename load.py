@@ -295,7 +295,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                     this.DataIndex.set(y)
                     z = len(this.TodayData[y][0]['Factions'])
                     for i in range(0, z):
-                        update_faction_data(this.TodayData[y][0]['Factions'][i], this.FactionStates[i]['State'])
+                        # If there is just a single faction in conflict, this is a game bug, override faction state to None in this circumstance
+                        update_faction_data(this.TodayData[y][0]['Factions'][i], this.FactionStates[i]['State'] if conflicts != 1 else 'None')
                     return
 
             # System not present, add a new system entry
