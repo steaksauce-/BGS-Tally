@@ -44,6 +44,9 @@ this.DiscordUsername = None
 this.ConflictStates = [
     'War', 'CivilWar'
 ]
+this.ElectionStates = [
+    'Election'
+]
 
 # Missions that we count as +1 INF in Elections even if the Journal reports no +INF
 this.MissionListElection = [
@@ -285,7 +288,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 this.FactionNames.append(i['Name'])
                 this.FactionStates.append({'Faction': i['Name'], 'State': i['FactionState']})
                 z += 1
-                if i['FactionState'] in this.ConflictStates: conflicts += 1
+                if i['FactionState'] in this.ConflictStates or i['FactionState'] in this.ElectionStates: conflicts += 1
 
         x = len(this.TodayData)
         if (x >= 1):

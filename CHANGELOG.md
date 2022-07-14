@@ -13,7 +13,7 @@
 
 ### Bug Fixes:
 
-* Add another workaround for game bug where factions are incorrectly reported at war - if only a single faction is reported at war in a system, ignore the war.
+* Workaround for game bug where factions are incorrectly reported at war (if only a single faction is reported at war in a system, ignore the war) now works for elections too.
 
 
 ## v1.9.0 - 2022-04-23
