@@ -11,6 +11,10 @@
 
 * Now use an automated GitHub action to build the zip file on every new release.
 
+### Bug Fixes:
+
+* Add another workaround for game bug where factions are incorrectly reported at war - if only a single faction is reported at war in a system, ignore the war.
+
 
 ## v1.9.0 - 2022-04-23
 
