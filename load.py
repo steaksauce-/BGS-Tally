@@ -286,7 +286,9 @@ def check_overlay():
             logger.info(f"EDMCOverlay is running")
             return True
     else:
-        # Couldn't load edmcoverlay python lib
+        # Couldn't load edmcoverlay python lib, the plugin probably isn't installed
+        logger.error(f"EDMCOverlay plugin is not installed", exc_info=e)
+        plug.show_error(f"BGS-Tally: EDMCOverlay plugin is not installed")
         return False
 
 
