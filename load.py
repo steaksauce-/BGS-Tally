@@ -3,7 +3,6 @@ import logging
 import os.path
 import sys
 import tkinter as tk
-import webbrowser
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import partial
@@ -11,6 +10,11 @@ from os import path
 from tkinter import ttk
 
 import myNotebook as nb
+try:
+    from EDMCOverlay import edmcoverlay
+except ImportError:
+    edmcoverlay = None
+
 import plug
 import requests
 from config import appname, config
@@ -22,6 +26,7 @@ from ScrollableNotebook import *
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.9.0"
 this.GitVersion = "0.0.0"
+this.Overlay = None
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -186,12 +191,13 @@ def plugin_start3(plugin_dir):
 
     version_success = check_version()
     tick_success = check_tick()
+    overlay_success = check_overlay()
 
     if tick_success == None:
         # Cannot continue if we couldn't fetch a tick
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
-    else:
-        return plugin_name
+
+    return plugin_name
 
 
 def plugin_stop():
@@ -261,6 +267,27 @@ def check_tick():
             return True
 
     return False
+
+
+def check_overlay():
+    """
+    Overlay check
+    """
+    if edmcoverlay:
+        try:
+            this.Overlay = edmcoverlay.Overlay()
+            this.Overlay.send_message("bgstallystart", "BGSTally Ready", "yellow", 30, 185, ttl=6)
+        except Exception as e:
+            logger.error(f"EDMCOverlay is not running", exc_info=e)
+            plug.show_error(f"BGS-Tally: EDMCOverlay is not running")
+            this.Overlay = None
+            return False
+        else:
+            logger.info(f"EDMCOverlay is running")
+            return True
+    else:
+        # Couldn't load edmcoverlay python lib
+        return False
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
