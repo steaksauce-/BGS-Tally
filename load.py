@@ -276,7 +276,8 @@ def check_overlay():
     if edmcoverlay:
         try:
             this.Overlay = edmcoverlay.Overlay()
-            this.Overlay.send_message("bgstallystart", "BGSTally Ready", "yellow", 30, 185, ttl=6)
+            this.Overlay.send_shape("bgstallyrect", "rect", "red", "blue", 20, 180, 100, 25, ttl=10)
+            this.Overlay.send_message("bgstallystart", "BGSTally Ready", "yellow", 30, 185, ttl=10)
         except Exception as e:
             logger.error(f"EDMCOverlay is not running", exc_info=e)
             plug.show_error(f"BGS-Tally: EDMCOverlay is not running")
@@ -287,7 +288,7 @@ def check_overlay():
             return True
     else:
         # Couldn't load edmcoverlay python lib, the plugin probably isn't installed
-        logger.error(f"EDMCOverlay plugin is not installed", exc_info=e)
+        logger.error(f"EDMCOverlay plugin is not installed")
         plug.show_error(f"BGS-Tally: EDMCOverlay plugin is not installed")
         return False
 
