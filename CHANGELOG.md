@@ -4,8 +4,7 @@
 
 ### New Features:
 
-* Tabs for systems are now sorted alphabetically by name, prioritising systems that have any BGS activity first.
-* Now use scrollable tabs and a drop-down tab selector.
+* Now use scrollable tabs and a drop-down tab selector. Tabs for systems are sorted alphabetically by name, prioritising systems that have any BGS activity first.
 
 ### Changes:
 
