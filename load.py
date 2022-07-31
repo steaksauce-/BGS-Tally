@@ -1029,9 +1029,12 @@ def post_to_discord(Form, Discord, tick_mode):
     if tick_mode == Ticks.TICK_CURRENT: discord_message_id = this.DiscordCurrentMessageID
     else: discord_message_id = this.DiscordPreviousMessageID
 
+    utc_time_now = datetime.utcnow().strftime("%H:%M:%S %A %d %B (in-game time)")
+
     if discord_message_id.get() == '' or discord_message_id.get() == None:
         # No previous post
         if discord_text != '':
+            discord_text += f"```yaml\n# Posted at: {utc_time_now}```"
             url = this.DiscordWebhook.get()
             response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
             if response.ok:
@@ -1044,6 +1047,7 @@ def post_to_discord(Form, Discord, tick_mode):
     else:
         # Previous post, amend or delete it
         if discord_text != '':
+            discord_text += f"```yaml\n# Updated at: {utc_time_now}```"
             url = f"{this.DiscordWebhook.get()}/messages/{discord_message_id.get()}"
             response = requests.patch(url=url, data={'content': discord_text, 'username': this.DiscordUsername.get()})
             if not response.ok:
