@@ -17,6 +17,7 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+import bgstally.fleetcarrier
 from ScrollableNotebook import *
 
 this = sys.modules[__name__]  # For holding module globals
@@ -38,7 +39,11 @@ this.ShowZeroActivitySystems = None
 this.AbbreviateFactionNames = None
 this.IncludeSecondaryInf = None
 this.DiscordWebhook = None
+this.DiscordFCJumpWebhook = None
 this.DiscordUsername = None
+
+# Class instances
+this.FleetCarrier = None
 
 # Conflict states, for determining whether we display the CZ UI and count conflict missions for factions in these states
 this.ConflictStates = [
@@ -134,10 +139,12 @@ def plugin_prefs(parent, cmdr, is_beta):
     ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
     nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
     nb.Checkbutton(frame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
-    nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=9)
+    nb.Label(frame, text="Discord BGS Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=9)
     EntryPlus(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
-    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
-    EntryPlus(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
+    nb.Label(frame, text="Discord FC Jump Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=10)
+    EntryPlus(frame, textvariable=this.DiscordFCJumpWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=10)
+    nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=11)
+    EntryPlus(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=11)
 
     return frame
 
@@ -177,12 +184,17 @@ def plugin_start3(plugin_dir):
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default=CheckStates.STATE_OFF))
     this.IncludeSecondaryInf = tk.StringVar(value=config.get_str("XSecondaryInf", default=CheckStates.STATE_ON))
     this.DiscordWebhook = tk.StringVar(value=config.get_str("XDiscordWebhook"))
+    this.DiscordFCJumpWebhook = tk.StringVar(value=config.get_str("XDiscordFCJumpWebhook"))
     this.DiscordUsername = tk.StringVar(value=config.get_str("XDiscordUsername"))
     this.DiscordCurrentMessageID = tk.StringVar(value=config.get_str("XDiscordCurrentMessageID"))
     this.DiscordPreviousMessageID = tk.StringVar(value=config.get_str("XDiscordPreviousMessageID"))
     this.DataIndex = tk.IntVar(value=config.get_int("xIndex"))
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
+
+    # Classes
+    this.FleetCarrier = bgstally.fleetcarrier.FleetCarrier(logger)
+    post_to_fcjump_discord()
 
     version_success = check_version()
     tick_success = check_tick()
@@ -319,6 +331,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             for i in range(0, z):
                 # If there is just a single faction in conflict, this is a game bug, override faction state to None in this circumstance
                 this.TodayData[1][0]['Factions'].append(get_new_faction_data(this.FactionNames[i], this.FactionStates[i]['State'] if conflicts != 1 else 'None'))
+
 
     if entry['event'] == 'Docked':  # enter system and faction named
         this.StationFaction.set(entry['StationFaction']['Name'])  # set controlling faction name
@@ -751,7 +764,7 @@ def display_data(title, data, tick_mode):
     Discord.focus()
 
     ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(copy_to_clipboard, ContainerFrame, Discord)).pack(side=tk.LEFT, padx=5, pady=5)
-    if is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(post_to_discord, ContainerFrame, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
+    if is_bgs_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(post_to_bgs_discord, ContainerFrame, Discord, tick_mode)).pack(side=tk.RIGHT, padx=5, pady=5)
 
     theme.update(ContainerFrame)
 
@@ -987,11 +1000,11 @@ def copy_to_clipboard(Form, Discord):
     Form.update()
 
 
-def post_to_discord(Form, Discord, tick_mode):
+def post_to_bgs_discord(Form, Discord, tick_mode):
     """
     Get all text from the Discord field and post it to the webhook
     """
-    if not is_webhook_valid(): return
+    if not is_bgs_webhook_valid(): return
 
     discord_text = Discord.get('1.0', 'end-1c').strip()
 
@@ -1039,12 +1052,44 @@ def post_to_discord(Form, Discord, tick_mode):
                 logger.error(f"Unable to delete previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
 
-def is_webhook_valid():
+def post_to_fcjump_discord():
+    """
+    Get all text from the Discord field and post it to the webhook
+    """
+    if not is_fcjump_webhook_valid(): return
+
+    discord_text = this.FleetCarrier.get_formatted_materials()
+    logger.info(discord_text)
+
+    # Try to post new message instead
+    url = this.DiscordFCJumpWebhook.get()
+    response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
+    if not response.ok:
+        logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+
+
+def is_webhook_valid(webhook):
+    """
+    Do a basic check on a user specified Discord webhook
+    """
+    return webhook.startswith('https://discordapp.com/api/webhooks/') \
+        or webhook.startswith('https://discord.com/api/webhooks/') \
+        or webhook.startswith('https://ptb.discord.com/api/webhooks/') \
+        or webhook.startswith('https://canary.discord.com/api/webhooks/')
+
+
+def is_bgs_webhook_valid():
     """
     Do a basic check on the user specified Discord webhook
     """
+    return is_webhook_valid(this.DiscordWebhook.get())
 
-    return this.DiscordWebhook.get().startswith('https://discordapp.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://ptb.discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://canary.discord.com/api/webhooks/')
+
+def is_fcjump_webhook_valid():
+    """
+    Do a basic check on the user specified Discord webhook
+    """
+    return is_webhook_valid(this.DiscordFCJumpWebhook.get())
 
 
 def tick_format(ticktime):
@@ -1066,6 +1111,7 @@ def save_data():
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
     config.set('XSecondaryInf', this.IncludeSecondaryInf.get())
     config.set('XDiscordWebhook', this.DiscordWebhook.get())
+    config.set('XDiscordFCJumpWebhook', this.DiscordFCJumpWebhook.get())
     config.set('XDiscordUsername', this.DiscordUsername.get())
     config.set('XDiscordCurrentMessageID', this.DiscordCurrentMessageID.get())
     config.set('XDiscordPreviousMessageID', this.DiscordPreviousMessageID.get())
