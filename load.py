@@ -1017,7 +1017,7 @@ def post_to_discord(Form, Discord, tick_mode):
     else:
         # Previous post, amend or delete it
         if discord_text != '':
-            discord_text += f"```yaml\n# Updated at: {utc_time_now}```"
+            discord_text += f"```diff\n+ Updated at: {utc_time_now}```"
             url = f"{this.DiscordWebhook.get()}/messages/{discord_message_id.get()}"
             response = requests.patch(url=url, data={'content': discord_text, 'username': this.DiscordUsername.get()})
             if not response.ok:
