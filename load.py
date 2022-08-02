@@ -1004,7 +1004,7 @@ def post_to_discord(Form, Discord, tick_mode):
     if discord_message_id.get() == '' or discord_message_id.get() == None:
         # No previous post
         if discord_text != '':
-            discord_text += f"```yaml\n# Posted at: {utc_time_now}```"
+            discord_text += f"```md\n# Posted at: {utc_time_now}```" # Blue text instead of gray
             url = this.DiscordWebhook.get()
             response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
             if response.ok:
