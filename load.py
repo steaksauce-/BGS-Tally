@@ -10,17 +10,13 @@ from os import path
 from tkinter import ttk
 
 import myNotebook as nb
-try:
-    from EDMCOverlay import edmcoverlay
-except ImportError:
-    edmcoverlay = None
-
 import plug
 import requests
 from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+import bgstally.overlay
 from ScrollableNotebook import *
 
 this = sys.modules[__name__]  # For holding module globals
@@ -189,9 +185,13 @@ def plugin_start3(plugin_dir):
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
 
+    # Classes
+    this.Overlay = bgstally.overlay.Overlay(logger)
+
     version_success = check_version()
     tick_success = check_tick()
-    overlay_success = check_overlay()
+    overlay_success = this.Overlay.check_overlay()
+
 
     if tick_success == None:
         # Cannot continue if we couldn't fetch a tick
@@ -267,30 +267,6 @@ def check_tick():
             return True
 
     return False
-
-
-def check_overlay():
-    """
-    Overlay check
-    """
-    if edmcoverlay:
-        try:
-            this.Overlay = edmcoverlay.Overlay()
-            this.Overlay.send_shape("bgstallyrect", "rect", "red", "blue", 20, 180, 100, 25, ttl=10)
-            this.Overlay.send_message("bgstallystart", "BGSTally Ready", "yellow", 30, 185, ttl=10)
-        except Exception as e:
-            logger.error(f"EDMCOverlay is not running", exc_info=e)
-            plug.show_error(f"BGS-Tally: EDMCOverlay is not running")
-            this.Overlay = None
-            return False
-        else:
-            logger.info(f"EDMCOverlay is running")
-            return True
-    else:
-        # Couldn't load edmcoverlay python lib, the plugin probably isn't installed
-        logger.error(f"EDMCOverlay plugin is not installed")
-        plug.show_error(f"BGS-Tally: EDMCOverlay plugin is not installed")
-        return False
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
