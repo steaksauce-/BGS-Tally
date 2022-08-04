@@ -187,8 +187,7 @@ def plugin_start3(plugin_dir):
     this.tick = Tick(logger, config)
 
     version_success = check_version()
-    tick_success = this.tick.check_tick()
-    overlay_success = this.overlay.check_overlay()
+    tick_success = this.tick.fetch_tick()
 
     if tick_success == None:
         # Cannot continue if we couldn't fetch a tick
@@ -198,6 +197,8 @@ def plugin_start3(plugin_dir):
         this.TodayData = {}
         this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
         this.DiscordCurrentMessageID.set('')
+
+    this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
 
     return plugin_name
 
@@ -254,7 +255,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         return
     if entry['event'] in EventList:  # get factions and populate today data
         # Check for a new tick
-        if this.tick.check_tick():
+        if this.tick.fetch_tick():
             this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
             this.YesterdayData = this.TodayData
             this.TodayData = {}

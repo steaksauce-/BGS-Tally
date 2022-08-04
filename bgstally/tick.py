@@ -1,4 +1,3 @@
-import tkinter as tk
 from datetime import datetime
 
 import plug
@@ -14,7 +13,7 @@ class Tick:
         self.load()
 
 
-    def check_tick(self):
+    def fetch_tick(self):
         """
         Tick check and counter reset
         """
@@ -58,4 +57,4 @@ class Tick:
         Return a formatted tick date/time
         """
         datetime_object = datetime.strptime(self.tick_time, '%Y-%m-%dT%H:%M:%S.%fZ')
-        return datetime_object.strftime("%H:%M:%S UTC %A %d %B")
+        return datetime_object.strftime("%H:%M:%S %A %d %B")
