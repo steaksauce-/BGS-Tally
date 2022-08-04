@@ -3,7 +3,6 @@ import logging
 import os.path
 import sys
 import tkinter as tk
-import webbrowser
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import partial
@@ -17,11 +16,13 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+import bgstally.overlay
 from ScrollableNotebook import *
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.9.0"
 this.GitVersion = "0.0.0"
+this.Overlay = None
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
@@ -184,14 +185,19 @@ def plugin_start3(plugin_dir):
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
 
+    # Classes
+    this.Overlay = bgstally.overlay.Overlay(logger)
+
     version_success = check_version()
     tick_success = check_tick()
+    overlay_success = this.Overlay.check_overlay()
+
 
     if tick_success == None:
         # Cannot continue if we couldn't fetch a tick
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
-    else:
-        return plugin_name
+
+    return plugin_name
 
 
 def plugin_stop():
