@@ -218,8 +218,10 @@ def plugin_app(parent):
     Create a frame for the EDMC main window
     """
     this.frame = tk.Frame(parent)
-    Title = tk.Label(this.frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo)
-    Title.grid(row=0, column=0, sticky=tk.W)
+    TitleLabel = tk.Label(this.frame, text="BGS Tally (Aussi)")
+    TitleLabel.grid(row=0, column=0, sticky=tk.W)
+    TitleVersion = tk.Label(this.frame, text="v" + this.VersionNo)
+    TitleVersion.grid(row=0, column=1, sticky=tk.W)
     if version_tuple(this.GitVersion) > version_tuple(this.VersionNo):
         HyperlinkLabel(this.frame, text="New version available", background=nb.Label().cget("background"), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
     tk.Button(this.frame, text='Latest BGS Tally', command=display_todaydata).grid(row=1, column=0, padx=3)
@@ -1101,7 +1103,7 @@ def tick_format(ticktime):
     Format the tick date/time
     """
     datetime_object = datetime.strptime(ticktime, '%Y-%m-%dT%H:%M:%S.%fZ')
-    return datetime_object.strftime("%H:%M:%S UTC %A %d %B")
+    return datetime_object.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def save_data():
