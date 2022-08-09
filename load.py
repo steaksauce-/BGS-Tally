@@ -18,19 +18,21 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.overlay import Overlay
 from bgstally.tick import Tick
-from ScrollableNotebook import *
+from ScrollableNotebook import ScrollableNotebook
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.9.0"
 this.GitVersion = "0.0.0"
-this.overlay = None
-this.tick = None
 this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
 this.MissionLog = []
 this.LastSettlementApproached = {}
+
+# Our Class instances
+this.overlay = None
+this.tick = None
 
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
 this.Status = None
