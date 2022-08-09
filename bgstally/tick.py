@@ -1,8 +1,12 @@
+import random
+import string
 from datetime import datetime
 
 import plug
 import requests
 
+DATETIME_FORMAT_ELITEBGS = "%Y-%m-%dT%H:%M:%S.%fZ"
+DATETIME_FORMAT_DISPLAY = "%H:%M:%S %A %d %B"
 
 class Tick:
     def __init__(self, logger, config):
@@ -36,6 +40,15 @@ class Tick:
         return False
 
 
+    def force_tick(self):
+        """
+        Force a new tick, user-initiated
+        """
+        # Keep the same tick ID so we don't start another new tick on next launch,
+        # but update the time to show the user that something has happened
+        self.tick_time = datetime.now().strftime(DATETIME_FORMAT_ELITEBGS)
+
+
     def load(self):
         """
         Load tick status from config
@@ -56,5 +69,5 @@ class Tick:
         """
         Return a formatted tick date/time
         """
-        datetime_object = datetime.strptime(self.tick_time, '%Y-%m-%dT%H:%M:%S.%fZ')
-        return datetime_object.strftime("%H:%M:%S %A %d %B")
+        datetime_object = datetime.strptime(self.tick_time, DATETIME_FORMAT_ELITEBGS)
+        return datetime_object.strftime(DATETIME_FORMAT_DISPLAY)

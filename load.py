@@ -8,6 +8,7 @@ from enum import Enum
 from functools import partial
 from os import path
 from tkinter import ttk
+from tkinter.messagebox import askyesno
 
 import myNotebook as nb
 import plug
@@ -140,6 +141,8 @@ def plugin_prefs(parent, cmdr, is_beta):
     EntryPlus(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
     nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
     EntryPlus(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
+    ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+    tk.Button(frame, text="FORCE Tick", command=confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=12)
 
     return frame
 
@@ -966,6 +969,21 @@ def display_yesterdaydata():
     Display the previous tally data window
     """
     display_data("Previous BGS Tally", this.YesterdayData, Ticks.TICK_PREVIOUS)
+
+
+def confirm_force_tick():
+    """
+    Force a tick when user clicks button
+    """
+    answer = askyesno(title='Confirm FORCE a New Tick', message='This will move your current activity into the previous tick, and clear activity for the current tick. Are you sure that you want to do this?')
+    if answer:
+        this.tick.force_tick()
+        this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        this.YesterdayData = this.TodayData
+        this.TodayData = {}
+        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+        this.DiscordCurrentMessageID.set('')
+        theme.update(this.frame)
 
 
 def copy_to_clipboard(Form, Discord):
