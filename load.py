@@ -1056,7 +1056,7 @@ def tick_format(ticktime):
     Format the tick date/time
     """
     datetime_object = datetime.strptime(ticktime, '%Y-%m-%dT%H:%M:%S.%fZ')
-    return datetime_object.strftime("%H:%M:%S UTC %A %d %B")
+    return datetime_object.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def save_data():
