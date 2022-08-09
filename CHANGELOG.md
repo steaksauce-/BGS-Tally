@@ -10,6 +10,7 @@
 ### Changes:
 
 * Now use an automated GitHub action to build the zip file on every new release.
+* Tidy up and narrow the BGS-Tally display in the EDMC main window, to reduce the width used (thank you @Athanasius for this change).
 
 ### Bug Fixes:
 
