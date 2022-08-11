@@ -22,7 +22,7 @@ from bgstally.tick import Tick
 from ScrollableNotebook import ScrollableNotebook
 
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "1.9.0"
+this.VersionNo = "1.10.0"
 this.GitVersion = "0.0.0"
 this.FactionNames = []
 this.TodayData = {}
