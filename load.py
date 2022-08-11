@@ -975,7 +975,7 @@ def confirm_force_tick():
     """
     Force a tick when user clicks button
     """
-    answer = askyesno(title='Confirm FORCE a New Tick', message='This will move your current activity into the previous tick, and clear activity for the current tick. Are you sure that you want to do this?')
+    answer = askyesno(title='Confirm FORCE a New Tick', message='This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?', default='no')
     if answer:
         this.tick.force_tick()
         this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
