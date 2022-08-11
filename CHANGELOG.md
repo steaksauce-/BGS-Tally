@@ -1,5 +1,23 @@
 # Change Log
 
+## v1.10.0 - 2022-08-11
+
+### New Features:
+
+* Now use scrollable tabs and a drop-down tab selector. Tabs for systems are sorted alphabetically by name, prioritising systems that have any BGS activity first.
+* Every Discord post now includes a date and time at the bottom of the post, to make it clear exactly when the user posted (suggested by @Tobytoolbag)
+* There is now a 'FORCE Tick' button in the settings, which can be used if the tick detector has failed to detect a tick but you know one has happened. This can occur on patch days or if the tick detector is down.
+
+### Changes:
+
+* Now use an automated GitHub action to build the zip file on every new release.
+* Tidy up and narrow the BGS-Tally display in the EDMC main window, to reduce the width used (thank you @Athanasius for this change).
+
+### Bug Fixes:
+
+* Workaround for game bug where factions are incorrectly reported at war (if only a single faction is reported at war in a system, ignore the war) now works for elections too.
+
+
 ## v1.9.0 - 2022-04-23
 
 ### New Features:
@@ -10,9 +28,9 @@
 
 * If a faction state changed post-tick, this was not spotted by the plugin if you have already visited the system since the tick. Most noticeable case was when a war starts if you were already in the system - no CZ tallies or manual controls appeared. This is fixed.
 * Better handling of network failures (when plugin version checking and tick checking).
-* Now accepts Discord webhooks that reference more domains: `discord.com`, `discordapp.com`, `ptb.discord.com`, `canary.discord.com`. This was stopping the _Post to Discord` button from appearing for some users (thank you @Sakurax64 for this fix).
+* Now accepts Discord webhooks that reference more domains: `discord.com`, `discordapp.com`, `ptb.discord.com`, `canary.discord.com`. This was stopping the _Post to Discord_ button from appearing for some users (thank you @Sakurax64 for this fix).
 
-### Changes
+### Changes:
 
 * Simplified the `README`, moving more information into the wiki.
 

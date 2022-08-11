@@ -3,12 +3,12 @@ import logging
 import os.path
 import sys
 import tkinter as tk
-import webbrowser
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import partial
 from os import path
 from tkinter import ttk
+from tkinter.messagebox import askyesno
 
 import myNotebook as nb
 import plug
@@ -17,8 +17,12 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+#from bgstally.overlay import Overlay
+from bgstally.tick import Tick
+from ScrollableNotebook import ScrollableNotebook
+
 this = sys.modules[__name__]  # For holding module globals
-this.VersionNo = "1.9.0"
+this.VersionNo = "1.10.0"
 this.GitVersion = "0.0.0"
 this.FactionNames = []
 this.TodayData = {}
@@ -27,10 +31,11 @@ this.DataIndex = 0
 this.MissionLog = []
 this.LastSettlementApproached = {}
 
+# Our Class instances
+#this.overlay = None
+this.tick = None
+
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
-this.TickTime = None
-this.CurrentTick = None
-this.LastTick = None
 this.Status = None
 this.ShowZeroActivitySystems = None
 this.AbbreviateFactionNames = None
@@ -41,6 +46,9 @@ this.DiscordUsername = None
 # Conflict states, for determining whether we display the CZ UI and count conflict missions for factions in these states
 this.ConflictStates = [
     'War', 'CivilWar'
+]
+this.ElectionStates = [
+    'Election'
 ]
 
 # Missions that we count as +1 INF in Elections even if the Journal reports no +INF
@@ -133,6 +141,8 @@ def plugin_prefs(parent, cmdr, is_beta):
     EntryPlus(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
     nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
     EntryPlus(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
+    ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+    tk.Button(frame, text="FORCE Tick", command=confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=12)
 
     return frame
 
@@ -164,9 +174,7 @@ def plugin_start3(plugin_dir):
     if path.exists(file):
         with open(file) as json_file:
             this.MissionLog = json.load(json_file)
-    this.CurrentTick = tk.StringVar(value="")
-    this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
-    this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
+
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
     this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default=CheckStates.STATE_ON))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default=CheckStates.STATE_OFF))
@@ -179,14 +187,25 @@ def plugin_start3(plugin_dir):
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
 
+    # Classes
+    #this.overlay = Overlay(logger)
+    this.tick = Tick(logger, config)
+
     version_success = check_version()
-    tick_success = check_tick()
+    tick_success = this.tick.fetch_tick()
 
     if tick_success == None:
         # Cannot continue if we couldn't fetch a tick
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
-    else:
-        return plugin_name
+    elif tick_success == True:
+        this.YesterdayData = this.TodayData
+        this.TodayData = {}
+        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+        this.DiscordCurrentMessageID.set('')
+
+    #this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
+
+    return plugin_name
 
 
 def plugin_stop():
@@ -201,8 +220,10 @@ def plugin_app(parent):
     Create a frame for the EDMC main window
     """
     this.frame = tk.Frame(parent)
-    Title = tk.Label(this.frame, text="BGS Tally (modified by Aussi) v" + this.VersionNo)
-    Title.grid(row=0, column=0, sticky=tk.W)
+    TitleLabel = tk.Label(this.frame, text="BGS Tally (Aussi)")
+    TitleLabel.grid(row=0, column=0, sticky=tk.W)
+    TitleVersion = tk.Label(this.frame, text="v" + this.VersionNo)
+    TitleVersion.grid(row=0, column=1, sticky=tk.W)
     if version_tuple(this.GitVersion) > version_tuple(this.VersionNo):
         HyperlinkLabel(this.frame, text="New version available", background=nb.Label().cget("background"), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
     tk.Button(this.frame, text='Latest BGS Tally', command=display_todaydata).grid(row=1, column=0, padx=3)
@@ -210,7 +231,7 @@ def plugin_app(parent):
     tk.Label(this.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, textvariable=this.Status).grid(row=2, column=1, sticky=tk.W)
-    this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
+    this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
     return this.frame
 
 
@@ -232,32 +253,6 @@ def check_version():
     return True
 
 
-def check_tick():
-    """
-    Tick check and counter reset
-    """
-    try:
-        response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks', timeout=10)  # get current tick and reset if changed
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Unable to fetch latest tick from elitebgs.app", exc_info=e)
-        plug.show_error(f"BGS-Tally: Unable to fetch latest tick from elitebgs.app")
-        return None
-    else:
-        tick = response.json()
-        this.CurrentTick.set(tick[0]['_id'])
-        this.TickTime.set(tick[0]['time'])
-        if this.LastTick.get() != this.CurrentTick.get():
-            this.LastTick.set(this.CurrentTick.get())
-            this.YesterdayData = this.TodayData
-            this.TodayData = {}
-            this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
-            this.DiscordCurrentMessageID.set('')
-            return True
-
-    return False
-
-
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
     Parse an incoming journal entry and store the data we need
@@ -267,8 +262,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         return
     if entry['event'] in EventList:  # get factions and populate today data
         # Check for a new tick
-        if check_tick():
-            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
+        if this.tick.fetch_tick():
+            this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+            this.YesterdayData = this.TodayData
+            this.TodayData = {}
+            this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+            this.DiscordCurrentMessageID.set('')
             theme.update(this.frame)
 
         this.FactionNames = []
@@ -283,7 +282,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 this.FactionNames.append(i['Name'])
                 this.FactionStates.append({'Faction': i['Name'], 'State': i['FactionState']})
                 z += 1
-                if i['FactionState'] in this.ConflictStates: conflicts += 1
+                if i['FactionState'] in this.ConflictStates or i['FactionState'] in this.ElectionStates: conflicts += 1
 
         x = len(this.TodayData)
         if (x >= 1):
@@ -293,7 +292,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                     this.DataIndex.set(y)
                     z = len(this.TodayData[y][0]['Factions'])
                     for i in range(0, z):
-                        update_faction_data(this.TodayData[y][0]['Factions'][i], this.FactionStates[i]['State'])
+                        # If there is just a single faction in conflict, this is a game bug, override faction state to None in this circumstance
+                        update_faction_data(this.TodayData[y][0]['Factions'][i], this.FactionStates[i]['State'] if conflicts != 1 else 'None')
                     return
 
             # System not present, add a new system entry
@@ -588,7 +588,8 @@ def display_data(title, data, tick_mode):
 
     ContainerFrame = ttk.Frame(Form)
     ContainerFrame.pack(fill=tk.BOTH, expand=1)
-    TabParent = ttk.Notebook(ContainerFrame)
+    TabParent=ScrollableNotebook(ContainerFrame, wheelscroll=False, tabmenu=True)
+    #TabParent = ttk.Notebook(ContainerFrame)
     TabParent.pack(fill=tk.BOTH, expand=1, side=tk.TOP, padx=5, pady=5)
 
     DiscordFrame = ttk.Frame(ContainerFrame)
@@ -610,15 +611,23 @@ def display_data(title, data, tick_mode):
     ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=this.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
     ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=this.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(option_change, Discord, data)).grid(sticky=tk.W)
 
+    # Calculate whether each system has had any activity and store in data structure
     for i in data:
         z = len(data[i][0]['Factions'])
-        zero_system_activity = True
+        data[i][0]['zero_system_activity'] = True
         for x in range(0, z):
             update_faction_data(data[i][0]['Factions'][x])
             if not is_faction_data_zero(data[i][0]['Factions'][x]):
-                zero_system_activity = False
+                data[i][0]['zero_system_activity'] = False
+                break
 
-        if this.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and zero_system_activity:
+    # Create a list of integer indexes into the data object, sorted by System name, prioritising systems with activity first
+    sorted_data_indexes = sorted(data, key=lambda x: ("1_" if data[x][0]['zero_system_activity'] else "0_") + data[x][0]['System'])
+
+    for i in sorted_data_indexes:
+        z = len(data[i][0]['Factions'])
+
+        if this.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and data[i][0]['zero_system_activity']:
             continue
 
         tab = ttk.Frame(TabParent)
@@ -727,6 +736,8 @@ def display_data(title, data, tick_mode):
                 CZGroundHVar.trace('w', partial(cz_change, CZGroundHVar, Discord, CZs.GROUND_HIGH, data, i, x))
 
         update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
+
+        tab.pack_forget()
 
     Discord.insert(tk.INSERT, generate_discord_text(data))
     # Select all text and focus the field
@@ -960,6 +971,21 @@ def display_yesterdaydata():
     display_data("Previous BGS Tally", this.YesterdayData, Ticks.TICK_PREVIOUS)
 
 
+def confirm_force_tick():
+    """
+    Force a tick when user clicks button
+    """
+    answer = askyesno(title='Confirm FORCE a New Tick', message='This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?', default='no')
+    if answer:
+        this.tick.force_tick()
+        this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        this.YesterdayData = this.TodayData
+        this.TodayData = {}
+        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+        this.DiscordCurrentMessageID.set('')
+        theme.update(this.frame)
+
+
 def copy_to_clipboard(Form, Discord):
     """
     Get all text from the Discord field and put it in the Copy buffer
@@ -982,9 +1008,12 @@ def post_to_discord(Form, Discord, tick_mode):
     if tick_mode == Ticks.TICK_CURRENT: discord_message_id = this.DiscordCurrentMessageID
     else: discord_message_id = this.DiscordPreviousMessageID
 
+    utc_time_now = datetime.utcnow().strftime("%H:%M:%S %A %d %B (in-game time)")
+
     if discord_message_id.get() == '' or discord_message_id.get() == None:
         # No previous post
         if discord_text != '':
+            discord_text += f"```md\n# Posted at: {utc_time_now}```" # Blue text instead of gray
             url = this.DiscordWebhook.get()
             response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': this.DiscordUsername.get()})
             if response.ok:
@@ -997,6 +1026,7 @@ def post_to_discord(Form, Discord, tick_mode):
     else:
         # Previous post, amend or delete it
         if discord_text != '':
+            discord_text += f"```diff\n+ Updated at: {utc_time_now}```"
             url = f"{this.DiscordWebhook.get()}/messages/{discord_message_id.get()}"
             response = requests.patch(url=url, data={'content': discord_text, 'username': this.DiscordUsername.get()})
             if not response.ok:
@@ -1030,20 +1060,11 @@ def is_webhook_valid():
     return this.DiscordWebhook.get().startswith('https://discordapp.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://ptb.discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://canary.discord.com/api/webhooks/')
 
 
-def tick_format(ticktime):
-    """
-    Format the tick date/time
-    """
-    datetime_object = datetime.strptime(ticktime, '%Y-%m-%dT%H:%M:%S.%fZ')
-    return datetime_object.strftime("%H:%M:%S UTC %A %d %B")
-
-
 def save_data():
     """
     Save all data structures
     """
-    config.set('XLastTick', this.CurrentTick.get())
-    config.set('XTickTime', this.TickTime.get())
+    this.tick.save()
     config.set('XStatus', this.Status.get())
     config.set('XShowZeroActivity', this.ShowZeroActivitySystems.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())

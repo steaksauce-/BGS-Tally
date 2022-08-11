@@ -1,6 +1,10 @@
 # BGS-Tally (modified by Aussi)
 
-An [EDMC](https://github.com/EDCD/EDMarketConnector) plugin to count Background Simulation (BGS) work. BGS Tally counts all the BGS work you do for any faction, in any system.
+[![CodeQL](https://github.com/aussig/BGS-Tally/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/aussig/BGS-Tally/actions/workflows/codeql-analysis.yml)
+[![GitHub Latest Version](https://img.shields.io/github/v/release/aussig/BGS-Tally)](https://github.com/aussig/BGS-Tally/releases/latest)
+[![Github All Releases](https://img.shields.io/github/downloads/aussig/BGS-Tally/total.svg)](https://github.com/aussig/BGS-Tally/releases/latest)
+
+A tool to track and report your Background Simulation (BGS) activity in Elite Dangerous, implemented as an [EDMC](https://github.com/EDCD/EDMarketConnector) plugin. BGS Tally counts all the BGS work you do for any faction, in any system.
 
 Based on BGS-Tally v2.0 by tezw21: [Original tezw21 BGS-Tally-v2.0 Project](https://github.com/tezw21/BGS-Tally-v2.0)
 
@@ -14,11 +18,7 @@ Full instructions for **installation and use are [here in the wiki &rarr;](https
 
 # Updating from a Previous Version
 
-The plugin writes your activity to three files in the _BGS-Tally_ folder, so if you want it to keep your progress, before replacing your old _BGS-Tally_ folder with the new one,  move these three files across from old to new:
-
-1. `Today.txt`
-2. `Yesterday.txt`
-3. `MissionLog.txt`
+Full instructions for **upgrading from a previous version are [here in the wiki &rarr;](https://github.com/aussig/BGS-Tally/wiki/Upgrade)**.
 
 
 # Discord Integration
