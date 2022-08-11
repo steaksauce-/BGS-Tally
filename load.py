@@ -3,12 +3,12 @@ import logging
 import os.path
 import sys
 import tkinter as tk
-import webbrowser
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import partial
 from os import path
 from tkinter import ttk
+from tkinter.messagebox import askyesno
 
 import myNotebook as nb
 import plug
@@ -17,7 +17,9 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from ScrollableNotebook import *
+#from bgstally.overlay import Overlay
+from bgstally.tick import Tick
+from ScrollableNotebook import ScrollableNotebook
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.9.0"
@@ -29,10 +31,11 @@ this.DataIndex = 0
 this.MissionLog = []
 this.LastSettlementApproached = {}
 
+# Our Class instances
+#this.overlay = None
+this.tick = None
+
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
-this.TickTime = None
-this.CurrentTick = None
-this.LastTick = None
 this.Status = None
 this.ShowZeroActivitySystems = None
 this.AbbreviateFactionNames = None
@@ -138,6 +141,8 @@ def plugin_prefs(parent, cmdr, is_beta):
     EntryPlus(frame, textvariable=this.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
     nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
     EntryPlus(frame, textvariable=this.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
+    ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+    tk.Button(frame, text="FORCE Tick", command=confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=12)
 
     return frame
 
@@ -169,9 +174,7 @@ def plugin_start3(plugin_dir):
     if path.exists(file):
         with open(file) as json_file:
             this.MissionLog = json.load(json_file)
-    this.CurrentTick = tk.StringVar(value="")
-    this.LastTick = tk.StringVar(value=config.get_str("XLastTick"))
-    this.TickTime = tk.StringVar(value=config.get_str("XTickTime"))
+
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
     this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default=CheckStates.STATE_ON))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default=CheckStates.STATE_OFF))
@@ -184,14 +187,25 @@ def plugin_start3(plugin_dir):
     this.StationFaction = tk.StringVar(value=config.get_str("XStation"))
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
 
+    # Classes
+    #this.overlay = Overlay(logger)
+    this.tick = Tick(logger, config)
+
     version_success = check_version()
-    tick_success = check_tick()
+    tick_success = this.tick.fetch_tick()
 
     if tick_success == None:
         # Cannot continue if we couldn't fetch a tick
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
-    else:
-        return plugin_name
+    elif tick_success == True:
+        this.YesterdayData = this.TodayData
+        this.TodayData = {}
+        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+        this.DiscordCurrentMessageID.set('')
+
+    #this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
+
+    return plugin_name
 
 
 def plugin_stop():
@@ -217,7 +231,7 @@ def plugin_app(parent):
     tk.Label(this.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
     tk.Label(this.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
     this.StatusLabel = tk.Label(this.frame, textvariable=this.Status).grid(row=2, column=1, sticky=tk.W)
-    this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
+    this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
     return this.frame
 
 
@@ -239,32 +253,6 @@ def check_version():
     return True
 
 
-def check_tick():
-    """
-    Tick check and counter reset
-    """
-    try:
-        response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks', timeout=10)  # get current tick and reset if changed
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Unable to fetch latest tick from elitebgs.app", exc_info=e)
-        plug.show_error(f"BGS-Tally: Unable to fetch latest tick from elitebgs.app")
-        return None
-    else:
-        tick = response.json()
-        this.CurrentTick.set(tick[0]['_id'])
-        this.TickTime.set(tick[0]['time'])
-        if this.LastTick.get() != this.CurrentTick.get():
-            this.LastTick.set(this.CurrentTick.get())
-            this.YesterdayData = this.TodayData
-            this.TodayData = {}
-            this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
-            this.DiscordCurrentMessageID.set('')
-            return True
-
-    return False
-
-
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
     Parse an incoming journal entry and store the data we need
@@ -274,8 +262,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         return
     if entry['event'] in EventList:  # get factions and populate today data
         # Check for a new tick
-        if check_tick():
-            this.TimeLabel = tk.Label(this.frame, text=tick_format(this.TickTime.get())).grid(row=3, column=1, sticky=tk.W)
+        if this.tick.fetch_tick():
+            this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+            this.YesterdayData = this.TodayData
+            this.TodayData = {}
+            this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+            this.DiscordCurrentMessageID.set('')
             theme.update(this.frame)
 
         this.FactionNames = []
@@ -979,6 +971,21 @@ def display_yesterdaydata():
     display_data("Previous BGS Tally", this.YesterdayData, Ticks.TICK_PREVIOUS)
 
 
+def confirm_force_tick():
+    """
+    Force a tick when user clicks button
+    """
+    answer = askyesno(title='Confirm FORCE a New Tick', message='This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?', default='no')
+    if answer:
+        this.tick.force_tick()
+        this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        this.YesterdayData = this.TodayData
+        this.TodayData = {}
+        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+        this.DiscordCurrentMessageID.set('')
+        theme.update(this.frame)
+
+
 def copy_to_clipboard(Form, Discord):
     """
     Get all text from the Discord field and put it in the Copy buffer
@@ -1053,20 +1060,11 @@ def is_webhook_valid():
     return this.DiscordWebhook.get().startswith('https://discordapp.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://ptb.discord.com/api/webhooks/') or this.DiscordWebhook.get().startswith('https://canary.discord.com/api/webhooks/')
 
 
-def tick_format(ticktime):
-    """
-    Format the tick date/time
-    """
-    datetime_object = datetime.strptime(ticktime, '%Y-%m-%dT%H:%M:%S.%fZ')
-    return datetime_object.strftime("%Y-%m-%d %H:%M:%S")
-
-
 def save_data():
     """
     Save all data structures
     """
-    config.set('XLastTick', this.CurrentTick.get())
-    config.set('XTickTime', this.TickTime.get())
+    this.tick.save()
     config.set('XStatus', this.Status.get())
     config.set('XShowZeroActivity', this.ShowZeroActivitySystems.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
