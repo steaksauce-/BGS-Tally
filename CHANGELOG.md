@@ -2,6 +2,10 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+
+
+## v1.10.0 - 2022-08-11
+
 ### New Features:
 
 * Now use scrollable tabs and a drop-down tab selector. Tabs for systems are sorted alphabetically by name, prioritising systems that have any BGS activity first.
