@@ -17,7 +17,7 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
-#from bgstally.overlay import Overlay
+from bgstally.overlay import Overlay
 from bgstally.tick import Tick
 from ScrollableNotebook import ScrollableNotebook
 
@@ -32,7 +32,7 @@ this.MissionLog = []
 this.LastSettlementApproached = {}
 
 # Our Class instances
-#this.overlay = None
+this.overlay = None
 this.tick = None
 
 # Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
@@ -188,7 +188,7 @@ def plugin_start3(plugin_dir):
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
 
     # Classes
-    #this.overlay = Overlay(logger)
+    this.overlay = Overlay(logger)
     this.tick = Tick(logger, config)
 
     version_success = check_version()
@@ -203,7 +203,7 @@ def plugin_start3(plugin_dir):
         this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
         this.DiscordCurrentMessageID.set('')
 
-    #this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
+    this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
 
     return plugin_name
 
