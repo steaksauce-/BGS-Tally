@@ -6,7 +6,7 @@ import plug
 import requests
 
 DATETIME_FORMAT_ELITEBGS = "%Y-%m-%dT%H:%M:%S.%fZ"
-DATETIME_FORMAT_DISPLAY = "%H:%M:%S %A %d %B"
+DATETIME_FORMAT_DISPLAY = "%Y-%m-%d %H:%M:%S"
 
 class Tick:
     def __init__(self, logger, config):
