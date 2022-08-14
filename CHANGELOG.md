@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes:
+
+* Change tick date / time format in main EDMC window to make it more compact.
 
 
 ## v1.10.0 - 2022-08-11
