@@ -175,6 +175,17 @@ def plugin_start3(plugin_dir):
         with open(file) as json_file:
             this.MissionLog = json.load(json_file)
 
+    # Remove all expired missions from MissionLog
+    for mission in reversed(this.MissionLog):
+        # Old missions pre v1.11.0 don't have Expiry stored. Set to 7 days ahead for safety
+        if not "Expiry" in mission: mission["Expiry"] = (datetime.utcnow() + timedelta(days = 7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        timedifference = datetime.utcnow() - datetime.strptime(mission["Expiry"], '%Y-%m-%dT%H:%M:%SZ')
+        if timedifference > timedelta(days=7):
+            # Keep missions for a while after they have expired, so we can log failed missions correctly
+            this.MissionLog.remove(mission)
+
+
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
     this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default=CheckStates.STATE_ON))
     this.AbbreviateFactionNames = tk.StringVar(value=config.get_str("XAbbreviate", default=CheckStates.STATE_OFF))
@@ -415,7 +426,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     if entry['event'] == 'MissionAccepted':  # mission accepted
         this.MissionLog.append({"Name": entry["Name"], "Faction": entry["Faction"], "MissionID": entry["MissionID"],
-                                "System": system})
+                                "Expiry": entry["Expiry"], "System": system})
         save_data()
 
     if entry['event'] == 'MissionFailed':  # mission failed
