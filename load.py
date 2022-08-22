@@ -17,6 +17,7 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+from bgstally.missionlog import MissionLog
 #from bgstally.overlay import Overlay
 from bgstally.tick import Tick
 from ScrollableNotebook import ScrollableNotebook
@@ -28,10 +29,10 @@ this.FactionNames = []
 this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
-this.MissionLog = []
 this.LastSettlementApproached = {}
 
 # Our Class instances
+this.missionlog = None
 #this.overlay = None
 this.tick = None
 
@@ -170,21 +171,6 @@ def plugin_start3(plugin_dir):
                 x = str(i)
                 this.YesterdayData[i] = this.YesterdayData[x]
                 del this.YesterdayData[x]
-    file = os.path.join(this.Dir, "MissionLog.txt")
-    if path.exists(file):
-        with open(file) as json_file:
-            this.MissionLog = json.load(json_file)
-
-    # Remove all expired missions from MissionLog
-    for mission in reversed(this.MissionLog):
-        # Old missions pre v1.11.0 don't have Expiry stored. Set to 7 days ahead for safety
-        if not "Expiry" in mission: mission["Expiry"] = (datetime.utcnow() + timedelta(days = 7)).strftime('%Y-%m-%dT%H:%M:%SZ')
-
-        timedifference = datetime.utcnow() - datetime.strptime(mission["Expiry"], '%Y-%m-%dT%H:%M:%SZ')
-        if timedifference > timedelta(days=7):
-            # Keep missions for a while after they have expired, so we can log failed missions correctly
-            this.MissionLog.remove(mission)
-
 
     this.Status = tk.StringVar(value=config.get_str("XStatus", default="Active"))
     this.ShowZeroActivitySystems = tk.StringVar(value=config.get_str("XShowZeroActivity", default=CheckStates.STATE_ON))
@@ -199,6 +185,7 @@ def plugin_start3(plugin_dir):
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
 
     # Classes
+    this.missionlog = MissionLog(this.Dir, logger)
     #this.overlay = Overlay(logger)
     this.tick = Tick(logger, config)
 
@@ -356,20 +343,18 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                                     else:
                                         this.TodayData[y][0]['Factions'][z]['MissionPointsSecondary'] -= inf
             else:
-                for p in range(len(this.MissionLog)):
-                    if this.MissionLog[p]["MissionID"] == entry["MissionID"]:
+                missionlog = this.missionlog.get_missionlog()
+                for p in range(len(missionlog)):
+                    if missionlog[p]["MissionID"] == entry["MissionID"]:
                         for y in this.TodayData:
-                            if this.MissionLog[p]['System'] == this.TodayData[y][0]['System']:
+                            if missionlog[p]['System'] == this.TodayData[y][0]['System']:
                                 for z in range(0, len(this.TodayData[y][0]['Factions'])):
                                     if this.TodayData[y][0]['Factions'][z]['Faction'] == fe3:
                                         if (this.TodayData[y][0]['Factions'][z]['FactionState'] == 'Election' and entry['Name'] in this.MissionListElection) \
                                         or (this.TodayData[y][0]['Factions'][z]['FactionState'] in this.ConflictStates and entry['Name'] in this.MissionListConflict) \
                                             and fe3 == entry['Faction']:
                                                 this.TodayData[y][0]['Factions'][z]['MissionPoints'] += 1
-        for count in range(len(this.MissionLog)):
-            if this.MissionLog[count]["MissionID"] == entry["MissionID"]:
-                this.MissionLog.pop(count)
-                break
+        this.missionlog.delete_mission_by_id(entry["MissionID"])
         save_data()
 
     if entry['event'] == 'SellExplorationData' or entry['event'] == "MultiSellExplorationData":  # get carto data value
@@ -425,26 +410,24 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         save_data()
 
     if entry['event'] == 'MissionAccepted':  # mission accepted
-        this.MissionLog.append({"Name": entry["Name"], "Faction": entry["Faction"], "MissionID": entry["MissionID"],
-                                "Expiry": entry["Expiry"], "System": system})
+        this.missionlog.add_mission(entry["Name"], entry["Faction"], entry["MissionID"], entry["Expiry"], system)
         save_data()
 
     if entry['event'] == 'MissionFailed':  # mission failed
-        for x in range(len(this.MissionLog)):
-            if this.MissionLog[x]["MissionID"] == entry["MissionID"]:
+        missionlog = this.missionlog.get_missionlog()
+        for x in range(len(missionlog)):
+            if missionlog[x]["MissionID"] == entry["MissionID"]:
                 for y in this.TodayData:
-                    if this.MissionLog[x]['System'] == this.TodayData[y][0]['System']:
+                    if missionlog[x]['System'] == this.TodayData[y][0]['System']:
                         for z in range(0, len(this.TodayData[y][0]['Factions'])):
-                            if this.MissionLog[x]['Faction'] == this.TodayData[y][0]['Factions'][z]['Faction']:
+                            if missionlog[x]['Faction'] == this.TodayData[y][0]['Factions'][z]['Faction']:
                                 this.TodayData[y][0]['Factions'][z]['MissionFailed'] += 1
-                this.MissionLog.pop(x)
+                this.missionlog.delete_mission_by_index(x)
                 break
         save_data()
 
     if entry['event'] == 'MissionAbandoned':
-        for x in range(len(this.MissionLog)):
-            if this.MissionLog[x]["MissionID"] == entry["MissionID"]:
-                this.MissionLog.pop(x)
+        this.missionlog.delete_mission_by_id(entry["MissionID"])
         save_data()
 
     if entry['event'] == 'CommitCrime':
@@ -1075,6 +1058,7 @@ def save_data():
     """
     Save all data structures
     """
+    this.missionlog.save()
     this.tick.save()
     config.set('XStatus', this.Status.get())
     config.set('XShowZeroActivity', this.ShowZeroActivitySystems.get())
@@ -1093,10 +1077,6 @@ def save_data():
     file = os.path.join(this.Dir, "Yesterday Data.txt")
     with open(file, 'w') as outfile:
         json.dump(this.YesterdayData, outfile)
-    file = os.path.join(this.Dir, "MissionLog.txt")
-    with open(file, 'w') as outfile:
-        json.dump(this.MissionLog, outfile)
-
 
 
 class EntryPlus(ttk.Entry):
