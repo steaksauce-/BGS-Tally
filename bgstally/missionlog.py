@@ -61,6 +61,15 @@ class MissionLog:
         self.missionlog.pop(missionindex)
 
 
+    def get_active_systems(self):
+        """
+        Return a list of systems that have currently active missions
+        """
+        systems = [x['System'] for x in self.missionlog]
+        # De-dupe before returning
+        return list(dict.fromkeys(systems))
+
+
     def _expire_old_missions(self):
         """
         Clear out all missions older than 7 days from the mission log

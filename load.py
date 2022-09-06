@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import os.path
@@ -968,12 +969,25 @@ def confirm_force_tick():
 
 def new_tick(force, updateui):
     """
-    Handle a new tick
+    Handle a new tick - move TodayData into YesterdayData and clear TodayData. Similar with Discord message IDs. Also update UI.
     """
     if force:
         this.tick.force_tick()
 
-    this.YesterdayData = this.TodayData
+    mission_systems = this.missionlog.get_active_systems()
+
+    this.YesterdayData = copy.deepcopy(this.TodayData)
+
+    for x in this.TodayData:
+        if this.TodayData[x][0]['System'] in mission_systems:
+            # The system has a current mission, zero, don't delete
+            faction_count = len(this.TodayData[x][0]['Factions'])
+            for i in range(faction_count):
+                this.TodayData[x][0]['Factions'][i] = get_new_faction_data(this.TodayData[x][0]['Factions'][i]['Faction'], this.TodayData[x][0]['Factions'][i]['FactionState'])
+        else:
+            # No current missions, delete
+            del this.TodayData[x]
+
     this.TodayData = {}
     this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
     this.DiscordCurrentMessageID.set('')
