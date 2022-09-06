@@ -196,10 +196,7 @@ def plugin_start3(plugin_dir):
         # Cannot continue if we couldn't fetch a tick
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
     elif tick_success == True:
-        this.YesterdayData = this.TodayData
-        this.TodayData = {}
-        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
-        this.DiscordCurrentMessageID.set('')
+        new_tick(False, False)
 
     #this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
 
@@ -261,12 +258,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry['event'] in EventList:  # get factions and populate today data
         # Check for a new tick
         if this.tick.fetch_tick():
-            this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
-            this.YesterdayData = this.TodayData
-            this.TodayData = {}
-            this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
-            this.DiscordCurrentMessageID.set('')
-            theme.update(this.frame)
+            new_tick(False, True)
 
         this.FactionNames = []
         this.FactionStates = []
@@ -971,12 +963,23 @@ def confirm_force_tick():
     """
     answer = askyesno(title='Confirm FORCE a New Tick', message='This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?', default='no')
     if answer:
+        new_tick(True, True)
+
+
+def new_tick(force, updateui):
+    """
+    Handle a new tick
+    """
+    if force:
         this.tick.force_tick()
+
+    this.YesterdayData = this.TodayData
+    this.TodayData = {}
+    this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
+    this.DiscordCurrentMessageID.set('')
+
+    if updateui:
         this.TimeLabel = tk.Label(this.frame, text=this.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
-        this.YesterdayData = this.TodayData
-        this.TodayData = {}
-        this.DiscordPreviousMessageID.set(this.DiscordCurrentMessageID.get())
-        this.DiscordCurrentMessageID.set('')
         theme.update(this.frame)
 
 
