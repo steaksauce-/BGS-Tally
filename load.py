@@ -1017,7 +1017,7 @@ def post_to_bgs_discord(Form, Discord, tick_mode):
     if tick_mode == Ticks.TICK_CURRENT: discord_message_id = this.DiscordCurrentMessageID
     else: discord_message_id = this.DiscordPreviousMessageID
 
-    utc_time_now = datetime.utcnow().strftime("%H:%M:%S %A %d %B (in-game time)")
+    utc_time_now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S (in-game time)")
 
     if discord_message_id.get() == '' or discord_message_id.get() == None:
         # No previous post
