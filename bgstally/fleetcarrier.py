@@ -31,6 +31,7 @@ class FleetCarrier:
                 self.name = json_data['CarrierName']
                 self.id = json_data['CarrierID']
                 self.materials = json_data['Items']
+                self.materials = sorted(self.materials, key=lambda d: d['Name_Localised'])
 
         except Exception as e:
             self.logger.error(f"Unable to fetch latest tick from elitebgs.app", exc_info=e)
