@@ -5,6 +5,7 @@
 ### Changes:
 
 * Change tick date / time format in main EDMC window to make it more compact.
+* Change report date / time format in Discord posts to avoid localised text (days of week and month names).
 
 
 ## v1.10.0 - 2022-08-11
