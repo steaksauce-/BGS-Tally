@@ -978,7 +978,8 @@ def new_tick(force, updateui):
 
     this.YesterdayData = copy.deepcopy(this.TodayData)
 
-    for x in this.TodayData:
+    # Looks odd to iterate YesterdayData here, but it's a copy of TodayData and we need to modify TodayData as we're iterating
+    for x in this.YesterdayData:
         if this.TodayData[x][0]['System'] in mission_systems:
             # The system has a current mission, zero, don't delete
             faction_count = len(this.TodayData[x][0]['Factions'])
@@ -986,6 +987,11 @@ def new_tick(force, updateui):
                 this.TodayData[x][0]['Factions'][i] = get_new_faction_data(this.TodayData[x][0]['Factions'][i]['Faction'], this.TodayData[x][0]['Factions'][i]['FactionState'])
         else:
             # No current missions, delete
+            # @todo This won't work - The stupid data structure uses sequentially numbered keys in a dict for some reason, so
+            # if we delete a key they will no longer be sequentially numbered and the plugin falls over on initial load.
+            # Need to convert these into system name as key then we can delete by system name here. Perhaps use new file names
+            # when we do this - current and previous or filename by date?
+
             del this.TodayData[x]
 
     this.TodayData = {}
