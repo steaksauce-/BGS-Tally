@@ -18,6 +18,7 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+from bgstally.activitymanager import ActivityManager
 from bgstally.missionlog import MissionLog
 #from bgstally.overlay import Overlay
 from bgstally.tick import Tick
@@ -33,6 +34,7 @@ this.DataIndex = 0
 this.LastSettlementApproached = {}
 
 # Our Class instances
+this.activitymanager = None
 this.missionlog = None
 #this.overlay = None
 this.tick = None
@@ -189,6 +191,7 @@ def plugin_start3(plugin_dir):
     this.missionlog = MissionLog(this.Dir, logger)
     #this.overlay = Overlay(logger)
     this.tick = Tick(logger, config)
+    this.activitymanager = ActivityManager(this.Dir, this.tick.tick_id, logger)
 
     version_success = check_version()
     tick_success = this.tick.fetch_tick()
@@ -987,7 +990,7 @@ def new_tick(force, updateui):
                 this.TodayData[x][0]['Factions'][i] = get_new_faction_data(this.TodayData[x][0]['Factions'][i]['Faction'], this.TodayData[x][0]['Factions'][i]['FactionState'])
         else:
             # No current missions, delete
-            # @todo This won't work - The stupid data structure uses sequentially numbered keys in a dict for some reason, so
+            # TODO: This won't work - The stupid data structure uses sequentially numbered keys in a dict for some reason, so
             # if we delete a key they will no longer be sequentially numbered and the plugin falls over on initial load.
             # Need to convert these into system name as key then we can delete by system name here. Perhaps use new file names
             # when we do this - current and previous or filename by date?
@@ -1083,6 +1086,7 @@ def save_data():
     """
     this.missionlog.save()
     this.tick.save()
+    this.activitymanager.save()
     config.set('XStatus', this.Status.get())
     config.set('XShowZeroActivity', this.ShowZeroActivitySystems.get())
     config.set('XAbbreviate', this.AbbreviateFactionNames.get())
