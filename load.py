@@ -32,6 +32,7 @@ this.TodayData = {}
 this.YesterdayData = {}
 this.DataIndex = 0
 this.LastSettlementApproached = {}
+this.LastShipTargeted = {}
 
 # Our Class instances
 this.activitymanager = None
@@ -426,12 +427,18 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         this.missionlog.delete_mission_by_id(entry["MissionID"])
         save_data()
 
+    if entry['event'] == 'ShipTargeted':
+        if 'Faction' in entry and 'PilotName_Localised' in entry:
+            this.LastShipTargeted = {'Faction': entry['Faction'], 'PilotName_Localised': entry['PilotName_Localised']}
+
     if entry['event'] == 'CommitCrime':
-        if entry['CrimeType'] == 'murder':
+        # The faction logged in the CommitCrime event is the system faction, not the ship faction. So we store the
+        # ship faction in LastShipTargeted from the previous ShipTargeted event.
+        if entry['CrimeType'] == 'murder' and entry.get('Victim') == this.LastShipTargeted.get('PilotName_Localised'):
             for y in this.TodayData:
                 if system == this.TodayData[y][0]['System']:
                     for z in range(0, len(this.TodayData[y][0]['Factions'])):
-                        if entry['Faction'] == this.TodayData[y][0]['Factions'][z]['Faction']:
+                        if this.LastShipTargeted.get('Faction') == this.TodayData[y][0]['Factions'][z]['Faction']:
                             this.TodayData[y][0]['Factions'][z]['Murdered'] += 1
 
     if entry['event'] == 'ApproachSettlement':

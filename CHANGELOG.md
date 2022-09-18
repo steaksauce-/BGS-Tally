@@ -7,6 +7,10 @@
 * Change tick date / time format in main EDMC window to make it more compact.
 * Change report date / time format in Discord posts to avoid localised text (days of week and month names).
 
+### Bug Fixes:
+
+* Murders were being counted against the system faction. Now count them against the faction of the target ship instead.
+
 
 ## v1.10.0 - 2022-08-11
 
