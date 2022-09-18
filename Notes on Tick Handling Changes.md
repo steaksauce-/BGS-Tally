@@ -13,3 +13,5 @@ File name = tick ID?  How do we know which is the latest tick?  Perhaps that's s
 Need to store dates in activity data I think - then we can identify the last and previous
 
 Does Activitymanager need to know about and handle new tick?
+
+New data storage solution should work completely in parallel with existing - then after a period of testing we can ensure new exactly matches old. Even to the point of generating parallel Discord reports, which should also be identical.

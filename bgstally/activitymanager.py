@@ -17,8 +17,10 @@ class ActivityManager:
         self.plugindir = plugindir
         self.logger = logger
         self.activitydata = {}
-        self._load(current_tickid)
+        self.currentactivity = None
+        self.previousactivity = None
 
+        self._load(current_tickid)
 
     def save(self):
         """
