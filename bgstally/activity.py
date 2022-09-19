@@ -15,15 +15,20 @@ class Activity:
     factions with their activity
     """
 
-    def __init__(self, plugindir, tick = None):
+    def __init__(self, plugindir, tick = None, discordmessageid = None):
         """
         Instantiate using a given tickid
         """
         if tick == None: tick = Tick()
         self.tickid = tick.tickid
         self.ticktime = tick.ticktime
+        self.discordmessageid = discordmessageid
         self.plugindir = plugindir
-        self.data = {'tickid': self.tickid, 'ticktime': self.ticktime.strftime(DATETIME_FORMAT_ACTIVITY), 'systems': {}}
+        self.data = {
+            'tickid': self.tickid,
+            'ticktime': self.ticktime.strftime(DATETIME_FORMAT_ACTIVITY),
+            'discordmessageid': self.discordmessageid,
+            'systems': {}}
 
 
     def load(self, filepath):
@@ -34,6 +39,7 @@ class Activity:
             self.data = json.load(activityfile)
             self.tickid = self.data.get('tickid')
             self.ticktime = datetime.strptime(self.data.get('ticktime'), DATETIME_FORMAT_ACTIVITY)
+            self.discordmessageid = self.data.get('discordmessageid')
 
 
     def save(self, filepath):
@@ -51,7 +57,7 @@ class Activity:
         # Convert:
         # {"1": [{"System": "Sowiio", "SystemAddress": 1458376217306, "Factions": [{}, {}], "zero_system_activity": false}]}
         # To:
-        # {"tickid": tickid, "ticktime": ticktime, "systems": {1458376217306: {"System": "Sowiio", "SystemAddress": 1458376217306, "Factions": [{}, {}], "zero_system_activity": false}}}
+        # {"tickid": tickid, "ticktime": ticktime, "discordmessageid": discordmessageid, "systems": {1458376217306: {"System": "Sowiio", "SystemAddress": 1458376217306, "Factions": [{}, {}], "zero_system_activity": false}}}
         with open(filepath) as legacyactivityfile:
             legacydata = json.load(legacyactivityfile)
             for legacysystemlist in legacydata.values():  # Iterate the values of the dict. We don't care about the keys - they were just "1", "2" etc.

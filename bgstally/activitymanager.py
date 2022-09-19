@@ -1,11 +1,13 @@
 from os import listdir, mkdir, path, remove
 
+from config import config
+
 from bgstally.activity import Activity
 from bgstally.debug import Debug
 from bgstally.tick import Tick
 
-FILE_LEGACY_CURRENTDATA = 'Today Data.txt'
-FILE_LEGACY_PREVIOUSDATA = 'Yesterday Data.txt'
+FILE_LEGACY_CURRENTDATA = "Today Data.txt"
+FILE_LEGACY_PREVIOUSDATA = "Yesterday Data.txt"
 FOLDER_ACTIVITYDATA = "activitydata"
 FILE_SUFFIX = ".json"
 
@@ -19,6 +21,7 @@ class ActivityManager:
         self.activitydata = []
 
         self._load(current_tick)
+
 
     def save(self):
         """
@@ -43,16 +46,16 @@ class ActivityManager:
 
         # Handle legacy data if it exists - parse and migrate to new format
         filepath = path.join(self.plugindir, FILE_LEGACY_CURRENTDATA)
-        if path.exists(filepath): self._convert_legacy_data(filepath, current_tick)
+        if path.exists(filepath): self._convert_legacy_data(filepath, current_tick, config.get_str('XDiscordCurrentMessageID'))
         filepath = path.join(self.plugindir, FILE_LEGACY_PREVIOUSDATA)
-        if path.exists(filepath): self._convert_legacy_data(filepath, Tick()) # Fake a tick for previous legacy - we don't have tickid or ticktime
+        if path.exists(filepath): self._convert_legacy_data(filepath, Tick(), config.get_str('XDiscordPreviousMessageID')) # Fake a tick for previous legacy - we don't have tickid or ticktime
 
         self.activitydata.sort(reverse=True)
 
         Debug.logger.info(f"Sorted activity data: {self.activitydata}")
 
 
-    def _convert_legacy_data(self, filepath, tick):
+    def _convert_legacy_data(self, filepath, tick, discordmessageid):
         """
         Convert a legacy activity data file to new location and format
         """
@@ -63,6 +66,6 @@ class ActivityManager:
                 # TODO: remove(filepath)
                 return
 
-        activity = Activity(self.plugindir, tick)
+        activity = Activity(self.plugindir, tick, discordmessageid)
         activity.load_legacy_data(filepath)
         self.activitydata.append(activity)
