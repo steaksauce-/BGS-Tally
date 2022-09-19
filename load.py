@@ -37,20 +37,6 @@ this.DataIndex = 0
 this.LastSettlementApproached = {}
 this.LastShipTargeted = {}
 
-# Our Class instances
-this.activitymanager = None
-this.missionlog = None
-#this.overlay = None
-this.tick = None
-
-# Plugin Preferences on settings tab. These are all initialised to Variables in plugin_start3
-this.Status = None
-this.ShowZeroActivitySystems = None
-this.AbbreviateFactionNames = None
-this.IncludeSecondaryInf = None
-this.DiscordWebhook = None
-this.DiscordUsername = None
-
 # Conflict states, for determining whether we display the CZ UI and count conflict missions for factions in these states
 this.ConflictStates = [
     'War', 'CivilWar'
