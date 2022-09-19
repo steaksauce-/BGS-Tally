@@ -1,8 +1,10 @@
-import imp
 import json
+from datetime import datetime
 
 from bgstally.debug import Debug
 from bgstally.tick import Tick
+
+DATETIME_FORMAT_ACTIVITY = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 class Activity:
@@ -21,7 +23,7 @@ class Activity:
         self.tickid = tick.tickid
         self.ticktime = tick.ticktime
         self.plugindir = plugindir
-        self.data = {'tickid': self.tickid, 'ticktime': self.ticktime, 'systems': {}}
+        self.data = {'tickid': self.tickid, 'ticktime': self.ticktime.strftime(DATETIME_FORMAT_ACTIVITY), 'systems': {}}
 
 
     def load(self, filepath):
@@ -31,7 +33,7 @@ class Activity:
         with open(filepath) as activityfile:
             self.data = json.load(activityfile)
             self.tickid = self.data.get('tickid')
-            self.ticktime = self.data.get('ticktime')
+            self.ticktime = datetime.strptime(self.data.get('ticktime'), DATETIME_FORMAT_ACTIVITY)
 
 
     def save(self, filepath):
@@ -56,3 +58,27 @@ class Activity:
                 legacysystem = legacysystemlist[0] # For some reason each system was a list, but always had just 1 entry
                 if 'SystemAddress' in legacysystem:
                     self.data['systems'][legacysystem['SystemAddress']] = legacysystem # Copy entire existing data structure in, we don't change it inside the system
+
+
+    def __eq__(self, other):
+        if isinstance(other, Activity): return (self.ticktime == other.ticktime)
+        return False
+
+    def __lt__(self, other):
+        if isinstance(other, Activity): return (self.ticktime < other.ticktime)
+        return False
+
+    def __le__(self, other):
+        if isinstance(other, Activity): return (self.ticktime <= other.ticktime)
+        return False
+
+    def __gt__(self, other):
+        if isinstance(other, Activity): return (self.ticktime > other.ticktime)
+        return False
+
+    def __ge__(self, other):
+        if isinstance(other, Activity): return (self.ticktime >= other.ticktime)
+        return False
+
+    def __repr__(self):
+        return f"{self.tickid} ({self.ticktime}): {self.data}"

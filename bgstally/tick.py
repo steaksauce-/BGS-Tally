@@ -14,7 +14,7 @@ TICKID_UNKNOWN = "unknown_tickid"
 class Tick:
     def __init__(self, load = False):
         self.tickid = TICKID_UNKNOWN
-        self.ticktime = (datetime.utcnow() - timedelta(days = 30)).strftime(DATETIME_FORMAT_ELITEBGS) # Default to a tick a month old
+        self.ticktime = (datetime.utcnow() - timedelta(days = 30)) # Default to a tick a month old
         if load: self.load()
 
 
@@ -35,7 +35,7 @@ class Tick:
             if self.tickid != tick[0]['_id']:
                 # There is a new tick ID
                 self.tickid = tick[0]['_id']
-                self.ticktime = tick[0]['time']
+                self.ticktime = datetime.strptime(tick[0]['time'], DATETIME_FORMAT_ELITEBGS)
                 return True
 
         return False
@@ -47,7 +47,7 @@ class Tick:
         """
         # Keep the same tick ID so we don't start another new tick on next launch,
         # but update the time to show the user that something has happened
-        self.ticktime = datetime.now().strftime(DATETIME_FORMAT_ELITEBGS)
+        self.ticktime = datetime.now()
 
 
     def load(self):
@@ -55,7 +55,7 @@ class Tick:
         Load tick status from config
         """
         self.tickid = config.get_str("XLastTick")
-        self.ticktime = config.get_str("XTickTime")
+        self.ticktime = datetime.strptime(config.get_str("XTickTime"), DATETIME_FORMAT_ELITEBGS)
 
 
     def save(self):
@@ -63,12 +63,11 @@ class Tick:
         Save tick status to config
         """
         config.set('XLastTick', self.tickid)
-        config.set('XTickTime', self.ticktime)
+        config.set('XTickTime', self.ticktime.strftime(DATETIME_FORMAT_ELITEBGS))
 
 
     def get_formatted(self):
         """
         Return a formatted tick date/time
         """
-        datetime_object = datetime.strptime(self.ticktime, DATETIME_FORMAT_ELITEBGS)
-        return datetime_object.strftime(DATETIME_FORMAT_DISPLAY)
+        return self.ticktime.strftime(DATETIME_FORMAT_DISPLAY)
