@@ -1,13 +1,14 @@
-import os.path
 import json
+import os.path
 from datetime import datetime, timedelta
+
+from bgstally.debug import Debug
 
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 
 class MissionLog:
-    def __init__(self, plugindir, logger):
+    def __init__(self, plugindir):
         self.plugindir = plugindir
-        self.logger = logger
         self.missionlog = []
         self.load()
 

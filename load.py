@@ -1,6 +1,5 @@
 import copy
 import json
-import logging
 import os.path
 import sys
 import tkinter as tk
@@ -14,15 +13,19 @@ from tkinter.messagebox import askyesno
 import myNotebook as nb
 import plug
 import requests
-from config import appname, config
+from config import config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activitymanager import ActivityManager
+from bgstally.debug import Debug
 from bgstally.missionlog import MissionLog
 #from bgstally.overlay import Overlay
 from bgstally.tick import Tick
 from ScrollableNotebook import ScrollableNotebook
+
+# This could also be returned from plugin_start3()
+plugin_name = path.basename(path.dirname(__file__))
 
 this = sys.modules[__name__]  # For holding module globals
 this.VersionNo = "1.10.0"
@@ -81,29 +84,6 @@ this.MissionListConflict = [
     'Mission_OnFoot_Assassination_Covert_MB_name',
     'Mission_OnFoot_Onslaught_Offline_MB_name'
 ]
-
-
-# This could also be returned from plugin_start3()
-plugin_name = os.path.basename(os.path.dirname(__file__))
-
-# A Logger is used per 'found' plugin to make it easy to include the plugin's
-# folder name in the logging output format.
-# NB: plugin_name here *must* be the plugin's folder name as per the preceding
-#     code, else the logger won't be properly set up.
-logger = logging.getLogger(f'{appname}.{plugin_name}')
-
-# If the Logger has handlers then it was already set up by the core code, else
-# it needs setting up here.
-if not logger.hasHandlers():
-    level = logging.INFO  # So logger.info(...) is equivalent to print()
-
-    logger.setLevel(level)
-    logger_channel = logging.StreamHandler()
-    logger_formatter = logging.Formatter(f'%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s')
-    logger_formatter.default_time_format = '%Y-%m-%d %H:%M:%S'
-    logger_formatter.default_msec_format = '%s.%03d'
-    logger_channel.setFormatter(logger_formatter)
-    logger.addHandler(logger_channel)
 
 
 class CZs(Enum):
@@ -189,10 +169,11 @@ def plugin_start3(plugin_dir):
     this.StationType = tk.StringVar(value=config.get_str("XStationType"))
 
     # Classes
-    this.missionlog = MissionLog(this.Dir, logger)
-    #this.overlay = Overlay(logger)
-    this.tick = Tick(logger, config)
-    this.activitymanager = ActivityManager(this.Dir, this.tick.tick_id, logger)
+    this.debug = Debug(plugin_name)
+    this.missionlog = MissionLog(this.Dir)
+    #this.overlay = Overlay()
+    this.tick = Tick(True)
+    this.activitymanager = ActivityManager(this.Dir, this.tick)
 
     version_success = check_version()
     tick_success = this.tick.fetch_tick()
@@ -243,7 +224,7 @@ def check_version():
         response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest', timeout=10)  # check latest version
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        logger.warning(f"Unable to fetch latest plugin version", exc_info=e)
+        this.debug.logger.warning(f"Unable to fetch latest plugin version", exc_info=e)
         plug.show_error(f"BGS-Tally: Unable to fetch latest plugin version")
         return None
     else:
@@ -1048,7 +1029,7 @@ def post_to_discord(Form, Discord, tick_mode):
                 response_json = response.json()
                 discord_message_id.set(response_json['id'])
             else:
-                logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+                this.debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
     else:
         # Previous post, amend or delete it
@@ -1058,7 +1039,7 @@ def post_to_discord(Form, Discord, tick_mode):
             response = requests.patch(url=url, data={'content': discord_text, 'username': this.DiscordUsername.get()})
             if not response.ok:
                 discord_message_id.set('')
-                logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+                this.debug.logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
                 # Try to post new message instead
                 url = this.DiscordWebhook.get()
@@ -1068,7 +1049,7 @@ def post_to_discord(Form, Discord, tick_mode):
                     response_json = response.json()
                     discord_message_id.set(response_json['id'])
                 else:
-                    logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+                    this.debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
         else:
             url = f"{this.DiscordWebhook.get()}/messages/{discord_message_id.get()}"
             response = requests.delete(url=url)
@@ -1076,7 +1057,7 @@ def post_to_discord(Form, Discord, tick_mode):
                 # Clear the Message ID
                 discord_message_id.set('')
             else:
-                logger.error(f"Unable to delete previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+                this.debug.logger.error(f"Unable to delete previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
 
 def is_webhook_valid():

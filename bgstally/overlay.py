@@ -1,5 +1,7 @@
 import plug
 
+from bgstally.debug import Debug
+
 try:
     from EDMCOverlay import edmcoverlay
 except ImportError:
@@ -7,9 +9,8 @@ except ImportError:
 
 
 class Overlay:
-    def __init__(self, logger):
+    def __init__(self):
         self.edmcoverlay = None
-        self.logger = logger
         self._check_overlay()
 
 
@@ -30,15 +31,15 @@ class Overlay:
                 self.display_message("info", "BGSTally Ready")
             except Exception as e:
                 self.edmcoverlay = None
-                self.logger.error(f"EDMCOverlay is not running", exc_info=e)
+                Debug.logger.error(f"EDMCOverlay is not running", exc_info=e)
                 plug.show_error(f"BGS-Tally: EDMCOverlay is not running")
                 return False
             else:
-                self.logger.info(f"EDMCOverlay is running")
+                Debug.logger.info(f"EDMCOverlay is running")
                 return True
         else:
             # Couldn't load edmcoverlay python lib, the plugin probably isn't installed
-            self.logger.error(f"EDMCOverlay plugin is not installed")
+            Debug.logger.error(f"EDMCOverlay plugin is not installed")
             plug.show_error(f"BGS-Tally: EDMCOverlay plugin is not installed")
             return False
 

@@ -1,5 +1,8 @@
-import os.path
+import imp
 import json
+
+from bgstally.debug import Debug
+from bgstally.tick import Tick
 
 
 class Activity:
@@ -10,14 +13,15 @@ class Activity:
     factions with their activity
     """
 
-    def __init__(self, plugindir, logger, tickid=None):
+    def __init__(self, plugindir, tick = None):
         """
         Instantiate using a given tickid
         """
-        self.tickid = tickid
+        if tick == None: tick = Tick()
+        self.tickid = tick.tickid
+        self.ticktime = tick.ticktime
         self.plugindir = plugindir
-        self.logger = logger
-        self.data = {'tickid': self.tickid, 'systems': {}}
+        self.data = {'tickid': self.tickid, 'ticktime': self.ticktime, 'systems': {}}
 
 
     def load(self, filepath):
@@ -27,6 +31,7 @@ class Activity:
         with open(filepath) as activityfile:
             self.data = json.load(activityfile)
             self.tickid = self.data.get('tickid')
+            self.ticktime = self.data.get('ticktime')
 
 
     def save(self, filepath):
@@ -44,7 +49,7 @@ class Activity:
         # Convert:
         # {"1": [{"System": "Sowiio", "SystemAddress": 1458376217306, "Factions": [{}, {}], "zero_system_activity": false}]}
         # To:
-        # {"tickid": tickid, "systems": {1458376217306: {"System": "Sowiio", "SystemAddress": 1458376217306, "Factions": [{}, {}], "zero_system_activity": false}}}
+        # {"tickid": tickid, "ticktime": ticktime, "systems": {1458376217306: {"System": "Sowiio", "SystemAddress": 1458376217306, "Factions": [{}, {}], "zero_system_activity": false}}}
         with open(filepath) as legacyactivityfile:
             legacydata = json.load(legacyactivityfile)
             for legacysystemlist in legacydata.values():  # Iterate the values of the dict. We don't care about the keys - they were just "1", "2" etc.
