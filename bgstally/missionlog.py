@@ -7,7 +7,7 @@ from bgstally.debug import Debug
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 
 class MissionLog:
-    def __init__(self, plugindir):
+    def __init__(self, plugindir: str):
         self.plugindir = plugindir
         self.missionlog = []
         self.load()
@@ -38,14 +38,14 @@ class MissionLog:
         return self.missionlog
 
 
-    def add_mission(self, name, faction, missionid, expiry, system):
+    def add_mission(self, name: str, faction: str, missionid: str, expiry: str, system_name: str):
         """
         Add a mission to the missionlog
         """
-        self.missionlog.append({"Name": name, "Faction": faction, "MissionID": missionid, "Expiry": expiry, "System": system})
+        self.missionlog.append({"Name": name, "Faction": faction, "MissionID": missionid, "Expiry": expiry, "System": system_name})
 
 
-    def delete_mission_by_id(self, missionid):
+    def delete_mission_by_id(self, missionid: str):
         """
         Delete the mission with the given id from the missionlog
         """
@@ -55,7 +55,7 @@ class MissionLog:
                 break
 
 
-    def delete_mission_by_index(self, missionindex):
+    def delete_mission_by_index(self, missionindex: int):
         """
         Delete the mission at the given index from the missionlog
         """

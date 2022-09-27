@@ -12,9 +12,13 @@ TICKID_UNKNOWN = "unknown_tickid"
 
 
 class Tick:
-    def __init__(self, load = False):
-        self.tickid = TICKID_UNKNOWN
-        self.ticktime = (datetime.utcnow() - timedelta(days = 30)) # Default to a tick a month old
+    """
+    Information about a tick
+    """
+
+    def __init__(self, load: bool = False):
+        self.tick_id = TICKID_UNKNOWN
+        self.tick_time = (datetime.utcnow() - timedelta(days = 30)) # Default to a tick a month old
         if load: self.load()
 
 
@@ -32,10 +36,10 @@ class Tick:
         else:
             tick = response.json()
 
-            if self.tickid != tick[0]['_id']:
+            if self.tick_id != tick[0]['_id']:
                 # There is a new tick ID
-                self.tickid = tick[0]['_id']
-                self.ticktime = datetime.strptime(tick[0]['time'], DATETIME_FORMAT_ELITEBGS)
+                self.tick_id = tick[0]['_id']
+                self.tick_time = datetime.strptime(tick[0]['time'], DATETIME_FORMAT_ELITEBGS)
                 return True
 
         return False
@@ -47,27 +51,27 @@ class Tick:
         """
         # Keep the same tick ID so we don't start another new tick on next launch,
         # but update the time to show the user that something has happened
-        self.ticktime = datetime.now()
+        self.tick_time = datetime.now()
 
 
     def load(self):
         """
         Load tick status from config
         """
-        self.tickid = config.get_str("XLastTick")
-        self.ticktime = datetime.strptime(config.get_str("XTickTime"), DATETIME_FORMAT_ELITEBGS)
+        self.tick_id = config.get_str("XLastTick")
+        self.tick_time = datetime.strptime(config.get_str("XTickTime"), DATETIME_FORMAT_ELITEBGS)
 
 
     def save(self):
         """
         Save tick status to config
         """
-        config.set('XLastTick', self.tickid)
-        config.set('XTickTime', self.ticktime.strftime(DATETIME_FORMAT_ELITEBGS))
+        config.set('XLastTick', self.tick_id)
+        config.set('XTickTime', self.tick_time.strftime(DATETIME_FORMAT_ELITEBGS))
 
 
     def get_formatted(self):
         """
         Return a formatted tick date/time
         """
-        return self.ticktime.strftime(DATETIME_FORMAT_DISPLAY)
+        return self.tick_time.strftime(DATETIME_FORMAT_DISPLAY)

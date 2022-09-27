@@ -14,7 +14,7 @@ class Overlay:
         self._check_overlay()
 
 
-    def display_message(self, frame_name, message):
+    def display_message(self, frame_name: str, message: str):
         if self.edmcoverlay == None: return
         fi = self._get_frame_info(frame_name)
         self.edmcoverlay.send_shape(f"bgstally-frame-{frame_name}", "rect", fi["border_colour"], fi["fill_colour"], fi["x"], fi["y"], fi["w"], fi["h"], ttl=fi["ttl"])
@@ -44,7 +44,7 @@ class Overlay:
             return False
 
 
-    def _get_frame_info(self, frame):
+    def _get_frame_info(self, frame: str):
         if frame == "info":
             return {"border_colour": "red", "fill_colour": "blue", "text_colour": "yellow", "x": 20, "y": 180, "w": 100, "h": 25, "ttl": 30}
         elif frame == "tick":

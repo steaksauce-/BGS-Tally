@@ -6,7 +6,7 @@ from config import appname
 class Debug:
     logger = None
 
-    def __init__(self, plugin_name):
+    def __init__(self, plugin_name: str):
         # A Logger is used per 'found' plugin to make it easy to include the plugin's
         # folder name in the logging output format.
         # NB: plugin_name here *must* be the plugin's folder name as per the preceding
