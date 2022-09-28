@@ -5,9 +5,9 @@ from config import config
 from bgstally.enums import CheckStates
 
 
-class Prefs:
+class State:
     """
-    Manage plugin user preferences
+    Manage plugin user state and preferences
     """
 
     def __init__(self):
@@ -16,8 +16,10 @@ class Prefs:
 
     def load(self):
         """
-        Load our preferences
+        Load our state
         """
+
+        # UI preference fields
         self.Status = tk.StringVar(value=config.get_str('XStatus', default="Active"))
         self.ShowZeroActivitySystems = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
         self.AbbreviateFactionNames = tk.StringVar(value=config.get_str('XAbbreviate', default=CheckStates.STATE_OFF))
@@ -25,17 +27,18 @@ class Prefs:
         self.DiscordWebhook = tk.StringVar(value=config.get_str('XDiscordWebhook'))
         self.DiscordUsername = tk.StringVar(value=config.get_str('XDiscordUsername'))
 
-        self.DiscordCurrentMessageID = tk.StringVar(value=config.get_str('XDiscordCurrentMessageID'))
-        self.DiscordPreviousMessageID = tk.StringVar(value=config.get_str('XDiscordPreviousMessageID'))
-        self.DataIndex = tk.IntVar(value=config.get_int('xIndex'))
-        self.StationFaction = tk.StringVar(value=config.get_str('XStation'))
-        self.StationType = tk.StringVar(value=config.get_str('XStationType'))
+        # Other persistent values
+        self.DataIndex = config.get_int('xIndex')
+        self.StationFaction = config.get_str('XStation')
+        self.StationType = config.get_str('XStationType')
 
 
     def save(self):
         """
-        Save our preferences
+        Save our state
         """
+
+        # UI preference fields
         config.set('XStatus', self.Status.get())
         config.set('XShowZeroActivity', self.ShowZeroActivitySystems.get())
         config.set('XAbbreviate', self.AbbreviateFactionNames.get())
@@ -43,8 +46,7 @@ class Prefs:
         config.set('XDiscordWebhook', self.DiscordWebhook.get())
         config.set('XDiscordUsername', self.DiscordUsername.get())
 
-        config.set('XDiscordCurrentMessageID', self.DiscordCurrentMessageID.get())
-        config.set('XDiscordPreviousMessageID', self.DiscordPreviousMessageID.get())
-        config.set('XIndex', self.DataIndex.get())
-        config.set('XStation', self.StationFaction.get())
-        config.set('XStationType', self.StationType.get())
+        # Other persistent values
+        config.set('XIndex', self.DataIndex)
+        config.set('XStation', self.StationFaction)
+        config.set('XStationType', self.StationType)
