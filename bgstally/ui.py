@@ -122,7 +122,12 @@ class UI:
         ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=self.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
         ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
 
-        for system in activity.systems.values():
+        system_list = activity.get_ordered_systems()
+        Debug.logger.info(system_list)
+
+        for system_id in system_list:
+            system = activity.systems[system_id]
+
             if self.state.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and system['zero_system_activity']:
                 continue
 

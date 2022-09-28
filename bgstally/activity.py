@@ -80,14 +80,12 @@ class Activity:
         # {"tick_id": tick_id, "tick_time": tick_time, "discord_messageid": discordmessageid, "systems": {1458376217306: {"System": "Sowiio", "SystemAddress": 1458376217306, "zero_system_activity": false, "Factions": {"Faction Name 1": {}, "Faction Name 2": {}}}}}
         with open(filepath) as legacyactivityfile:
             legacydata = json.load(legacyactivityfile)
-            for legacysystemlist in legacydata.values():  # Iterate the values of the dict. We don't care about the keys - they were just "1", "2" etc.
-                legacysystem = legacysystemlist[0]        # For some reason each system was a list, but always had just 1 entry
+            for legacysystemlist in legacydata.values():        # Iterate the values of the dict. We don't care about the keys - they were just "1", "2" etc.
+                legacysystem = legacysystemlist[0]              # For some reason each system was a list, but always had just 1 entry
                 if 'SystemAddress' in legacysystem:
-                    # Build and convert system data
                     factions = {}
                     for faction in legacysystem['Factions']:
-                        # Just convert List to Dict, with faction name as key
-                        factions[faction['Faction']] = faction
+                        factions[faction['Faction']] = faction  # Just convert List to Dict, with faction name as key
 
                     self.systems[legacysystem['SystemAddress']] = self._get_new_system_data(legacysystem['System'], legacysystem['SystemAddress'], factions)
             self._recalculate_zero_activity()
@@ -108,6 +106,13 @@ class Activity:
         """
         with open(filepath, 'w') as activityfile:
             json.dump(self._as_dict(), activityfile)
+
+
+    def get_ordered_systems(self):
+        """
+        Get an ordered list of the systems we are tracking, with those with activity before those without
+        """
+        return sorted(self.systems.keys(), key=lambda x: (self.systems[x]['zero_system_activity'], self.systems[x]['System']))
 
 
     def clear_activity(self, mission_log: MissionLog):
@@ -175,6 +180,8 @@ class Activity:
                 # We do not have this faction, create a new clean entry
                 self.current_system['Factions'][faction['Name']] = self._get_new_faction_data(faction['Name'], faction['FactionState'] if conflicts != 1 else "None")
 
+        self._recalculate_zero_activity()
+
 
     def mission_completed(self, journal_entry: Dict, mission_log: MissionLog):
         """
@@ -201,6 +208,7 @@ class Activity:
                             faction['MissionPoints'] -= inf
                         else:
                             faction['MissionPointsSecondary'] -= inf
+                    self._recalculate_zero_activity()
 
             else:  # No influence specified for faction effect
                 mission_log_items = mission_log.get_missionlog()
@@ -215,8 +223,9 @@ class Activity:
 
                         if (faction['FactionState'] in ELECTION_STATES and journal_entry['Name'] in ELECTION_MISSIONS) \
                         or (faction['FactionState'] in CONFLICT_STATES and journal_entry['Name'] in CONFLICT_MISSIONS) \
-                            and effect_faction_name == journal_entry['Faction']:
-                                faction['MissionPoints'] += 1
+                        and effect_faction_name == journal_entry['Faction']:
+                            faction['MissionPoints'] += 1
+                    self._recalculate_zero_activity()
 
         mission_log.delete_mission_by_id(journal_entry['MissionID'])
 
@@ -236,6 +245,7 @@ class Activity:
                 if faction: faction['MissionFailed'] += 1
 
                 mission_log.delete_mission_by_id(mission['MissionID'])
+                self._recalculate_zero_activity()
                 break
 
 
@@ -244,7 +254,9 @@ class Activity:
         Handle sale of exploration data
         """
         faction = self.current_system['Factions'].get(state.StationFaction)
-        if faction: faction['CartData'] += journal_entry['TotalEarnings']
+        if faction:
+            faction['CartData'] += journal_entry['TotalEarnings']
+            self._recalculate_zero_activity()
 
 
     def organic_data_sold(self, journal_entry: Dict, state: State):
@@ -255,6 +267,7 @@ class Activity:
         if faction:
             for e in journal_entry['BioData']:
                 faction['ExoData'] += e['Value'] + e['Bonus']
+            self._recalculate_zero_activity()
 
 
     def bv_redeemed(self, journal_entry: Dict, state: State):
@@ -268,6 +281,7 @@ class Activity:
                     faction['Bounties'] += (bv_info['Amount'] / 2)
                 else:
                     faction['Bounties'] += bv_info['Amount']
+                self._recalculate_zero_activity()
 
 
     def cb_redeemed(self, journal_entry: Dict):
@@ -275,7 +289,9 @@ class Activity:
         Handle redemption of combat bonds
         """
         faction = self.current_system['Factions'].get(journal_entry['Faction'])
-        if faction: faction['CombatBonds'] += journal_entry['Amount']
+        if faction:
+            faction['CombatBonds'] += journal_entry['Amount']
+            self._recalculate_zero_activity()
 
 
     def trade_purchased(self, journal_entry: Dict, state: State):
@@ -283,7 +299,9 @@ class Activity:
         Handle purchase of trade commodities
         """
         faction = self.current_system['Factions'].get(state.StationFaction)
-        if faction: faction['TradePurchase'] += journal_entry['TotalCost']
+        if faction:
+            faction['TradePurchase'] += journal_entry['TotalCost']
+            self._recalculate_zero_activity()
 
 
     def trade_sold(self, journal_entry: Dict, state: State):
@@ -298,6 +316,7 @@ class Activity:
                 faction['BlackMarketProfit'] += profit
             else:
                 faction['TradeProfit'] += profit
+            self._recalculate_zero_activity()
 
 
     def ship_targeted(self, journal_entry: Dict):
@@ -317,8 +336,9 @@ class Activity:
         if journal_entry['CrimeType'] != 'murder' or journal_entry.get('Victim') != self.last_ship_targeted.get('PilotName_Localised'): return
 
         faction = self.current_system['Factions'].get(self.last_ship_targeted.get('Faction'))
-        if faction: faction['Murdered'] += 1
-
+        if faction:
+            faction['Murdered'] += 1
+            self._recalculate_zero_activity()
 
     def settlement_approached(self, journal_entry: Dict):
         """
@@ -389,6 +409,7 @@ class Activity:
                 # Store last settlement type
                 self.last_settlement_approached['size'] = 'h'
 
+        self._recalculate_zero_activity()
 
     #
     # Private functions
@@ -400,7 +421,7 @@ class Activity:
         """
         return {'System': system_name,
                 'SystemAddress': system_address,
-                'zero'
+                'zero_system_activity': True,
                 'Factions': faction_data}
 
 
@@ -441,7 +462,7 @@ class Activity:
 
     def _recalculate_zero_activity(self):
         """
-        For efficiency, we store whether each system has had any activity in the data structure
+        For efficiency at display time, we store whether each system has had any activity in the data structure
         """
         for system in self.systems.values():
             system['zero_system_activity'] = True
