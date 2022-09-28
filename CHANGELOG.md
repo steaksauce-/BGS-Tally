@@ -10,6 +10,7 @@
 ### Bug Fixes:
 
 * Murders were being counted against the system faction. Now count them against the faction of the target ship instead.
+* Using the mini scroll-left and scroll-right arrows in the tab bar was throwing errors if there weren't enough tabs to scroll.
 
 
 ## v1.10.0 - 2022-08-11
