@@ -248,7 +248,7 @@ class UI:
         DiscordText.focus()
 
         ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
-        if self.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self.discord.post_to_discord, ContainerFrame, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
+        if self.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self.discord.post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
 
         theme.update(ContainerFrame)
 
