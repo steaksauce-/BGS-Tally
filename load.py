@@ -34,7 +34,7 @@ def plugin_start3(plugin_dir):
     #this.overlay = Overlay()
     this.tick = Tick(True)
     this.activity_manager = ActivityManager(plugin_dir, this.mission_log, this.tick)
-    this.ui = UI(this.state, this.activity_manager, this.tick, this.discord, this.VersionNo)
+    this.ui = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.VersionNo)
 
     version_success = check_version()
     tick_success = this.tick.fetch_tick()

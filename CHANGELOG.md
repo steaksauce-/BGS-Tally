@@ -2,6 +2,10 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* In the activity window, systems with activity now have a green marker in their tab.
+
 ### Changes:
 
 * This version includes a complete and fundamental rewrite of the code, separating into separate modules for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks.

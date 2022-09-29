@@ -1,7 +1,8 @@
 import sys
 import tkinter as tk
 from functools import partial
-from tkinter import ttk
+from os import path
+from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
 
 import myNotebook as nb
@@ -9,27 +10,32 @@ from ScrollableNotebook import ScrollableNotebook
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from bgstally.activity import Activity, CONFLICT_STATES, ELECTION_STATES
+from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.activitymanager import ActivityManager
-from bgstally.discord import Discord
 from bgstally.debug import Debug
+from bgstally.discord import Discord
 from bgstally.enums import CheckStates, CZs
 from bgstally.state import State
 from bgstally.tick import Tick
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
+FOLDER_ASSETS = "assets"
+
 
 class UI:
     """
     Display the user's activity
     """
 
-    def __init__(self, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, plugin_version_number: str):
+
+    def __init__(self, plugin_dir: str, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, plugin_version_number: str):
         self.activity_manager = activity_manager
         self.state = state
         self.tick = tick
         self.discord = discord
         self.version_number = plugin_version_number
+
+        self.active_tab_image = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "active_tab.png"))
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):
@@ -127,16 +133,16 @@ class UI:
         for system_id in system_list:
             system = activity.systems[system_id]
 
-            if self.state.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and system['zero_system_activity']:
-                continue
+            if self.state.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and system['zero_system_activity']: continue
 
             tab = ttk.Frame(TabParent)
-            # Make the second column (faction name) fill available space
-            tab.columnconfigure(1, weight=1)
+            tab.columnconfigure(1, weight=1) # Make the second column (faction name) fill available space
 
             FactionEnableCheckbuttons = []
 
-            TabParent.add(tab, text=system['System'])
+            if system['zero_system_activity']: TabParent.add(tab, text=system['System'])
+            else: TabParent.add(tab, text=system['System'], compound='right', image=self.active_tab_image)
+
             ttk.Label(tab, text="Include", font=heading_font).grid(row=0, column=0, padx=2, pady=2)
             EnableAllCheckbutton = ttk.Checkbutton(tab)
             EnableAllCheckbutton.grid(row=1, column=0, padx=2, pady=2)
