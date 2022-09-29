@@ -147,6 +147,8 @@ class Activity:
         try: test = journal_entry['Factions']
         except KeyError: return
 
+        self.current_system = None
+
         for system_address in self.systems:
             if system_address == journal_entry['SystemAddress']:
                 # We already have an entry for this system
