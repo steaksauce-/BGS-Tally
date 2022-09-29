@@ -28,7 +28,6 @@ class State:
         self.DiscordUsername = tk.StringVar(value=config.get_str('XDiscordUsername'))
 
         # Other persistent values
-        self.DataIndex = config.get_int('xIndex')
         self.StationFaction = config.get_str('XStation')
         self.StationType = config.get_str('XStationType')
 
@@ -47,6 +46,5 @@ class State:
         config.set('XDiscordUsername', self.DiscordUsername.get())
 
         # Other persistent values
-        config.set('XIndex', self.DataIndex)
         config.set('XStation', self.StationFaction)
         config.set('XStationType', self.StationType)
