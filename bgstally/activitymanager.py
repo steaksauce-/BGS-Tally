@@ -20,11 +20,11 @@ class ActivityManager:
     the data storage of Activity logs.
     """
 
-    def __init__(self, plugindir: str, mission_log: MissionLog, current_tick: Tick):
-        self.plugindir = plugindir
+    def __init__(self, plugin_dir: str, mission_log: MissionLog, current_tick: Tick):
+        self.plugin_dir = plugin_dir
         self.mission_log = mission_log
 
-        self.activitydata = []
+        self.activity_data = []
         self.current_activity = None
 
         self._load(current_tick)
@@ -34,8 +34,8 @@ class ActivityManager:
         """
         Save all activity data
         """
-        for activity in self.activitydata:
-            activity.save(path.join(self.plugindir, FOLDER_ACTIVITYDATA, activity.tick_id + FILE_SUFFIX))
+        for activity in self.activity_data:
+            activity.save(path.join(self.plugin_dir, FOLDER_ACTIVITYDATA, activity.tick_id + FILE_SUFFIX))
 
 
     def get_current_activity(self):
@@ -51,8 +51,8 @@ class ActivityManager:
         We'll probably do away with this specific function in future, and generalise this into being able to
         access any previous available activity, with a UI to choose from previous activities.
         """
-        if len(self.activitydata) < 2: return None
-        else: return self.activitydata[1]
+        if len(self.activity_data) < 2: return None
+        else: return self.activity_data[1]
 
 
     def new_tick(self, tick: Tick):
@@ -64,8 +64,8 @@ class ActivityManager:
         new_activity.tick_time = tick.tick_time
         new_activity.discord_messageid = None
         new_activity.clear_activity(self.mission_log)
-        self.activitydata.append(new_activity)
-        self.activitydata.sort(reverse=True)
+        self.activity_data.append(new_activity)
+        self.activity_data.sort(reverse=True)
         self.current_activity = new_activity
 
 
@@ -74,36 +74,36 @@ class ActivityManager:
         Load all activity data
         """
         # Handle modern data from subfolder
-        filepath = path.join(self.plugindir, FOLDER_ACTIVITYDATA)
+        filepath = path.join(self.plugin_dir, FOLDER_ACTIVITYDATA)
         if not path.exists(filepath): mkdir(filepath)
         for activityfilename in listdir(filepath):
             if activityfilename.endswith(FILE_SUFFIX):
-                activity = Activity(self.plugindir, Tick())
+                activity = Activity(self.plugin_dir, Tick())
                 activity.load(path.join(filepath, activityfilename))
-                self.activitydata.append(activity)
+                self.activity_data.append(activity)
                 if activity.tick_id == current_tick.tick_id: self.current_activity = activity
 
         # Handle legacy data if it exists - parse and migrate to new format
-        filepath = path.join(self.plugindir, FILE_LEGACY_PREVIOUSDATA)
+        filepath = path.join(self.plugin_dir, FILE_LEGACY_PREVIOUSDATA)
         if path.exists(filepath): self._convert_legacy_data(filepath, Tick(), config.get_str('XDiscordPreviousMessageID')) # Fake a tick for previous legacy - we don't have tick_id or tick_time
-        filepath = path.join(self.plugindir, FILE_LEGACY_CURRENTDATA)
+        filepath = path.join(self.plugin_dir, FILE_LEGACY_CURRENTDATA)
         if path.exists(filepath): self._convert_legacy_data(filepath, current_tick, config.get_str('XDiscordCurrentMessageID'))
 
-        self.activitydata.sort(reverse=True)
+        self.activity_data.sort(reverse=True)
 
 
     def _convert_legacy_data(self, filepath: str, tick: Tick, discordmessageid: str):
         """
         Convert a legacy activity data file to new location and format.
         """
-        for activity in self.activitydata:
+        for activity in self.activity_data:
             if activity.tick_id == tick.tick_id:
                 # We already have modern data for this legacy tick ID, ignore it and delete the file
                 Debug.logger.warning(f"Tick data already exists for tick {tick.tick_id} when loading legacy data. Ignoring legacy data.")
                 # TODO: remove(filepath) - Can be done in a future version of the plugin, when we are sure everything is solid
                 return
 
-        activity = Activity(self.plugindir, tick, discordmessageid)
+        activity = Activity(self.plugin_dir, tick, discordmessageid)
         activity.load_legacy_data(filepath)
-        self.activitydata.append(activity)
+        self.activity_data.append(activity)
         if activity.tick_id == tick.tick_id: self.current_activity = activity
