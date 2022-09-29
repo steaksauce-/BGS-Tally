@@ -123,7 +123,6 @@ class UI:
         ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
 
         system_list = activity.get_ordered_systems()
-        Debug.logger.info(system_list)
 
         for system_id in system_list:
             system = activity.systems[system_id]

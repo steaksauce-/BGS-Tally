@@ -162,7 +162,7 @@ def check_version():
     Check for a new plugin version
     """
     try:
-        response = requests.get('https://api.github.com/repos/aussig/BGS-Tally/releases/latest', timeout=10)
+        response = requests.get("https://api.github.com/repos/aussig/BGS-Tally/releases/latest", timeout=10)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         this.debug.logger.warning(f"Unable to fetch latest plugin version", exc_info=e)

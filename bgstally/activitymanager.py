@@ -84,10 +84,10 @@ class ActivityManager:
                 if activity.tick_id == current_tick.tick_id: self.current_activity = activity
 
         # Handle legacy data if it exists - parse and migrate to new format
-        filepath = path.join(self.plugindir, FILE_LEGACY_CURRENTDATA)
-        if path.exists(filepath): self._convert_legacy_data(filepath, current_tick, config.get_str('XDiscordCurrentMessageID'))
         filepath = path.join(self.plugindir, FILE_LEGACY_PREVIOUSDATA)
         if path.exists(filepath): self._convert_legacy_data(filepath, Tick(), config.get_str('XDiscordPreviousMessageID')) # Fake a tick for previous legacy - we don't have tick_id or tick_time
+        filepath = path.join(self.plugindir, FILE_LEGACY_CURRENTDATA)
+        if path.exists(filepath): self._convert_legacy_data(filepath, current_tick, config.get_str('XDiscordCurrentMessageID'))
 
         self.activitydata.sort(reverse=True)
 
@@ -100,7 +100,7 @@ class ActivityManager:
             if activity.tick_id == tick.tick_id:
                 # We already have modern data for this legacy tick ID, ignore it and delete the file
                 Debug.logger.warning(f"Tick data already exists for tick {tick.tick_id} when loading legacy data. Ignoring legacy data.")
-                # TODO: remove(filepath)
+                # TODO: remove(filepath) - Can be done in a future version of the plugin, when we are sure everything is solid
                 return
 
         activity = Activity(self.plugindir, tick, discordmessageid)
