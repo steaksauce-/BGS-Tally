@@ -1,8 +1,7 @@
 import json
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Dict
 
-from bgstally.debug import Debug
 from bgstally.enums import CheckStates
 from bgstally.missionlog import MissionLog
 from bgstally.state import State
@@ -88,7 +87,7 @@ class Activity:
                         factions[faction['Faction']] = faction  # Just convert List to Dict, with faction name as key
 
                     self.systems[legacysystem['SystemAddress']] = self._get_new_system_data(legacysystem['System'], legacysystem['SystemAddress'], factions)
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
 
     def load(self, filepath: str):
@@ -97,7 +96,7 @@ class Activity:
         """
         with open(filepath) as activityfile:
             self._from_dict(json.load(activityfile))
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
 
     def save(self, filepath: str):
@@ -182,7 +181,7 @@ class Activity:
                 # We do not have this faction, create a new clean entry
                 self.current_system['Factions'][faction['Name']] = self._get_new_faction_data(faction['Name'], faction['FactionState'] if conflicts != 1 else "None")
 
-        self._recalculate_zero_activity()
+        self.recalculate_zero_activity()
 
 
     def mission_completed(self, journal_entry: Dict, mission_log: MissionLog):
@@ -210,7 +209,7 @@ class Activity:
                             faction['MissionPoints'] -= inf
                         else:
                             faction['MissionPointsSecondary'] -= inf
-                    self._recalculate_zero_activity()
+                    self.recalculate_zero_activity()
 
             else:  # No influence specified for faction effect
                 mission_log_items = mission_log.get_missionlog()
@@ -227,7 +226,7 @@ class Activity:
                         or (faction['FactionState'] in CONFLICT_STATES and journal_entry['Name'] in CONFLICT_MISSIONS) \
                         and effect_faction_name == journal_entry['Faction']:
                             faction['MissionPoints'] += 1
-                    self._recalculate_zero_activity()
+                    self.recalculate_zero_activity()
 
         mission_log.delete_mission_by_id(journal_entry['MissionID'])
 
@@ -247,7 +246,7 @@ class Activity:
                 if faction: faction['MissionFailed'] += 1
 
                 mission_log.delete_mission_by_id(mission['MissionID'])
-                self._recalculate_zero_activity()
+                self.recalculate_zero_activity()
                 break
 
 
@@ -258,7 +257,7 @@ class Activity:
         faction = self.current_system['Factions'].get(state.StationFaction)
         if faction:
             faction['CartData'] += journal_entry['TotalEarnings']
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
 
     def organic_data_sold(self, journal_entry: Dict, state: State):
@@ -269,7 +268,7 @@ class Activity:
         if faction:
             for e in journal_entry['BioData']:
                 faction['ExoData'] += e['Value'] + e['Bonus']
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
 
     def bv_redeemed(self, journal_entry: Dict, state: State):
@@ -283,7 +282,7 @@ class Activity:
                     faction['Bounties'] += (bv_info['Amount'] / 2)
                 else:
                     faction['Bounties'] += bv_info['Amount']
-                self._recalculate_zero_activity()
+                self.recalculate_zero_activity()
 
 
     def cb_redeemed(self, journal_entry: Dict):
@@ -293,7 +292,7 @@ class Activity:
         faction = self.current_system['Factions'].get(journal_entry['Faction'])
         if faction:
             faction['CombatBonds'] += journal_entry['Amount']
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
 
     def trade_purchased(self, journal_entry: Dict, state: State):
@@ -303,7 +302,7 @@ class Activity:
         faction = self.current_system['Factions'].get(state.StationFaction)
         if faction:
             faction['TradePurchase'] += journal_entry['TotalCost']
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
 
     def trade_sold(self, journal_entry: Dict, state: State):
@@ -318,7 +317,7 @@ class Activity:
                 faction['BlackMarketProfit'] += profit
             else:
                 faction['TradeProfit'] += profit
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
 
     def ship_targeted(self, journal_entry: Dict):
@@ -340,7 +339,7 @@ class Activity:
         faction = self.current_system['Factions'].get(self.last_ship_targeted.get('Faction'))
         if faction:
             faction['Murdered'] += 1
-            self._recalculate_zero_activity()
+            self.recalculate_zero_activity()
 
     def settlement_approached(self, journal_entry: Dict):
         """
@@ -411,7 +410,21 @@ class Activity:
                 # Store last settlement type
                 self.last_settlement_approached['size'] = 'h'
 
-        self._recalculate_zero_activity()
+        self.recalculate_zero_activity()
+
+
+    def recalculate_zero_activity(self):
+        """
+        For efficiency at display time, we store whether each system has had any activity in the data structure
+        """
+        for system in self.systems.values():
+            system['zero_system_activity'] = True
+            for faction_data in system['Factions'].values():
+                self._update_faction_data(faction_data)
+                if not self._is_faction_data_zero(faction_data):
+                    system['zero_system_activity'] = False
+                    break
+
 
     #
     # Private functions
@@ -462,29 +475,18 @@ class Activity:
         if not 'Scenarios' in faction_data: faction_data['Scenarios'] = 0
 
 
-    def _recalculate_zero_activity(self):
-        """
-        For efficiency at display time, we store whether each system has had any activity in the data structure
-        """
-        for system in self.systems.values():
-            system['zero_system_activity'] = True
-            for faction_data in system['Factions'].values():
-                self._update_faction_data(faction_data)
-                if not self._is_faction_data_zero(faction_data):
-                    system['zero_system_activity'] = False
-                    break
-
-
     def _is_faction_data_zero(self, faction_data: Dict):
         """
         Check whether all information is empty or zero for a faction
         """
-        return faction_data['MissionPoints'] == 0 and faction_data['MissionPointsSecondary'] == 0 and \
-                faction_data['TradeProfit'] == 0 and faction_data['TradePurchase'] == 0 and faction_data['BlackMarketProfit'] == 0 and \
-                faction_data['Bounties'] == 0 and faction_data['CartData'] == 0 and faction_data['ExoData'] == 0 and \
-                faction_data['CombatBonds'] == 0 and faction_data['MissionFailed'] == 0 and faction_data['Murdered'] == 0 and \
-                faction_data['SpaceCZ'] == {} and faction_data['GroundCZ'] == {} and faction_data['GroundCZSettlements'] == {} and \
-                faction_data['Scenarios'] == 0
+        return int(faction_data['MissionPoints']) == 0 and int(faction_data['MissionPointsSecondary']) == 0 and \
+                int(faction_data['TradeProfit']) == 0 and int(faction_data['TradePurchase']) == 0 and int(faction_data['BlackMarketProfit']) == 0 and \
+                int(faction_data['Bounties']) == 0 and int(faction_data['CartData']) == 0 and int(faction_data['ExoData']) == 0 and \
+                int(faction_data['CombatBonds']) == 0 and int(faction_data['MissionFailed']) == 0 and int(faction_data['Murdered']) == 0 and \
+                (faction_data['SpaceCZ'] == {} or (int(faction_data['SpaceCZ'].get('l', 0)) == 0 and int(faction_data['SpaceCZ'].get('m', 0)) == 0 and int(faction_data['SpaceCZ'].get('h', 0)) == 0)) and \
+                (faction_data['GroundCZ'] == {} or (int(faction_data['GroundCZ'].get('l', 0)) == 0 and int(faction_data['GroundCZ'].get('m', 0)) == 0 and int(faction_data['GroundCZ'].get('h', 0)) == 0)) and \
+                faction_data['GroundCZSettlements'] == {} and \
+                int(faction_data['Scenarios']) == 0
 
 
     def _as_dict(self):
