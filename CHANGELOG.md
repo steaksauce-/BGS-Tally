@@ -4,7 +4,7 @@
 
 ### New Features:
 
-* In the activity window, systems with activity now have a green marker in their tab.
+* In the activity window, there are now markers against every system, showing at a glance whether there is activity (&#129001; / &#11036;) and also whether you are reporting all, some, or none of the activity (&#9745; / &#9632; / &#9633;).
 
 ### Changes:
 

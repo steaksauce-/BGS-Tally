@@ -1,9 +1,9 @@
-import sys
 import tkinter as tk
 from functools import partial
 from os import path
 from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
+from typing import Dict
 
 import myNotebook as nb
 from ScrollableNotebook import ScrollableNotebook
@@ -35,7 +35,12 @@ class UI:
         self.discord = discord
         self.version_number = plugin_version_number
 
-        self.active_tab_image = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "active_tab.png"))
+        self.image_tab_active_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
+        self.image_tab_active_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
+        self.image_tab_active_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_disabled.png"))
+        self.image_tab_inactive_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_enabled.png"))
+        self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
+        self.image_tab_inactive_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):
@@ -130,6 +135,8 @@ class UI:
 
         system_list = activity.get_ordered_systems()
 
+        tab_index = 0
+
         for system_id in system_list:
             system = activity.systems[system_id]
 
@@ -137,16 +144,14 @@ class UI:
 
             tab = ttk.Frame(TabParent)
             tab.columnconfigure(1, weight=1) # Make the second column (faction name) fill available space
+            TabParent.add(tab, text=system['System'], compound='right', image=self.image_tab_active_enabled)
 
             FactionEnableCheckbuttons = []
-
-            if system['zero_system_activity']: TabParent.add(tab, text=system['System'])
-            else: TabParent.add(tab, text=system['System'], compound='right', image=self.active_tab_image)
 
             ttk.Label(tab, text="Include", font=heading_font).grid(row=0, column=0, padx=2, pady=2)
             EnableAllCheckbutton = ttk.Checkbutton(tab)
             EnableAllCheckbutton.grid(row=1, column=0, padx=2, pady=2)
-            EnableAllCheckbutton.configure(command=partial(self._enable_all_factions_change, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, system))
+            EnableAllCheckbutton.configure(command=partial(self._enable_all_factions_change, TabParent, tab_index, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, system))
             EnableAllCheckbutton.state(['!alternate'])
             ttk.Label(tab, text="Faction", font=heading_font).grid(row=0, column=1, padx=2, pady=2)
             ttk.Label(tab, text="State", font=heading_font).grid(row=0, column=2, padx=2, pady=2)
@@ -180,7 +185,7 @@ class UI:
             for faction in system['Factions'].values():
                 EnableCheckbutton = ttk.Checkbutton(tab)
                 EnableCheckbutton.grid(row=x + header_rows, column=0, sticky=tk.N, padx=2, pady=2)
-                EnableCheckbutton.configure(command=partial(self._enable_faction_change, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, faction, x))
+                EnableCheckbutton.configure(command=partial(self._enable_faction_change, TabParent, tab_index, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, system, faction, x))
                 EnableCheckbutton.state(['selected', '!alternate'] if faction['Enabled'] == CheckStates.STATE_ON else ['!selected', '!alternate'])
                 FactionEnableCheckbuttons.append(EnableCheckbutton)
 
@@ -188,7 +193,7 @@ class UI:
                 FactionNameFrame.grid(row=x + header_rows, column=1, sticky=tk.NW)
                 FactionName = ttk.Label(FactionNameFrame, text=faction['Faction'])
                 FactionName.grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=2, pady=2)
-                FactionName.bind("<Button-1>", partial(self._faction_name_clicked, EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, faction, x))
+                FactionName.bind("<Button-1>", partial(self._faction_name_clicked, TabParent, tab_index, EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, system, faction, x))
                 settlement_row_index = 1
                 for settlement_name in faction.get('GroundCZSettlements', {}):
                     SettlementCheckbutton = ttk.Checkbutton(FactionNameFrame)
@@ -203,11 +208,11 @@ class UI:
                 ttk.Label(tab, text=faction['FactionState']).grid(row=x + header_rows, column=2, sticky=tk.N)
                 MissionPointsVar = tk.IntVar(value=faction['MissionPoints'])
                 ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, sticky=tk.N, padx=2, pady=2)
-                MissionPointsVar.trace('w', partial(self._mission_points_change, MissionPointsVar, True, DiscordText, activity, faction, x))
+                MissionPointsVar.trace('w', partial(self._mission_points_change, TabParent, tab_index, MissionPointsVar, True, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
                 if (faction['FactionState'] not in CONFLICT_STATES and faction['FactionState'] not in ELECTION_STATES):
                     MissionPointsSecVar = tk.IntVar(value=faction['MissionPointsSecondary'])
                     ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, sticky=tk.N, padx=2, pady=2)
-                    MissionPointsSecVar.trace('w', partial(self._mission_points_change, MissionPointsSecVar, False, DiscordText, activity, faction, x))
+                    MissionPointsSecVar.trace('w', partial(self._mission_points_change, TabParent, tab_index, MissionPointsSecVar, False, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
                 ttk.Label(tab, text=self._human_format(faction['TradePurchase'])).grid(row=x + header_rows, column=5, sticky=tk.N)
                 ttk.Label(tab, text=self._human_format(faction['TradeProfit'])).grid(row=x + header_rows, column=6, sticky=tk.N)
                 ttk.Label(tab, text=self._human_format(faction['BlackMarketProfit'])).grid(row=x + header_rows, column=7, sticky=tk.N)
@@ -219,7 +224,7 @@ class UI:
                 ttk.Label(tab, text=faction['Murdered']).grid(row=x + header_rows, column=13, sticky=tk.N)
                 ScenariosVar = tk.IntVar(value=faction['Scenarios'])
                 ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=ScenariosVar).grid(row=x + header_rows, column=14, sticky=tk.N, padx=2, pady=2)
-                ScenariosVar.trace('w', partial(self._scenarios_change, ScenariosVar, DiscordText, activity, faction, x))
+                ScenariosVar.trace('w', partial(self._scenarios_change, TabParent, tab_index, ScenariosVar, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
 
                 if (faction['FactionState'] in CONFLICT_STATES):
                     CZSpaceLVar = tk.StringVar(value=faction['SpaceCZ'].get('l', '0'))
@@ -235,18 +240,19 @@ class UI:
                     CZGroundHVar = tk.StringVar(value=faction['GroundCZ'].get('h', '0'))
                     ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZGroundHVar).grid(row=x + header_rows, column=20, sticky=tk.N, padx=2, pady=2)
                     # Watch for changes on all SpinBox Variables. This approach catches any change, including manual editing, while using 'command' callbacks only catches clicks
-                    CZSpaceLVar.trace('w', partial(self._cz_change, CZSpaceLVar, DiscordText, CZs.SPACE_LOW, activity, faction, x))
-                    CZSpaceMVar.trace('w', partial(self._cz_change, CZSpaceMVar, DiscordText, CZs.SPACE_MED, activity, faction, x))
-                    CZSpaceHVar.trace('w', partial(self._cz_change, CZSpaceHVar, DiscordText, CZs.SPACE_HIGH, activity, faction, x))
-                    CZGroundLVar.trace('w', partial(self._cz_change, CZGroundLVar, DiscordText, CZs.GROUND_LOW, activity, faction, x))
-                    CZGroundMVar.trace('w', partial(self._cz_change, CZGroundMVar, DiscordText, CZs.GROUND_MED, activity, faction, x))
-                    CZGroundHVar.trace('w', partial(self._cz_change, CZGroundHVar, DiscordText, CZs.GROUND_HIGH, activity, faction, x))
+                    CZSpaceLVar.trace('w', partial(self._cz_change, TabParent, tab_index, CZSpaceLVar, EnableAllCheckbutton, DiscordText, CZs.SPACE_LOW, activity, system, faction, x))
+                    CZSpaceMVar.trace('w', partial(self._cz_change, TabParent, tab_index, CZSpaceMVar, EnableAllCheckbutton, DiscordText, CZs.SPACE_MED, activity, system, faction, x))
+                    CZSpaceHVar.trace('w', partial(self._cz_change, TabParent, tab_index, CZSpaceHVar, EnableAllCheckbutton, DiscordText, CZs.SPACE_HIGH, activity, system, faction, x))
+                    CZGroundLVar.trace('w', partial(self._cz_change, TabParent, tab_index, CZGroundLVar, EnableAllCheckbutton, DiscordText, CZs.GROUND_LOW, activity, system, faction, x))
+                    CZGroundMVar.trace('w', partial(self._cz_change, TabParent, tab_index, CZGroundMVar, EnableAllCheckbutton, DiscordText, CZs.GROUND_MED, activity, system, faction, x))
+                    CZGroundHVar.trace('w', partial(self._cz_change, TabParent, tab_index, CZGroundHVar, EnableAllCheckbutton, DiscordText, CZs.GROUND_HIGH, activity, system, faction, x))
 
                 x += 1
 
-            self._update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
+            self._update_enable_all_factions_checkbutton(TabParent, tab_index, EnableAllCheckbutton, FactionEnableCheckbuttons, system)
 
             tab.pack_forget()
+            tab_index += 1
 
         DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
         # Select all text and focus the field
@@ -298,39 +304,18 @@ class UI:
         DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
 
 
-    def _cz_change(self, CZVar, DiscordText, cz_type, activity: Activity, faction, faction_index, *args):
-        """
-        Callback (set as a variable trace) for when a CZ Variable is changed
-        """
-        if cz_type == CZs.SPACE_LOW:
-            faction['SpaceCZ']['l'] = CZVar.get()
-        elif cz_type == CZs.SPACE_MED:
-            faction['SpaceCZ']['m'] = CZVar.get()
-        elif cz_type == CZs.SPACE_HIGH:
-            faction['SpaceCZ']['h'] = CZVar.get()
-        elif cz_type == CZs.GROUND_LOW:
-            faction['GroundCZ']['l'] = CZVar.get()
-        elif cz_type == CZs.GROUND_MED:
-            faction['GroundCZ']['m'] = CZVar.get()
-        elif cz_type == CZs.GROUND_HIGH:
-            faction['GroundCZ']['h'] = CZVar.get()
-
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
-
-
-    def _enable_faction_change(self, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, faction, faction_index, *args):
+    def _enable_faction_change(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, system, faction, faction_index, *args):
         """
         Callback for when a Faction Enable Checkbutton is changed
         """
         faction['Enabled'] = CheckStates.STATE_ON if FactionEnableCheckbuttons[faction_index].instate(['selected']) else CheckStates.STATE_OFF
-        self._update_enable_all_factions_checkbutton(EnableAllCheckbutton, FactionEnableCheckbuttons)
+        self._update_enable_all_factions_checkbutton(notebook, tab_index, EnableAllCheckbutton, FactionEnableCheckbuttons, system)
 
         DiscordText.delete('1.0', 'end-1c')
         DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
 
 
-    def _enable_all_factions_change(self, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, system, *args):
+    def _enable_all_factions_change(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, system, *args):
         """
         Callback for when the Enable All Factions Checkbutton is changed
         """
@@ -343,6 +328,8 @@ class UI:
                 FactionEnableCheckbuttons[x].state(['!selected'])
                 faction['Enabled'] = CheckStates.STATE_OFF
             x += 1
+
+        self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
 
         DiscordText.delete('1.0', 'end-1c')
         DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
@@ -358,7 +345,7 @@ class UI:
         DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
 
 
-    def _update_enable_all_factions_checkbutton(self, EnableAllCheckbutton, FactionEnableCheckbuttons):
+    def _update_enable_all_factions_checkbutton(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, FactionEnableCheckbuttons, system):
         """
         Update the 'Enable all factions' checkbox to the correct state based on which individual factions are enabled
         """
@@ -377,14 +364,16 @@ class UI:
         else:
             EnableAllCheckbutton.state(['!alternate', '!selected'])
 
+        self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
 
-    def _faction_name_clicked(self, EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, faction, faction_index, *args):
+
+    def _faction_name_clicked(self, notebook: ScrollableNotebook, tab_index: int, EnableCheckbutton, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, system, faction, faction_index, *args):
         """
         Callback when a faction name is clicked. Toggle enabled state.
         """
         if EnableCheckbutton.instate(['selected']): EnableCheckbutton.state(['!selected'])
         else: EnableCheckbutton.state(['selected'])
-        self._enable_faction_change(EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, faction, faction_index, *args)
+        self._enable_faction_change(notebook, tab_index, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, system, faction, faction_index, *args)
 
 
     def _settlement_name_clicked(self, SettlementCheckbutton, settlement_name, DiscordText, activity: Activity, faction, faction_index, *args):
@@ -396,7 +385,31 @@ class UI:
         self._enable_settlement_change(SettlementCheckbutton, settlement_name, DiscordText, activity, faction, faction_index, *args)
 
 
-    def _mission_points_change(self, MissionPointsVar, primary, DiscordText, activity: Activity, faction, faction_index, *args):
+    def _cz_change(self, notebook: ScrollableNotebook, tab_index: int, CZVar, EnableAllCheckbutton, DiscordText, cz_type, activity: Activity, system, faction, faction_index, *args):
+        """
+        Callback (set as a variable trace) for when a CZ Variable is changed
+        """
+        if cz_type == CZs.SPACE_LOW:
+            faction['SpaceCZ']['l'] = CZVar.get()
+        elif cz_type == CZs.SPACE_MED:
+            faction['SpaceCZ']['m'] = CZVar.get()
+        elif cz_type == CZs.SPACE_HIGH:
+            faction['SpaceCZ']['h'] = CZVar.get()
+        elif cz_type == CZs.GROUND_LOW:
+            faction['GroundCZ']['l'] = CZVar.get()
+        elif cz_type == CZs.GROUND_MED:
+            faction['GroundCZ']['m'] = CZVar.get()
+        elif cz_type == CZs.GROUND_HIGH:
+            faction['GroundCZ']['h'] = CZVar.get()
+
+        activity.recalculate_zero_activity()
+        self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
+
+        DiscordText.delete('1.0', 'end-1c')
+        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+
+
+    def _mission_points_change(self, notebook: ScrollableNotebook, tab_index: int, MissionPointsVar, primary, EnableAllCheckbutton, DiscordText, activity: Activity, system, faction, faction_index, *args):
         """
         Callback (set as a variable trace) for when a mission points Variable is changed
         """
@@ -405,18 +418,41 @@ class UI:
         else:
             faction['MissionPointsSecondary'] = MissionPointsVar.get()
 
+        activity.recalculate_zero_activity()
+        Debug.logger.info(system)
+        self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
+
         DiscordText.delete('1.0', 'end-1c')
         DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
 
 
-    def _scenarios_change(self, ScenariosVar, DiscordText, activity: Activity, faction, faction_index, *args):
+    def _scenarios_change(self, notebook: ScrollableNotebook, tab_index: int, ScenariosVar, EnableAllCheckbutton, DiscordText, activity: Activity, system, faction, faction_index, *args):
         """
         Callback (set as a variable trace) for when the scenarios Variable is changed
         """
         faction['Scenarios'] = ScenariosVar.get()
 
+        activity.recalculate_zero_activity()
+        self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
+
         DiscordText.delete('1.0', 'end-1c')
         DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+
+
+    def _update_tab_image(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, system: Dict):
+        """
+        Update the image alongside the tab title
+        """
+        if EnableAllCheckbutton.instate(['selected']):
+            if system['zero_system_activity']: notebook.notebookTab.tab(tab_index, image=self.image_tab_inactive_enabled)
+            else: notebook.notebookTab.tab(tab_index, image=self.image_tab_active_enabled)
+        else:
+            if EnableAllCheckbutton.instate(['alternate']):
+                if system['zero_system_activity']: notebook.notebookTab.tab(tab_index, image=self.image_tab_inactive_part_enabled)
+                else: notebook.notebookTab.tab(tab_index, image=self.image_tab_active_part_enabled)
+            else:
+                if system['zero_system_activity']: notebook.notebookTab.tab(tab_index, image=self.image_tab_inactive_disabled)
+                else: notebook.notebookTab.tab(tab_index, image=self.image_tab_active_disabled)
 
 
     def _process_faction_name(self, faction_name):
