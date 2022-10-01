@@ -27,14 +27,14 @@ def plugin_start3(plugin_dir):
     Load this plugin into EDMC
     """
     # Classes
-    this.debug = Debug(this.plugin_name)
-    this.state = State()
-    this.mission_log = MissionLog(plugin_dir)
-    this.discord = Discord(this.state)
+    this.debug: Debug = Debug(this.plugin_name)
+    this.state: State = State()
+    this.mission_log: MissionLog = MissionLog(plugin_dir)
+    this.discord: Discord = Discord(this.state)
     #this.overlay = Overlay()
-    this.tick = Tick(True)
-    this.activity_manager = ActivityManager(plugin_dir, this.mission_log, this.tick)
-    this.ui = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.VersionNo)
+    this.tick: Tick = Tick(True)
+    this.activity_manager: ActivityManager = ActivityManager(plugin_dir, this.mission_log, this.tick)
+    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.VersionNo)
 
     version_success = check_version()
     tick_success = this.tick.fetch_tick()
@@ -86,16 +86,16 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             this.ui.new_tick(False, True)
             activity = this.activity_manager.get_current_activity() # New activity will be generated with a new tick
 
-        activity.system_entered(entry)
+        activity.system_entered(entry, this.state)
         dirty = True
 
     if entry['event'] == 'Docked':
-        this.state.StationFaction = entry['StationFaction']['Name']
-        this.state.StationType = entry['StationType']
+        this.state.station_faction = entry['StationFaction']['Name']
+        this.state.station_type = entry['StationType']
         dirty = True
 
     if (entry['event'] == 'Location' or entry['event'] == 'StartUp') and entry['Docked'] == True:
-        this.state.StationType = entry['StationType']
+        this.state.station_type = entry['StationType']
         dirty = True
 
     if entry['event'] == 'SellExplorationData' or entry['event'] == 'MultiSellExplorationData':
@@ -111,7 +111,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         dirty = True
 
     if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':
-        activity.cb_redeemed(entry)
+        activity.cb_redeemed(entry, this.state)
         dirty = True
 
     if entry['event'] == 'MarketBuy':
@@ -139,19 +139,19 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         dirty = True
 
     if entry['event'] == 'ShipTargeted':
-        activity.ship_targeted(entry)
+        activity.ship_targeted(entry, this.state)
         dirty = True
 
     if entry['event'] == 'CommitCrime':
-        activity.crime_committed(entry, system)
+        activity.crime_committed(entry, system, this.state)
         dirty = True
 
     if entry['event'] == 'ApproachSettlement' and state['Odyssey']:
-        activity.settlement_approached(entry)
+        activity.settlement_approached(entry, this.state)
         dirty = True
 
     if entry['event'] == 'FactionKillBond' and state['Odyssey']:
-        activity.cb_received(entry)
+        activity.cb_received(entry, this.state)
         dirty = True
 
     if dirty: save_data()

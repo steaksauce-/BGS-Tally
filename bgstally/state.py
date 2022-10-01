@@ -1,4 +1,5 @@
 import tkinter as tk
+from typing import Dict
 
 from config import config
 
@@ -20,16 +21,21 @@ class State:
         """
 
         # UI preference fields
-        self.Status = tk.StringVar(value=config.get_str('XStatus', default="Active"))
-        self.ShowZeroActivitySystems = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
-        self.AbbreviateFactionNames = tk.StringVar(value=config.get_str('XAbbreviate', default=CheckStates.STATE_OFF))
-        self.IncludeSecondaryInf = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
-        self.DiscordWebhook = tk.StringVar(value=config.get_str('XDiscordWebhook'))
-        self.DiscordUsername = tk.StringVar(value=config.get_str('XDiscordUsername'))
+        self.Status:str = tk.StringVar(value=config.get_str('XStatus', default="Active"))
+        self.ShowZeroActivitySystems:str = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
+        self.AbbreviateFactionNames:str = tk.StringVar(value=config.get_str('XAbbreviate', default=CheckStates.STATE_OFF))
+        self.IncludeSecondaryInf:str = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
+        self.DiscordWebhook:str = tk.StringVar(value=config.get_str('XDiscordWebhook'))
+        self.DiscordUsername:str = tk.StringVar(value=config.get_str('XDiscordUsername'))
 
-        # Other persistent values
-        self.StationFaction = config.get_str('XStation')
-        self.StationType = config.get_str('XStationType')
+        # Persistent values
+        self.current_system_id:str = config.get_str('XCurrentSystemID')
+        self.station_faction:str = config.get_str('XStationFaction')
+        self.station_type:str = config.get_str('XStationType')
+
+        # Non-persistent values
+        self.last_settlement_approached:Dict = {}
+        self.last_ship_targeted:Dict = {}
 
 
     def save(self):
@@ -45,6 +51,7 @@ class State:
         config.set('XDiscordWebhook', self.DiscordWebhook.get())
         config.set('XDiscordUsername', self.DiscordUsername.get())
 
-        # Other persistent values
-        config.set('XStation', self.StationFaction)
-        config.set('XStationType', self.StationType)
+        # Persistent values
+        config.set('XCurrentSystemID', self.current_system_id if self.current_system_id != None else "")
+        config.set('XStationFaction', self.station_faction if self.station_faction != None else "")
+        config.set('XStationType', self.station_type if self.station_type != None else "")

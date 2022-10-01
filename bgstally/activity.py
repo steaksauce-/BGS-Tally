@@ -53,6 +53,7 @@ class Activity:
         """
         Instantiate using a given Tick
         """
+        self.plugindir = plugindir
         if tick == None: tick = Tick()
 
         # Stored data
@@ -60,13 +61,6 @@ class Activity:
         self.tick_time = tick.tick_time
         self.discord_messageid = discord_messageid
         self.systems = {}
-
-        # Transient data
-        self.plugindir = plugindir
-        self.current_system = None
-        self.current_station = {}
-        self.last_settlement_approached = {}
-        self.last_ship_targeted = {}
 
 
     def load_legacy_data(self, filepath: str):
@@ -139,25 +133,25 @@ class Activity:
     # Player Journal Log Handling
     #
 
-    def system_entered(self, journal_entry: Dict):
+    def system_entered(self, journal_entry: Dict, state: State):
         """
         The user has entered a system
         """
         try: test = journal_entry['Factions']
         except KeyError: return
 
-        self.current_system = None
+        current_system = None
 
         for system_address in self.systems:
             if system_address == journal_entry['SystemAddress']:
                 # We already have an entry for this system
-                self.current_system = self.systems[system_address]
+                current_system = self.systems[system_address]
                 break
 
-        if self.current_system is None:
+        if current_system is None:
             # We don't have this system yet
-            self.current_system = self._get_new_system_data(journal_entry['StarSystem'], journal_entry['SystemAddress'], {})
-            self.systems[journal_entry['SystemAddress']] = self.current_system
+            current_system = self._get_new_system_data(journal_entry['StarSystem'], journal_entry['SystemAddress'], {})
+            self.systems[journal_entry['SystemAddress']] = current_system
 
         conflicts = 0
 
@@ -173,15 +167,16 @@ class Activity:
         for faction in journal_entry['Factions']:
             if faction['Name'] == "Pilots' Federation Local Branch": continue
 
-            if faction['Name'] in self.current_system['Factions']:
+            if faction['Name'] in current_system['Factions']:
                 # We have this faction, ensure it's up to date with latest state
-                faction_data = self.current_system['Factions'][faction['Name']]
+                faction_data = current_system['Factions'][faction['Name']]
                 self._update_faction_data(faction_data, faction['FactionState'] if conflicts != 1 else "None")
             else:
                 # We do not have this faction, create a new clean entry
-                self.current_system['Factions'][faction['Name']] = self._get_new_faction_data(faction['Name'], faction['FactionState'] if conflicts != 1 else "None")
+                current_system['Factions'][faction['Name']] = self._get_new_faction_data(faction['Name'], faction['FactionState'] if conflicts != 1 else "None")
 
         self.recalculate_zero_activity()
+        state.current_system_id = str(current_system['SystemAddress'])
 
 
     def mission_completed(self, journal_entry: Dict, mission_log: MissionLog):
@@ -254,7 +249,10 @@ class Activity:
         """
         Handle sale of exploration data
         """
-        faction = self.current_system['Factions'].get(state.StationFaction)
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
+        faction = current_system.get(state.station_faction)
         if faction:
             faction['CartData'] += journal_entry['TotalEarnings']
             self.recalculate_zero_activity()
@@ -264,7 +262,10 @@ class Activity:
         """
         Handle sale of organic data
         """
-        faction = self.current_system['Factions'].get(state.StationFaction)
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
+        faction = current_system['Factions'].get(state.station_faction)
         if faction:
             for e in journal_entry['BioData']:
                 faction['ExoData'] += e['Value'] + e['Bonus']
@@ -275,21 +276,27 @@ class Activity:
         """
         Handle redemption of bounty vouchers
         """
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
         for bv_info in journal_entry['Factions']:
-            faction = self.current_system['Factions'].get(bv_info['Faction'])
+            faction = current_system['Factions'].get(bv_info['Faction'])
             if faction:
-                if state.StationType == 'FleetCarrier':
+                if state.station_type == 'FleetCarrier':
                     faction['Bounties'] += (bv_info['Amount'] / 2)
                 else:
                     faction['Bounties'] += bv_info['Amount']
                 self.recalculate_zero_activity()
 
 
-    def cb_redeemed(self, journal_entry: Dict):
+    def cb_redeemed(self, journal_entry: Dict, state: State):
         """
         Handle redemption of combat bonds
         """
-        faction = self.current_system['Factions'].get(journal_entry['Faction'])
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
+        faction = current_system['Factions'].get(journal_entry['Faction'])
         if faction:
             faction['CombatBonds'] += journal_entry['Amount']
             self.recalculate_zero_activity()
@@ -299,7 +306,10 @@ class Activity:
         """
         Handle purchase of trade commodities
         """
-        faction = self.current_system['Factions'].get(state.StationFaction)
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
+        faction = current_system['Factions'].get(state.station_faction)
         if faction:
             faction['TradePurchase'] += journal_entry['TotalCost']
             self.recalculate_zero_activity()
@@ -309,7 +319,10 @@ class Activity:
         """
         Handle sale of trade commodities
         """
-        faction = self.current_system['Factions'].get(state.StationFaction)
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
+        faction = current_system['Factions'].get(state.station_faction)
         if faction:
             cost = journal_entry['Count'] * journal_entry['AvgPricePaid']
             profit = journal_entry['TotalSale'] - cost
@@ -320,95 +333,102 @@ class Activity:
             self.recalculate_zero_activity()
 
 
-    def ship_targeted(self, journal_entry: Dict):
+    def ship_targeted(self, journal_entry: Dict, state: State):
         """
         Handle targeting a ship
         """
         if 'Faction' in journal_entry and 'PilotName_Localised' in journal_entry:
-            self.last_ship_targeted = {'Faction': journal_entry['Faction'], 'PilotName_Localised': journal_entry['PilotName_Localised']}
+            state.last_ship_targeted = {'Faction': journal_entry['Faction'], 'PilotName_Localised': journal_entry['PilotName_Localised']}
 
 
-    def crime_committed(self, journal_entry: Dict, current_system: str):
+    def crime_committed(self, journal_entry: Dict, state: State):
         """
         Handle a crime
         """
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
         # The faction logged in the CommitCrime event is the system faction, not the ship faction. So we store the
         # ship faction from the previous ShipTargeted event in last_ship_targeted.
-        if journal_entry['CrimeType'] != 'murder' or journal_entry.get('Victim') != self.last_ship_targeted.get('PilotName_Localised'): return
+        if journal_entry['CrimeType'] != 'murder' or journal_entry.get('Victim') != state.last_ship_targeted.get('PilotName_Localised'): return
 
-        faction = self.current_system['Factions'].get(self.last_ship_targeted.get('Faction'))
+        faction = current_system['Factions'].get(state.last_ship_targeted.get('Faction'))
         if faction:
             faction['Murdered'] += 1
             self.recalculate_zero_activity()
 
-    def settlement_approached(self, journal_entry: Dict):
+
+    def settlement_approached(self, journal_entry: Dict, state:State):
         """
         Handle approaching a settlement
         """
-        self.last_settlement_approached = {'timestamp': journal_entry['timestamp'], 'name': journal_entry['Name'], 'size': None}
+        state.last_settlement_approached = {'timestamp': journal_entry['timestamp'], 'name': journal_entry['Name'], 'size': None}
 
 
-    def cb_received(self, journal_entry: Dict):
+    def cb_received(self, journal_entry: Dict, state: State):
         """
         Handle a combat bond received for a kill
         """
-        if self.last_settlement_approached == {}: return
+        if state.last_settlement_approached == {}: return
 
-        timedifference = datetime.strptime(journal_entry['timestamp'], "%Y-%m-%dT%H:%M:%SZ") - datetime.strptime(self.last_settlement_approached['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
+        current_system = self.systems[state.current_system_id]
+        if not current_system: return
+
+        timedifference = datetime.strptime(journal_entry['timestamp'], "%Y-%m-%dT%H:%M:%SZ") - datetime.strptime(state.last_settlement_approached['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
         if timedifference > timedelta(minutes=5):
             # Too long since we last approached a settlement, we can't be sure we're fighting at that settlement, clear down
-            self.last_settlement_approached = {}
+            state.last_settlement_approached = {}
             return
 
         # Bond issued within a short time after approaching settlement
-        faction = self.current_system['Factions'].get(journal_entry['AwardingFaction'])
+        faction = current_system['Factions'].get(journal_entry['AwardingFaction'])
         if not faction: return
 
         # Add settlement to this faction's list, if not already present
-        if self.last_settlement_approached['name'] not in faction['GroundCZSettlements']:
-            faction['GroundCZSettlements'][self.last_settlement_approached['name']] = {'count': 0, 'enabled': CheckStates.STATE_ON}
+        if state.last_settlement_approached['name'] not in faction['GroundCZSettlements']:
+            faction['GroundCZSettlements'][state.last_settlement_approached['name']] = {'count': 0, 'enabled': CheckStates.STATE_ON}
 
         # Store the previously counted size of this settlement
-        previous_size = self.last_settlement_approached['size']
+        previous_size = state.last_settlement_approached['size']
 
         # Increment this settlement's overall count if this is the first bond counted
-        if self.last_settlement_approached['size'] == None:
-            faction['GroundCZSettlements'][self.last_settlement_approached['name']]['count'] += 1
+        if state.last_settlement_approached['size'] == None:
+            faction['GroundCZSettlements'][state.last_settlement_approached['name']]['count'] += 1
 
         # Calculate and count CZ H/M/L - Note this isn't ideal as it counts on any kill, assuming we'll win the CZ! Also note that we re-calculate on every
         # kill because when a kill is made my multiple players in a team, the CBs are split. We just hope that at some point we'll make a solo kill which will
         # put this settlement into the correct CZ size category
         if journal_entry['Reward'] < CZ_GROUND_LOW_CB_MAX:
             # Handle as 'Low' if this is the first CB
-            if self.last_settlement_approached['size'] == None:
+            if state.last_settlement_approached['size'] == None:
                 # Increment overall 'Low' count for this faction
                 faction['GroundCZ']['l'] = str(int(faction['GroundCZ'].get('l', '0')) + 1)
                 # Set faction settlement type
-                faction['GroundCZSettlements'][self.last_settlement_approached['name']]['type'] = 'l'
+                faction['GroundCZSettlements'][state.last_settlement_approached['name']]['type'] = 'l'
                 # Store last settlement type
-                self.last_settlement_approached['size'] = 'l'
+                state.last_settlement_approached['size'] = 'l'
         elif journal_entry['Reward'] < CZ_GROUND_MED_CB_MAX:
             # Handle as 'Med' if this is either the first CB or we've counted this settlement as a 'Low' before
-            if self.last_settlement_approached['size'] == None or self.last_settlement_approached['size'] == 'l':
+            if state.last_settlement_approached['size'] == None or state.last_settlement_approached['size'] == 'l':
                 # Increment overall 'Med' count for this faction
                 faction['GroundCZ']['m'] = str(int(faction['GroundCZ'].get('m', '0')) + 1)
                 # Decrement overall previous size count if we previously counted it
                 if previous_size != None: faction['GroundCZ'][previous_size] -= 1
                 # Set faction settlement type
-                faction['GroundCZSettlements'][self.last_settlement_approached['name']]['type'] = 'm'
+                faction['GroundCZSettlements'][state.last_settlement_approached['name']]['type'] = 'm'
                 # Store last settlement type
-                self.last_settlement_approached['size'] = 'm'
+                state.last_settlement_approached['size'] = 'm'
         else:
             # Handle as 'High' if this is either the first CB or we've counted this settlement as a 'Low' or 'Med' before
-            if self.last_settlement_approached['size'] == None or self.last_settlement_approached['size'] == 'l' or self.last_settlement_approached['size'] == 'm':
+            if state.last_settlement_approached['size'] == None or state.last_settlement_approached['size'] == 'l' or state.last_settlement_approached['size'] == 'm':
                 # Increment overall 'High' count for this faction
                 faction['GroundCZ']['h'] = str(int(faction['GroundCZ'].get('h', '0')) + 1)
                 # Decrement overall previous size count if we previously counted it
                 if previous_size != None: faction['GroundCZ'][previous_size] -= 1
                 # Set faction settlement type
-                faction['GroundCZSettlements'][self.last_settlement_approached['name']]['type'] = 'h'
+                faction['GroundCZSettlements'][state.last_settlement_approached['name']]['type'] = 'h'
                 # Store last settlement type
-                self.last_settlement_approached['size'] = 'h'
+                state.last_settlement_approached['size'] = 'h'
 
         self.recalculate_zero_activity()
 
