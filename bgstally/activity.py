@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict
 
+from bgstally.debug import Debug
 from bgstally.enums import CheckStates
 from bgstally.missionlog import MissionLog
 from bgstally.state import State
@@ -252,7 +253,7 @@ class Activity:
         current_system = self.systems[state.current_system_id]
         if not current_system: return
 
-        faction = current_system.get(state.station_faction)
+        faction = current_system['Factions'].get(state.station_faction)
         if faction:
             faction['CartData'] += journal_entry['TotalEarnings']
             self.recalculate_zero_activity()
