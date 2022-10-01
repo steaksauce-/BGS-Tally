@@ -80,7 +80,7 @@ class Activity:
                     for faction in legacysystem['Factions']:
                         factions[faction['Faction']] = faction  # Just convert List to Dict, with faction name as key
 
-                    self.systems[legacysystem['SystemAddress']] = self._get_new_system_data(legacysystem['System'], legacysystem['SystemAddress'], factions)
+                    self.systems[str(legacysystem['SystemAddress'])] = self._get_new_system_data(legacysystem['System'], str(legacysystem['SystemAddress']), factions)
             self.recalculate_zero_activity()
 
 
@@ -143,7 +143,7 @@ class Activity:
         current_system = None
 
         for system_address in self.systems:
-            if system_address == journal_entry['SystemAddress']:
+            if system_address == str(journal_entry['SystemAddress']):
                 # We already have an entry for this system
                 current_system = self.systems[system_address]
                 break
@@ -151,7 +151,7 @@ class Activity:
         if current_system is None:
             # We don't have this system yet
             current_system = self._get_new_system_data(journal_entry['StarSystem'], journal_entry['SystemAddress'], {})
-            self.systems[journal_entry['SystemAddress']] = current_system
+            self.systems[str(journal_entry['SystemAddress'])] = current_system
 
         conflicts = 0
 
@@ -189,7 +189,7 @@ class Activity:
                 inf = len(faction_effect['Influence'][0]['Influence'])
                 inftrend = faction_effect['Influence'][0]['Trend']
                 for system_address, system in self.systems.items():
-                    if faction_effect['Influence'][0]['SystemAddress'] != system_address: continue
+                    if str(faction_effect['Influence'][0]['SystemAddress']) != system_address: continue
 
                     faction = system['Factions'].get(effect_faction_name)
                     if not faction: continue
