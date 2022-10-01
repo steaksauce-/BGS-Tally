@@ -1,16 +1,16 @@
 import json
 from os.path import join
-import logging
 
 from config import config
 
+from bgstally.debug import Debug
+
 
 class FleetCarrier:
-    def __init__(self, logger):
+    def __init__(self):
         self.name = ""
         self.id = ""
         self.materials = {}
-        self.logger = logger
 
         self._parse_materials()
 
@@ -34,10 +34,13 @@ class FleetCarrier:
                 self.materials = sorted(self.materials, key=lambda d: d['Name_Localised'])
 
         except Exception as e:
-            self.logger.error(f"Unable to fetch latest tick from elitebgs.app", exc_info=e)
+            Debug.logger.error(f"Unable to load FCMaterials.json from the player journal folder", exc_info=e)
 
 
     def get_formatted_materials(self):
+        """
+        Return a list of formatted materials for posting to Discord
+        """
         result = f"```css\nMaterials List for Carrier {self.name}\n\n"
         selling = ""
         buying = ""
@@ -48,4 +51,5 @@ class FleetCarrier:
                 buying += f" {material['Name_Localised']} x {material['Demand']} @ {material['Price']}\n"
 
         result += f"Selling:\n{selling}\nBuying\n{buying}```"
+
         return result

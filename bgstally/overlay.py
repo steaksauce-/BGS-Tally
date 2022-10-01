@@ -1,5 +1,7 @@
 import plug
 
+from bgstally.debug import Debug
+
 try:
     from EDMCOverlay import edmcoverlay
 except ImportError:
@@ -7,13 +9,12 @@ except ImportError:
 
 
 class Overlay:
-    def __init__(self, logger):
+    def __init__(self):
         self.edmcoverlay = None
-        self.logger = logger
         self._check_overlay()
 
 
-    def display_message(self, frame_name, message):
+    def display_message(self, frame_name: str, message: str):
         if self.edmcoverlay == None: return
         fi = self._get_frame_info(frame_name)
         self.edmcoverlay.send_shape(f"bgstally-frame-{frame_name}", "rect", fi["border_colour"], fi["fill_colour"], fi["x"], fi["y"], fi["w"], fi["h"], ttl=fi["ttl"])
@@ -30,20 +31,20 @@ class Overlay:
                 self.display_message("info", "BGSTally Ready")
             except Exception as e:
                 self.edmcoverlay = None
-                self.logger.error(f"EDMCOverlay is not running", exc_info=e)
+                Debug.logger.error(f"EDMCOverlay is not running", exc_info=e)
                 plug.show_error(f"BGS-Tally: EDMCOverlay is not running")
                 return False
             else:
-                self.logger.info(f"EDMCOverlay is running")
+                Debug.logger.info(f"EDMCOverlay is running")
                 return True
         else:
             # Couldn't load edmcoverlay python lib, the plugin probably isn't installed
-            self.logger.error(f"EDMCOverlay plugin is not installed")
+            Debug.logger.error(f"EDMCOverlay plugin is not installed")
             plug.show_error(f"BGS-Tally: EDMCOverlay plugin is not installed")
             return False
 
 
-    def _get_frame_info(self, frame):
+    def _get_frame_info(self, frame: str):
         if frame == "info":
             return {"border_colour": "red", "fill_colour": "blue", "text_colour": "yellow", "x": 20, "y": 180, "w": 100, "h": 25, "ttl": 30}
         elif frame == "tick":
