@@ -2,8 +2,13 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* In the activity window, there are now markers against every system, showing at a glance whether there is activity (&#129001; / &#11036;) and also whether you are reporting all, some, or none of the activity (&#9745; / &#9632; / &#9633;).
+
 ### Changes:
 
+* This version includes a complete and fundamental rewrite of the code, separating into separate modules for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks.
 * Change tick date / time format in main EDMC window to make it more compact.
 * Change report date / time format in Discord posts to avoid localised text (days of week and month names).
 
