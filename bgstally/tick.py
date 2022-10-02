@@ -75,3 +75,17 @@ class Tick:
         Return a formatted tick date/time
         """
         return self.tick_time.strftime(DATETIME_FORMAT_DISPLAY)
+
+
+    def get_next_formatted(self):
+        """
+        Return next predicted tick formated date/time
+        """
+        return self.next_predicted().strftime(DATETIME_FORMAT_DISPLAY)
+
+
+    def next_predicted(self):
+        """
+        Return the next predicted tick time (currently just add 24h to the current tick time)
+        """
+        return self.tick_time + timedelta(hours = 24)

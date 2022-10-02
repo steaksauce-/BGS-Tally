@@ -1,4 +1,5 @@
 import tkinter as tk
+from datetime import datetime, timedelta
 from functools import partial
 from os import path
 from threading import Thread
@@ -6,6 +7,7 @@ from time import sleep
 from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
 from typing import Dict, Optional
+from xmlrpc.client import boolean
 
 import myNotebook as nb
 from ScrollableNotebook import ScrollableNotebook
@@ -23,7 +25,8 @@ from bgstally.tick import Tick
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 FOLDER_ASSETS = "assets"
-WORKER_PERIOD = 1
+TIME_WORKER_PERIOD_S = 2
+TIME_TICK_ALERT_M = 60
 
 
 class UI:
@@ -32,12 +35,12 @@ class UI:
     """
 
     def __init__(self, plugin_dir: str, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, overlay: Overlay, plugin_version_number: str):
-        self.activity_manager = activity_manager
-        self.state = state
-        self.tick = tick
-        self.discord = discord
-        self.overlay = overlay
-        self.version_number = plugin_version_number
+        self.activity_manager: ActivityManager = activity_manager
+        self.state:State = state
+        self.tick:Tick = tick
+        self.discord:Discord = discord
+        self.overlay:Overlay = overlay
+        self.version_number:str = plugin_version_number
 
         self.image_tab_active_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
         self.image_tab_active_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
@@ -46,7 +49,7 @@ class UI:
         self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
         self.image_tab_inactive_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
 
-        self.shutting_down = False
+        self.shutting_down: boolean = False
 
         self.thread: Optional[Thread] = Thread(target=self.worker, name="BGSTally worker")
         self.thread.daemon = True
@@ -67,13 +70,15 @@ class UI:
         Debug.logger.debug("Starting Worker...")
 
         while True:
-            Debug.logger.debug("Working")
-
             if self.shutting_down:
                 Debug.logger.debug("Shutting down Worker...")
                 return
 
-            sleep(WORKER_PERIOD)
+            self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted()}", True)
+            if (datetime.utcnow() > self.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
+                self.overlay.display_message("tickwarn", f"Next Tick: {self.tick.get_next_formatted()}", True)
+
+            sleep(TIME_WORKER_PERIOD_S)
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):
@@ -90,13 +95,18 @@ class UI:
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
         tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
         tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
-        tk.Button(self.frame, text="Test Overlay", command=partial(self.overlay.display_message, "tickwarn", f"Last Tick: {self.tick.get_formatted()}")).grid(row=1, column=2, padx=3)
+        tk.Button(self.frame, text="Test Overlay", command=partial(self.display_tick_overlay)).grid(row=1, column=2, padx=3)
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.state.Status).grid(row=2, column=1, sticky=tk.W)
         self.TimeLabel = tk.Label(self.frame, text=self.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
 
         return self.frame
+
+
+    def display_tick_overlay(self):
+        self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted()}", True)
+        self.overlay.display_message("tickwarn", f"Next Tick: {self.tick.get_next_formatted()}", True)
 
 
     def update_time_label(self):
