@@ -76,7 +76,7 @@ class UI:
 
             self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted()}", True)
             if (datetime.utcnow() > self.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
-                self.overlay.display_message("tickwarn", f"Next Tick: {self.tick.get_next_formatted()}", True)
+                self.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
 
             sleep(TIME_WORKER_PERIOD_S)
 
