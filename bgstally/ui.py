@@ -1,9 +1,13 @@
 import tkinter as tk
+from datetime import datetime, timedelta
 from functools import partial
 from os import path
+from threading import Thread
+from time import sleep
 from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
-from typing import Dict
+from typing import Dict, Optional
+from xmlrpc.client import boolean
 
 import myNotebook as nb
 from ScrollableNotebook import ScrollableNotebook
@@ -15,11 +19,14 @@ from bgstally.activitymanager import ActivityManager
 from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.enums import CheckStates, CZs
+from bgstally.overlay import Overlay
 from bgstally.state import State
 from bgstally.tick import Tick
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 FOLDER_ASSETS = "assets"
+TIME_WORKER_PERIOD_S = 2
+TIME_TICK_ALERT_M = 60
 
 
 class UI:
@@ -27,13 +34,13 @@ class UI:
     Display the user's activity
     """
 
-
-    def __init__(self, plugin_dir: str, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, plugin_version_number: str):
-        self.activity_manager = activity_manager
-        self.state = state
-        self.tick = tick
-        self.discord = discord
-        self.version_number = plugin_version_number
+    def __init__(self, plugin_dir: str, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, overlay: Overlay, plugin_version_number: str):
+        self.activity_manager: ActivityManager = activity_manager
+        self.state:State = state
+        self.tick:Tick = tick
+        self.discord:Discord = discord
+        self.overlay:Overlay = overlay
+        self.version_number:str = plugin_version_number
 
         self.image_tab_active_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
         self.image_tab_active_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
@@ -41,6 +48,37 @@ class UI:
         self.image_tab_inactive_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_enabled.png"))
         self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
         self.image_tab_inactive_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
+
+        self.shutting_down: boolean = False
+
+        self.thread: Optional[Thread] = Thread(target=self.worker, name="BGSTally worker")
+        self.thread.daemon = True
+        self.thread.start()
+
+
+    def shut_down(self):
+        """
+        Shut down all worker threads.
+        """
+        self.shutting_down = True
+
+
+    def worker(self) -> None:
+        """
+        Handle thread work
+        """
+        Debug.logger.debug("Starting Worker...")
+
+        while True:
+            if self.shutting_down:
+                Debug.logger.debug("Shutting down Worker...")
+                return
+
+            self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted()}", True)
+            if (datetime.utcnow() > self.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
+                self.overlay.display_message("tickwarn", f"Next Tick: {self.tick.get_next_formatted()}", True)
+
+            sleep(TIME_WORKER_PERIOD_S)
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):

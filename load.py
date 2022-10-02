@@ -11,7 +11,7 @@ from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.missionlog import MissionLog
 from bgstally.state import State
-#from bgstally.overlay import Overlay
+from bgstally.overlay import Overlay
 from bgstally.tick import Tick
 from bgstally.ui import UI
 
@@ -31,10 +31,10 @@ def plugin_start3(plugin_dir):
     this.state: State = State()
     this.mission_log: MissionLog = MissionLog(plugin_dir)
     this.discord: Discord = Discord(this.state)
-    #this.overlay = Overlay()
     this.tick: Tick = Tick(True)
+    this.overlay = Overlay()
     this.activity_manager: ActivityManager = ActivityManager(plugin_dir, this.mission_log, this.tick)
-    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.VersionNo)
+    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.overlay, this.VersionNo)
 
     version_success = check_version()
     tick_success = this.tick.fetch_tick()
@@ -45,8 +45,6 @@ def plugin_start3(plugin_dir):
     elif tick_success == True:
         this.ui.new_tick(False, False)
 
-    #this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
-
     return this.plugin_name
 
 
@@ -54,6 +52,7 @@ def plugin_stop():
     """
     EDMC is closing
     """
+    this.ui.shut_down()
     save_data()
 
 
