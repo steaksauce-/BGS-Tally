@@ -321,6 +321,7 @@ class UI:
         if force: self.tick.force_tick()
         self.activity_manager.new_tick(self.tick)
         if updateui: self.update_time_label()
+        self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
 
 
     def _version_tuple(self, version: str):

@@ -17,7 +17,7 @@ class Overlay:
         self._check_overlay()
 
 
-    def display_message(self, frame_name: str, message: str, fit_to_width: bool = False):
+    def display_message(self, frame_name: str, message: str, fit_to_width: bool = False, ttl_override: int = None, text_colour_override: str = None):
         """
         Display a message in the overlay
         """
@@ -26,10 +26,12 @@ class Overlay:
         try:
             fi = self._get_frame_info(frame_name)
             message_width = len(message) * WIDTH_CHARACTER_NORMAL if fi["text_size"] == "normal" else len(message) * WIDTH_CHARACTER_LARGE
+            ttl = ttl_override if ttl_override else fi["ttl"]
+            text_colour = text_colour_override if text_colour_override else fi["text_colour"]
 
             if fi["border_colour"] and fi["fill_colour"]:
-                self.edmcoverlay.send_shape(f"bgstally-frame-{frame_name}", "rect", fi["border_colour"], fi["fill_colour"], fi["x"], fi["y"], message_width + 30 if fit_to_width else fi["w"], fi["h"], ttl=fi["ttl"])
-            self.edmcoverlay.send_message(f"bgstally-msg-{frame_name}", message, fi["text_colour"], fi["x"] + 10, fi["y"] + 5, ttl=fi["ttl"], size=fi["text_size"])
+                self.edmcoverlay.send_shape(f"bgstally-frame-{frame_name}", "rect", fi["border_colour"], fi["fill_colour"], fi["x"], fi["y"], message_width + 30 if fit_to_width else fi["w"], fi["h"], ttl=ttl)
+            self.edmcoverlay.send_message(f"bgstally-msg-{frame_name}", message, text_colour, fi["x"] + 10, fi["y"] + 5, ttl=ttl, size=fi["text_size"])
         except Exception as e:
             Debug.logger.info(f"Could not display overlay message")
 
