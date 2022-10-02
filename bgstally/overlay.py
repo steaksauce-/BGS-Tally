@@ -9,6 +9,9 @@ except ImportError:
 
 
 class Overlay:
+    """
+    Handles the game overlay. Provides purpose-agnostic functions to display information and data in frames on screen.
+    """
     def __init__(self):
         self.edmcoverlay = None
         self._check_overlay()
@@ -31,11 +34,11 @@ class Overlay:
                 self.display_message("info", "BGSTally Ready")
             except Exception as e:
                 self.edmcoverlay = None
-                Debug.logger.error(f"EDMCOverlay is not running", exc_info=e)
-                plug.show_error(f"BGS-Tally: EDMCOverlay is not running")
+                Debug.logger.warning(f"EDMCOverlay is not running, disabling overlay features")
+                plug.show_error(f"BGS-Tally: EDMCOverlay is not running, disabling overlay features")
                 return False
             else:
-                Debug.logger.info(f"EDMCOverlay is running")
+                Debug.logger.info(f"EDMCOverlay is running, enabling overlay features")
                 return True
         else:
             # Couldn't load edmcoverlay python lib, the plugin probably isn't installed
