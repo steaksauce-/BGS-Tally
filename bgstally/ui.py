@@ -1,9 +1,11 @@
 import tkinter as tk
 from functools import partial
 from os import path
+from threading import Thread
+from time import sleep
 from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
-from typing import Dict
+from typing import Dict, Optional
 
 import myNotebook as nb
 from ScrollableNotebook import ScrollableNotebook
@@ -21,6 +23,7 @@ from bgstally.tick import Tick
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 FOLDER_ASSETS = "assets"
+WORKER_PERIOD = 1
 
 
 class UI:
@@ -42,6 +45,35 @@ class UI:
         self.image_tab_inactive_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_enabled.png"))
         self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
         self.image_tab_inactive_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
+
+        self.shutting_down = False
+
+        self.thread: Optional[Thread] = Thread(target=self.worker, name="BGSTally worker")
+        self.thread.daemon = True
+        self.thread.start()
+
+
+    def shut_down(self):
+        """
+        Shut down all worker threads.
+        """
+        self.shutting_down = True
+
+
+    def worker(self) -> None:
+        """
+        Handle thread work
+        """
+        Debug.logger.debug("Starting Worker...")
+
+        while True:
+            Debug.logger.debug("Working")
+
+            if self.shutting_down:
+                Debug.logger.debug("Shutting down Worker...")
+                return
+
+            sleep(WORKER_PERIOD)
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):

@@ -52,6 +52,7 @@ def plugin_stop():
     """
     EDMC is closing
     """
+    this.ui.shut_down()
     save_data()
 
 
