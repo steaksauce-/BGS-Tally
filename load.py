@@ -15,11 +15,16 @@ from bgstally.overlay import Overlay
 from bgstally.tick import Tick
 from bgstally.ui import UI
 
-this = sys.modules[__name__]  # For holding module globals
 
-this.plugin_name = path.basename(path.dirname(__file__))
-this.VersionNo = "1.10.0"
-this.GitVersion = "0.0.0"
+class BGSTally:
+    """
+    For holding module globals
+    """
+    plugin_name:str = path.basename(path.dirname(__file__))
+    version:str = "1.10.0"
+    git_version:str = "0.0.0"
+
+this = BGSTally()
 
 
 def plugin_start3(plugin_dir):
@@ -34,7 +39,7 @@ def plugin_start3(plugin_dir):
     this.tick: Tick = Tick(True)
     this.overlay = Overlay()
     this.activity_manager: ActivityManager = ActivityManager(plugin_dir, this.mission_log, this.tick)
-    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.overlay, this.VersionNo)
+    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.overlay, this.version)
 
     version_success = check_version()
     tick_success = this.tick.fetch_tick()
@@ -60,7 +65,7 @@ def plugin_app(parent):
     """
     Return a TK Frame for adding to the EDMC main window
     """
-    return this.ui.get_plugin_frame(parent, this.GitVersion)
+    return this.ui.get_plugin_frame(parent, this.git_version)
 
 
 def plugin_prefs(parent, cmdr, is_beta):
@@ -169,7 +174,7 @@ def check_version():
         return None
     else:
         latest = response.json()
-        this.GitVersion = latest['tag_name']
+        this.git_version = latest['tag_name']
 
     return True
 
