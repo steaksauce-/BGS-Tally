@@ -31,10 +31,10 @@ def plugin_start3(plugin_dir):
     this.state: State = State()
     this.mission_log: MissionLog = MissionLog(plugin_dir)
     this.discord: Discord = Discord(this.state)
-    this.overlay = Overlay()
     this.tick: Tick = Tick(True)
+    this.overlay = Overlay()
     this.activity_manager: ActivityManager = ActivityManager(plugin_dir, this.mission_log, this.tick)
-    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.VersionNo)
+    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.overlay, this.VersionNo)
 
     version_success = check_version()
     tick_success = this.tick.fetch_tick()
@@ -44,8 +44,6 @@ def plugin_start3(plugin_dir):
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
     elif tick_success == True:
         this.ui.new_tick(False, False)
-
-    this.overlay.display_message("tickwarn", f"Tick: {this.tick.get_formatted()}")
 
     return this.plugin_name
 
