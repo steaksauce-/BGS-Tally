@@ -1,6 +1,4 @@
-import sys
 from os import path
-from xmlrpc.client import boolean
 
 import plug
 import requests
@@ -10,8 +8,8 @@ from bgstally.activitymanager import ActivityManager
 from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.missionlog import MissionLog
-from bgstally.state import State
 from bgstally.overlay import Overlay
+from bgstally.state import State
 from bgstally.tick import Tick
 from bgstally.ui import UI
 
@@ -82,7 +80,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if this.state.Status.get() != "Active": return
 
     activity: Activity = this.activity_manager.get_current_activity()
-    dirty: boolean = False
+    dirty: bool = False
 
     if entry['event'] in ['Location', 'FSDJump', 'CarrierJump']:
         # Check for a new tick
