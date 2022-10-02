@@ -95,18 +95,12 @@ class UI:
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
         tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
         tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
-        tk.Button(self.frame, text="Test Overlay", command=partial(self.display_tick_overlay)).grid(row=1, column=2, padx=3)
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.state.Status).grid(row=2, column=1, sticky=tk.W)
         self.TimeLabel = tk.Label(self.frame, text=self.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
 
         return self.frame
-
-
-    def display_tick_overlay(self):
-        self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted()}", True)
-        self.overlay.display_message("tickwarn", f"Next Tick: {self.tick.get_next_formatted()}", True)
 
 
     def update_time_label(self):
