@@ -9,9 +9,9 @@
 
 ### Changes:
 
-* This version includes a complete and fundamental rewrite of the code, separating into separate modules for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks.
-* Change tick date / time format in main EDMC window to make it more compact.
-* Change report date / time format in Discord posts to avoid localised text (days of week and month names).
+* This version includes a complete and fundamental rewrite of the code, separating into separate modules for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks - all stored in the `activitydata` folder.
+* Changed the tick date / time format in main EDMC window to make it more compact.
+* Changed the date / time format in Discord posts to avoid localised text (days of week and month names).
 
 ### Bug Fixes:
 
