@@ -43,7 +43,7 @@ class Overlay:
         if edmcoverlay:
             try:
                 self.edmcoverlay = edmcoverlay.Overlay()
-                self.display_message("info", "BGSTally Ready", True)
+                self.display_message("info", "BGSTally Ready", True, 30)
             except Exception as e:
                 Debug.logger.warning(f"EDMCOverlay is not running")
             else:

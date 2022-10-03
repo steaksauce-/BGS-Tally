@@ -70,18 +70,18 @@ class Tick:
         config.set('XTickTime', self.tick_time.strftime(DATETIME_FORMAT_ELITEBGS))
 
 
-    def get_formatted(self):
+    def get_formatted(self, format:str = DATETIME_FORMAT_DISPLAY):
         """
         Return a formatted tick date/time
         """
-        return self.tick_time.strftime(DATETIME_FORMAT_DISPLAY)
+        return self.tick_time.strftime(format)
 
 
-    def get_next_formatted(self):
+    def get_next_formatted(self, format:str = DATETIME_FORMAT_DISPLAY):
         """
         Return next predicted tick formated date/time
         """
-        return self.next_predicted().strftime(DATETIME_FORMAT_DISPLAY)
+        return self.next_predicted().strftime(format)
 
 
     def next_predicted(self):

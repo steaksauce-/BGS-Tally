@@ -24,6 +24,7 @@ from bgstally.state import State
 from bgstally.tick import Tick
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
+DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
 FOLDER_ASSETS = "assets"
 TIME_WORKER_PERIOD_S = 2
 TIME_TICK_ALERT_M = 60
@@ -74,7 +75,7 @@ class UI:
                 Debug.logger.debug("Shutting down Worker...")
                 return
 
-            self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted()}", True)
+            self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted(DATETIME_FORMAT_OVERLAY)}", True)
             if (datetime.utcnow() > self.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
                 self.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
 
