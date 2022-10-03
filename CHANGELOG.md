@@ -17,6 +17,7 @@
 
 * Murders were being counted against the system faction. Now count them against the faction of the target ship instead.
 * Using the mini scroll-left and scroll-right arrows in the tab bar was throwing errors if there weren't enough tabs to scroll.
+* A full fix has now been implemented to work around the problem where the game reports an odd number of factions in conflicts in a system (1, 3, 5 etc.) which is obviously not possible. BGS-Tally now pairs up factions, and ignores any conflicts that only have a single faction.
 
 
 ## v1.10.0 - 2022-08-11

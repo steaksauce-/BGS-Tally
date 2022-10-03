@@ -154,27 +154,28 @@ class Activity:
             current_system = self._get_new_system_data(journal_entry['StarSystem'], journal_entry['SystemAddress'], {})
             self.systems[str(journal_entry['SystemAddress'])] = current_system
 
-        conflicts = 0
-
-        # Iterate all factions first to calculate the number of conflicts - If there is just a single faction in conflict,
-        # this is a game bug, we override faction state to "None" in this circumstance.
-        # TODO: Ideally we could try to be cleverer and separately detect the number of elections, civil wars and wars, and if
-        # any of these are == 1 then don't allow the faction to be in that state. Even cleverer, and if possible, it would be
-        # great to 'pair up' the conflict factions and remove the state from ones that are not paired.
         for faction in journal_entry['Factions']:
             if faction['Name'] == "Pilots' Federation Local Branch": continue
-            if faction['FactionState'] in CONFLICT_STATES or faction['FactionState'] in ELECTION_STATES: conflicts += 1
 
-        for faction in journal_entry['Factions']:
-            if faction['Name'] == "Pilots' Federation Local Branch": continue
+            # Ignore conflict states in FactionState as we can't trust they always come in pairs. We deal with conflicts separately below.
+            faction_state = faction['FactionState'] if faction['FactionState'] not in CONFLICT_STATES and faction['FactionState'] not in ELECTION_STATES else "None"
 
             if faction['Name'] in current_system['Factions']:
                 # We have this faction, ensure it's up to date with latest state
                 faction_data = current_system['Factions'][faction['Name']]
-                self._update_faction_data(faction_data, faction['FactionState'] if conflicts != 1 else "None")
+                self._update_faction_data(faction_data, faction_state)
             else:
                 # We do not have this faction, create a new clean entry
-                current_system['Factions'][faction['Name']] = self._get_new_faction_data(faction['Name'], faction['FactionState'] if conflicts != 1 else "None")
+                current_system['Factions'][faction['Name']] = self._get_new_faction_data(faction['Name'], faction_state)
+
+        # Set war states for pairs of factions in War / Civil War / Elections
+        for conflict in journal_entry.get('Conflicts', []):
+            if conflict['Status'] != "active": continue
+
+            if conflict['Faction1']['Name'] in current_system['Factions'] and conflict['Faction2']['Name'] in current_system['Factions']:
+                conflict_state = "War" if conflict['WarType'] == "war" else "CivilWar" if conflict['WarType'] == "civilwar" else "Election" if conflict['WarType'] == "election" else "None"
+                current_system['Factions'][conflict['Faction1']['Name']]['FactionState'] = conflict_state
+                current_system['Factions'][conflict['Faction2']['Name']]['FactionState'] = conflict_state
 
         self.recalculate_zero_activity()
         state.current_system_id = str(current_system['SystemAddress'])
