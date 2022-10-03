@@ -91,70 +91,71 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         activity.system_entered(entry, this.state)
         dirty = True
 
-    if entry['event'] == 'Docked':
-        this.state.station_faction = entry['StationFaction']['Name']
-        this.state.station_type = entry['StationType']
-        dirty = True
+    match entry['event']:
+        case 'Docked':
+            this.state.station_faction = entry['StationFaction']['Name']
+            this.state.station_type = entry['StationType']
+            dirty = True
 
-    if (entry['event'] == 'Location' or entry['event'] == 'StartUp') and entry['Docked'] == True:
-        this.state.station_type = entry['StationType']
-        dirty = True
+        case 'Location' | 'StartUp' if entry['Docked'] == True:
+            this.state.station_type = entry['StationType']
+            dirty = True
 
-    if entry['event'] == 'SellExplorationData' or entry['event'] == 'MultiSellExplorationData':
-        activity.exploration_data_sold(entry, this.state)
-        dirty = True
+        case 'SellExplorationData' | 'MultiSellExplorationData':
+            activity.exploration_data_sold(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'SellOrganicData':
-        activity.organic_data_sold(entry, this.state)
-        dirty = True
+        case 'SellOrganicData':
+            activity.organic_data_sold(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'bounty':
-        activity.bv_redeemed(entry, this.state)
-        dirty = True
+        case 'RedeemVoucher' if entry['Type'] == 'bounty':
+            activity.bv_redeemed(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'RedeemVoucher' and entry['Type'] == 'CombatBond':
-        activity.cb_redeemed(entry, this.state)
-        dirty = True
+        case 'RedeemVoucher' if entry['Type'] == 'CombatBond':
+            activity.cb_redeemed(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'MarketBuy':
-        activity.trade_purchased(entry, this.state)
-        dirty = True
+        case 'MarketBuy':
+            activity.trade_purchased(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'MarketSell':
-        activity.trade_sold(entry, this.state)
-        dirty = True
+        case 'MarketSell':
+            activity.trade_sold(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'MissionAccepted':
-        this.mission_log.add_mission(entry['Name'], entry['Faction'], entry['MissionID'], entry['Expiry'], system)
-        dirty = True
+        case 'MissionAccepted':
+            this.mission_log.add_mission(entry['Name'], entry['Faction'], entry['MissionID'], entry['Expiry'], system)
+            dirty = True
 
-    if entry['event'] == 'MissionAbandoned':
-        this.mission_log.delete_mission_by_id(entry['MissionID'])
-        dirty = True
+        case 'MissionAbandoned':
+            this.mission_log.delete_mission_by_id(entry['MissionID'])
+            dirty = True
 
-    if entry['event'] == 'MissionFailed':
-        activity.mission_failed(entry, this.mission_log)
-        dirty = True
+        case 'MissionFailed':
+            activity.mission_failed(entry, this.mission_log)
+            dirty = True
 
-    if entry['event'] == 'MissionCompleted':
-        activity.mission_completed(entry, this.mission_log)
-        dirty = True
+        case 'MissionCompleted':
+            activity.mission_completed(entry, this.mission_log)
+            dirty = True
 
-    if entry['event'] == 'ShipTargeted':
-        activity.ship_targeted(entry, this.state)
-        dirty = True
+        case 'ShipTargeted':
+            activity.ship_targeted(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'CommitCrime':
-        activity.crime_committed(entry, system, this.state)
-        dirty = True
+        case 'CommitCrime':
+            activity.crime_committed(entry, system, this.state)
+            dirty = True
 
-    if entry['event'] == 'ApproachSettlement' and state['Odyssey']:
-        activity.settlement_approached(entry, this.state)
-        dirty = True
+        case 'ApproachSettlement' if state['Odyssey']:
+            activity.settlement_approached(entry, this.state)
+            dirty = True
 
-    if entry['event'] == 'FactionKillBond' and state['Odyssey']:
-        activity.cb_received(entry, this.state)
-        dirty = True
+        case 'FactionKillBond' if state['Odyssey']:
+            activity.cb_received(entry, this.state)
+            dirty = True
 
     if dirty: save_data()
 
