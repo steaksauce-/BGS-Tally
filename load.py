@@ -22,7 +22,7 @@ class BGSTally:
     version:str = "1.10.0"
     git_version:str = "0.0.0"
 
-this = BGSTally()
+this:BGSTally = BGSTally()
 
 
 def plugin_start3(plugin_dir):
@@ -146,7 +146,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             dirty = True
 
         case 'CommitCrime':
-            activity.crime_committed(entry, system, this.state)
+            activity.crime_committed(entry, this.state)
             dirty = True
 
         case 'ApproachSettlement' if state['Odyssey']:
