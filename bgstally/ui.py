@@ -93,8 +93,8 @@ class UI:
         TitleVersion.grid(row=0, column=1, sticky=tk.W)
         if self._version_tuple(git_version_number) > self._version_tuple(self.version_number):
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
-        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.state.Status).grid(row=2, column=1, sticky=tk.W)
@@ -103,11 +103,14 @@ class UI:
         return self.frame
 
 
-    def update_time_label(self):
+    def update_plugin_frame(self):
         """
         Update the tick time label in the plugin frame
         """
         self.TimeLabel = tk.Label(self.frame, text=self.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+
         theme.update(self.frame)
 
 
@@ -320,7 +323,7 @@ class UI:
         """
         if force: self.tick.force_tick()
         self.activity_manager.new_tick(self.tick)
-        if updateui: self.update_time_label()
+        if updateui: self.update_plugin_frame()
         self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
 
 
