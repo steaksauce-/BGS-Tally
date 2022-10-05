@@ -1,9 +1,13 @@
 import tkinter as tk
+from datetime import datetime, timedelta
 from functools import partial
 from os import path
+from threading import Thread
+from time import sleep
 from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
-from typing import Dict
+from typing import Dict, Optional
+from xmlrpc.client import boolean
 
 import myNotebook as nb
 from ScrollableNotebook import ScrollableNotebook
@@ -16,11 +20,15 @@ from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.enums import CheckStates, CZs
 from bgstally.fleetcarrier import FleetCarrier
+from bgstally.overlay import Overlay
 from bgstally.state import State
 from bgstally.tick import Tick
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
+DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
 FOLDER_ASSETS = "assets"
+TIME_WORKER_PERIOD_S = 2
+TIME_TICK_ALERT_M = 60
 
 
 class UI:
@@ -28,14 +36,14 @@ class UI:
     Display the user's activity
     """
 
-
-    def __init__(self, plugin_dir: str, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, fleet_carrier: FleetCarrier, plugin_version_number: str):
-        self.activity_manager = activity_manager
-        self.state = state
-        self.tick = tick
-        self.discord = discord
-        self.fleet_carrier = fleet_carrier
-        self.version_number = plugin_version_number
+    def __init__(self, plugin_dir: str, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, overlay: Overlay, fleet_carrier: FleetCarrier, plugin_version_number: str):
+        self.activity_manager: ActivityManager = activity_manager
+        self.state:State = state
+        self.tick:Tick = tick
+        self.discord:Discord = discord
+        self.overlay:Overlay = overlay
+        self.fleet_carrier:FleetCarrier = fleet_carrier
+        self.version_number:str = plugin_version_number
 
         self.image_tab_active_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
         self.image_tab_active_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
@@ -43,6 +51,37 @@ class UI:
         self.image_tab_inactive_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_enabled.png"))
         self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
         self.image_tab_inactive_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
+
+        self.shutting_down: boolean = False
+
+        self.thread: Optional[Thread] = Thread(target=self.worker, name="BGSTally worker")
+        self.thread.daemon = True
+        self.thread.start()
+
+
+    def shut_down(self):
+        """
+        Shut down all worker threads.
+        """
+        self.shutting_down = True
+
+
+    def worker(self) -> None:
+        """
+        Handle thread work
+        """
+        Debug.logger.debug("Starting Worker...")
+
+        while True:
+            if self.shutting_down:
+                Debug.logger.debug("Shutting down Worker...")
+                return
+
+            self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted(DATETIME_FORMAT_OVERLAY)}", True)
+            if (datetime.utcnow() > self.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
+                self.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
+
+            sleep(TIME_WORKER_PERIOD_S)
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):
@@ -57,8 +96,8 @@ class UI:
         TitleVersion.grid(row=0, column=1, sticky=tk.W)
         if self._version_tuple(git_version_number) > self._version_tuple(self.version_number):
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
-        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
         tk.Button(self.frame, text="Carrier Mats", command=partial(self.discord.post_to_fcjump_discord, self.fleet_carrier.get_formatted_materials())).grid(row=1, column=2, padx=3)
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
@@ -68,11 +107,14 @@ class UI:
         return self.frame
 
 
-    def update_time_label(self):
+    def update_plugin_frame(self):
         """
         Update the tick time label in the plugin frame
         """
         self.TimeLabel = tk.Label(self.frame, text=self.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+
         theme.update(self.frame)
 
 
@@ -287,7 +329,8 @@ class UI:
         """
         if force: self.tick.force_tick()
         self.activity_manager.new_tick(self.tick)
-        if updateui: self.update_time_label()
+        if updateui: self.update_plugin_frame()
+        self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
 
 
     def _version_tuple(self, version: str):

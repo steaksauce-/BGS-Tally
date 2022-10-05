@@ -4,19 +4,21 @@
 
 ### New Features:
 
+* In game overlay implemented!  Currently this just displays the current tick time, and if the next predicted tick is in the next hour, will alert that it's upcoming. The overlay requires *either* installing the separate [EDMCOverlay plugin from here](https://github.com/inorton/EDMCOverlay/releases/latest) *or* having another plugin running that has EDMCOverlay built in (for example the EDR plugin). _Many more things are planned for the overlay in future versions of BGS-Tally_.
 * In the activity window, there are now markers against every system, showing at a glance whether there is activity (&#129001; / &#11036;) and also whether you are reporting all, some, or none of the activity (&#9745; / &#9632; / &#9633;).
 * We now have the ability to post your Fleet Carrier materials sell and buy orders to a Discord channel.
 
 ### Changes:
 
-* This version includes a complete and fundamental rewrite of the code, separating into separate modules for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks.
-* Change tick date / time format in main EDMC window to make it more compact.
-* Change report date / time format in Discord posts to avoid localised text (days of week and month names).
+* This version includes a complete and fundamental rewrite of the code, separating into separate modules for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks - all stored in the `activitydata` folder.
+* Changed the tick date / time format in main EDMC window to make it more compact.
+* Changed the date / time format in Discord posts to avoid localised text (days of week and month names).
 
 ### Bug Fixes:
 
 * Murders were being counted against the system faction. Now count them against the faction of the target ship instead.
 * Using the mini scroll-left and scroll-right arrows in the tab bar was throwing errors if there weren't enough tabs to scroll.
+* A full fix has now been implemented to work around the problem where the game reports an odd number of factions in conflicts in a system (1, 3, 5 etc.) which is obviously not possible. BGS-Tally now pairs up factions, and ignores any conflicts that only have a single faction.
 
 
 ## v1.10.0 - 2022-08-11
