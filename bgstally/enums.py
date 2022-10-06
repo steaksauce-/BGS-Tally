@@ -23,3 +23,9 @@ class CheckStates(str, Enum):
 class Ticks(Enum):
     TICK_CURRENT = 0
     TICK_PREVIOUS = 1
+
+
+class UpdateUIPolicy(Enum):
+    NEVER = 0
+    IMMEDIATE = 1
+    LATER = 2

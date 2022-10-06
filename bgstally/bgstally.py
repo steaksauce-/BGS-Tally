@@ -1,3 +1,8 @@
+from threading import Thread
+from time import sleep
+from typing import Optional
+from bgstally.enums import UpdateUIPolicy
+
 import plug
 import requests
 
@@ -11,6 +16,8 @@ from bgstally.tick import Tick
 from bgstally.ui import UI
 
 PLUGIN_VERSION_URL = "https://api.github.com/repos/aussig/BGS-Tally/releases/latest"
+TIME_WORKER_PERIOD_S = 60
+
 
 class BGSTally:
     """
@@ -38,11 +45,18 @@ class BGSTally:
         self.activity_manager: ActivityManager = ActivityManager(self)
         self.ui: UI = UI(self)
 
+        self.shutting_down: bool = False
+
+        self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally Main worker")
+        self.thread.daemon = True
+        self.thread.start()
+
 
     def plugin_stop(self):
         """
         The plugin is shutting down.
         """
+        self.shutting_down = True
         self.ui.shut_down()
         self.save_data()
 
@@ -65,14 +79,17 @@ class BGSTally:
         return True
 
 
-    def new_tick(self, force: bool, updateui: bool):
+    def check_tick(self, uipolicy: UpdateUIPolicy):
         """
-        Start a new tick.
+        Check for a new tick
         """
-        if force: self.tick.force_tick()
-        self.activity_manager.new_tick(self.bgstally.tick)
-        if updateui: self.ui.update_plugin_frame()
-        self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
+        tick_success = self.tick.fetch_tick()
+
+        if tick_success:
+            self._new_tick(False, uipolicy)
+            return True
+        else:
+            return tick_success
 
 
     def save_data(self):
@@ -83,3 +100,35 @@ class BGSTally:
         self.tick.save()
         self.activity_manager.save()
         self.state.save()
+
+
+    def _new_tick(self, force: bool, uipolicy: UpdateUIPolicy):
+        """
+        Start a new tick.
+        """
+        if force: self.tick.force_tick()
+        self.activity_manager.new_tick(self.bgstally.tick)
+
+        match uipolicy:
+            case UpdateUIPolicy.IMMEDIATE:
+                self.ui.update_plugin_frame()
+            case UpdateUIPolicy.LATER:
+                self.ui.frame_needs_updating = True
+
+        self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
+
+
+    def _worker(self) -> None:
+        """
+        Handle thread work
+        """
+        Debug.logger.debug("Starting Main Worker...")
+
+        while True:
+            if self.shutting_down:
+                Debug.logger.debug("Shutting down Main Worker...")
+                return
+
+            self.check_tick(UpdateUIPolicy.LATER) # Must not update UI directly from a thread
+
+            sleep(TIME_WORKER_PERIOD_S)
