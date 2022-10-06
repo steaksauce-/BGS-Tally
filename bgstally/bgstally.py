@@ -15,7 +15,7 @@ from bgstally.state import State
 from bgstally.tick import Tick
 from bgstally.ui import UI
 
-PLUGIN_VERSION_URL = "https://api.github.com/repos/aussig/BGS-Tally/releases/latest"
+URL_PLUGIN_VERSION = "https://api.github.com/repos/aussig/BGS-Tally/releases/latest"
 TIME_WORKER_PERIOD_S = 60
 
 
@@ -66,7 +66,7 @@ class BGSTally:
         Check for a new plugin version
         """
         try:
-            response = requests.get(PLUGIN_VERSION_URL, timeout=10)
+            response = requests.get(URL_PLUGIN_VERSION, timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             self.debug.logger.warning(f"Unable to fetch latest plugin version", exc_info=e)

@@ -22,6 +22,8 @@ DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
 FOLDER_ASSETS = "assets"
 TIME_WORKER_PERIOD_S = 2
 TIME_TICK_ALERT_M = 60
+URL_LATEST_RELEASE = "https://github.com/aussig/BGS-Tally/releases/latest"
+URL_WIKI = "https://github.com/aussig/BGS-Tally/wiki"
 
 
 class UI:
@@ -75,7 +77,7 @@ class UI:
         TitleVersion = tk.Label(self.frame, text="v" + self.bgstally.version)
         TitleVersion.grid(row=0, column=1, sticky=tk.W)
         if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
-            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
+            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=0, column=1, sticky=tk.W)
         self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
         self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
@@ -106,7 +108,7 @@ class UI:
         # Make the second column fill available space
         frame.columnconfigure(1, weight=1)
 
-        HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + self.bgstally.version, background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/wiki", underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
+        HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + self.bgstally.version, background=nb.Label().cget('background'), url=URL_WIKI, underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
         nb.Checkbutton(frame, text="BGS Tally Active", variable=self.bgstally.state.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
         nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=self.bgstally.state.ShowZeroActivitySystems, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
