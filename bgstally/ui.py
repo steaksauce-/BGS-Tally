@@ -15,13 +15,8 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
-from bgstally.activitymanager import ActivityManager
 from bgstally.debug import Debug
-from bgstally.discord import Discord
 from bgstally.enums import CheckStates, CZs
-from bgstally.overlay import Overlay
-from bgstally.state import State
-from bgstally.tick import Tick
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
@@ -35,20 +30,15 @@ class UI:
     Display the user's activity
     """
 
-    def __init__(self, plugin_dir: str, state: State, activity_manager: ActivityManager, tick: Tick, discord: Discord, overlay: Overlay, plugin_version_number: str):
-        self.activity_manager: ActivityManager = activity_manager
-        self.state:State = state
-        self.tick:Tick = tick
-        self.discord:Discord = discord
-        self.overlay:Overlay = overlay
-        self.version_number:str = plugin_version_number
+    def __init__(self, bgstally):
+        self.bgstally = bgstally
 
-        self.image_tab_active_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
-        self.image_tab_active_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
-        self.image_tab_active_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_active_disabled.png"))
-        self.image_tab_inactive_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_enabled.png"))
-        self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
-        self.image_tab_inactive_disabled = PhotoImage(file = path.join(plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
+        self.image_tab_active_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
+        self.image_tab_active_part_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
+        self.image_tab_active_disabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_disabled.png"))
+        self.image_tab_inactive_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_inactive_enabled.png"))
+        self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
+        self.image_tab_inactive_disabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
 
         self.shutting_down: boolean = False
 
@@ -75,9 +65,9 @@ class UI:
                 Debug.logger.debug("Shutting down Worker...")
                 return
 
-            self.overlay.display_message("tick", f"Curr Tick: {self.tick.get_formatted(DATETIME_FORMAT_OVERLAY)}", True)
-            if (datetime.utcnow() > self.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
-                self.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
+            self.bgstally.overlay.display_message("tick", f"Curr Tick: {self.bgstally.tick.get_formatted(DATETIME_FORMAT_OVERLAY)}", True)
+            if (datetime.utcnow() > self.bgstally.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
+                self.bgstally.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
 
             sleep(TIME_WORKER_PERIOD_S)
 
@@ -90,16 +80,16 @@ class UI:
 
         TitleLabel = tk.Label(self.frame, text="BGS Tally (Aussi)")
         TitleLabel.grid(row=0, column=0, sticky=tk.W)
-        TitleVersion = tk.Label(self.frame, text="v" + self.version_number)
+        TitleVersion = tk.Label(self.frame, text="v" + self.bgstally.version)
         TitleVersion.grid(row=0, column=1, sticky=tk.W)
-        if self._version_tuple(git_version_number) > self._version_tuple(self.version_number):
+        if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
-        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
-        tk.Label(self.frame, textvariable=self.state.Status).grid(row=2, column=1, sticky=tk.W)
-        self.TimeLabel = tk.Label(self.frame, text=self.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=2, column=1, sticky=tk.W)
+        self.TimeLabel = tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
 
         return self.frame
 
@@ -108,9 +98,9 @@ class UI:
         """
         Update the tick time label in the plugin frame
         """
-        self.TimeLabel = tk.Label(self.frame, text=self.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
-        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+        self.TimeLabel = tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
 
         theme.update(self.frame)
 
@@ -124,18 +114,18 @@ class UI:
         # Make the second column fill available space
         frame.columnconfigure(1, weight=1)
 
-        HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + self.version_number, background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/wiki", underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
+        HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + self.bgstally.version, background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/wiki", underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
-        nb.Checkbutton(frame, text="BGS Tally Active", variable=self.state.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
-        nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=self.state.ShowZeroActivitySystems, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+        nb.Checkbutton(frame, text="BGS Tally Active", variable=self.bgstally.state.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
+        nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=self.bgstally.state.ShowZeroActivitySystems, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
         nb.Label(frame, text="Discord Settings").grid(column=0, padx=10, sticky=tk.W)
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
-        nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=self.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
-        nb.Checkbutton(frame, text="Include Secondary INF", variable=self.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+        nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+        nb.Checkbutton(frame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
         nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=9)
-        EntryPlus(frame, textvariable=self.state.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
+        EntryPlus(frame, textvariable=self.bgstally.state.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
         nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
-        EntryPlus(frame, textvariable=self.state.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
+        EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
         tk.Button(frame, text="FORCE Tick", command=self.confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=12)
 
@@ -172,8 +162,8 @@ class UI:
 
         DiscordOptionsFrame = ttk.Frame(DiscordFrame)
         DiscordOptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
-        ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=self.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
-        ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
+        ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
+        ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
 
         system_list = activity.get_ordered_systems()
 
@@ -182,7 +172,7 @@ class UI:
         for system_id in system_list:
             system = activity.systems[system_id]
 
-            if self.state.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and system['zero_system_activity']: continue
+            if self.bgstally.state.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and system['zero_system_activity']: continue
 
             tab = ttk.Frame(TabParent)
             tab.columnconfigure(1, weight=1) # Make the second column (faction name) fill available space
@@ -302,7 +292,7 @@ class UI:
         DiscordText.focus()
 
         ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
-        if self.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self.discord.post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
+        if self.bgstally.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self.bgstally.discord.post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
 
         theme.update(ContainerFrame)
 
@@ -322,10 +312,10 @@ class UI:
         """
         Start a new tick.  This isn't really the best place for this, but it's here for now.
         """
-        if force: self.tick.force_tick()
-        self.activity_manager.new_tick(self.tick)
+        if force: self.bgstally.tick.force_tick()
+        self.bgstally.activity_manager.new_tick(self.bgstally.tick)
         if updateui: self.update_plugin_frame()
-        self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
+        self.bgstally.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
 
 
     def _version_tuple(self, version: str):
@@ -502,7 +492,7 @@ class UI:
         """
         Shorten the faction name if the user has chosen to
         """
-        if self.state.AbbreviateFactionNames.get() == CheckStates.STATE_ON:
+        if self.bgstally.state.AbbreviateFactionNames.get() == CheckStates.STATE_ON:
             return ''.join((i if i.isnumeric() else i[0]) for i in faction_name.split())
         else:
             return faction_name
@@ -528,7 +518,7 @@ class UI:
                     faction_discord_text += f".WarINF {faction['MissionPoints']}; " if faction['MissionPoints'] > 0 else ""
                 else:
                     inf = faction['MissionPoints']
-                    if self.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
+                    if self.bgstally.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
                     faction_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
 
                 faction_discord_text += f".BVs {self._human_format(faction['Bounties'])}; " if faction['Bounties'] != 0 else ""

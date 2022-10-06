@@ -12,7 +12,8 @@ class Overlay:
     """
     Handles the game overlay. Provides purpose-agnostic functions to display information and data in frames on screen.
     """
-    def __init__(self):
+    def __init__(self, bgstally):
+        self.bgstally = bgstally
         self.edmcoverlay = None
         self._check_overlay()
 

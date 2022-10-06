@@ -1,7 +1,5 @@
-from os import path
 import plug
 import requests
-
 
 from bgstally.activitymanager import ActivityManager
 from bgstally.debug import Debug
@@ -28,15 +26,17 @@ class BGSTally:
         """
         The plugin is starting up. Initialise all our objects.
         """
+        self.plugin_dir = plugin_dir
+
         # Classes
-        self.debug: Debug = Debug(self.plugin_name)
-        self.state: State = State()
-        self.mission_log: MissionLog = MissionLog(plugin_dir)
-        self.discord: Discord = Discord(self.state)
-        self.tick: Tick = Tick(True)
-        self.overlay = Overlay()
-        self.activity_manager: ActivityManager = ActivityManager(plugin_dir, self.mission_log, self.tick)
-        self.ui: UI = UI(plugin_dir, self.state, self.activity_manager, self.tick, self.discord, self.overlay, self.version)
+        self.debug: Debug = Debug(self)
+        self.state: State = State(self)
+        self.mission_log: MissionLog = MissionLog(self)
+        self.discord: Discord = Discord(self)
+        self.tick: Tick = Tick(self, True)
+        self.overlay = Overlay(self)
+        self.activity_manager: ActivityManager = ActivityManager(self)
+        self.ui: UI = UI(self)
 
 
     def plugin_stop(self):
