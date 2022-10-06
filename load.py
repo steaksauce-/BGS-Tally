@@ -2,6 +2,7 @@ from os import path
 
 from bgstally.activity import Activity
 from bgstally.bgstally import BGSTally
+from bgstally.enums import UpdateUIPolicy
 
 PLUGIN_VERSION = "1.10.0"
 
@@ -16,13 +17,11 @@ def plugin_start3(plugin_dir):
     this.plugin_start(plugin_dir)
 
     version_success = this.check_version()
-    tick_success = this.tick.fetch_tick()
+    tick_success = this.check_tick(UpdateUIPolicy.NEVER)
 
     if tick_success == None:
         # Cannot continue if we couldn't fetch a tick
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
-    elif tick_success == True:
-        this.new_tick(False, False)
 
     return this.plugin_name
 
@@ -54,14 +53,15 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
     if this.state.Status.get() != "Active": return
 
+    this.ui.update()
+
     activity: Activity = this.activity_manager.get_current_activity()
     dirty: bool = False
 
     if entry['event'] in ['Location', 'FSDJump', 'CarrierJump']:
-        # Check for a new tick
-        if this.tick.fetch_tick():
-            this.new_tick(False, True)
-            activity = this.activity_manager.get_current_activity() # New activity will be generated with a new tick
+        if this.check_tick(UpdateUIPolicy.IMMEDIATE):
+            # New activity will be generated with a new tick
+            activity = this.activity_manager.get_current_activity()
 
         activity.system_entered(entry, this.state)
         dirty = True

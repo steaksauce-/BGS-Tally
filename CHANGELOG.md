@@ -10,15 +10,16 @@
 
 ### Changes:
 
-* This version includes a complete and fundamental rewrite of the code, separating into separate modules for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks - all stored in the `activitydata` folder.
+* This version includes a complete and fundamental rewrite of the code for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks - all stored in the `activitydata` folder.
 * Changed the tick date / time format in main EDMC window to make it more compact.
 * Changed the date / time format in Discord posts to avoid localised text (days of week and month names).
+* Big improvement in detecting new ticks. Previously, it would only check when you jump to a new system. Now, it checks every minute. This means that even if you stay in the same place (e.g. doing multiple CZs in one system), the tick will tock correctly.
 
 ### Bug Fixes:
 
 * Murders were being counted against the system faction. Now count them against the faction of the target ship instead.
 * Using the mini scroll-left and scroll-right arrows in the tab bar was throwing errors if there weren't enough tabs to scroll.
-* A full fix has now been implemented to work around the problem where the game reports an odd number of factions in conflicts in a system (1, 3, 5 etc.) which is obviously not possible. BGS-Tally now pairs up factions, and ignores any conflicts that only have a single faction.
+* A full fix has now been implemented to work around the game bug where the game reports an odd number of factions in conflicts in a system (1, 3, 5 etc.) which is obviously not possible. BGS-Tally now pairs up factions, and ignores any conflicts that only have a single faction.
 
 
 ## v1.10.0 - 2022-08-11
