@@ -7,7 +7,8 @@ from bgstally.debug import Debug
 
 
 class FleetCarrier:
-    def __init__(self):
+    def __init__(self, bgstally):
+        self.bgstally = bgstally
         self.name = ""
         self.id = ""
         self.materials = {}
