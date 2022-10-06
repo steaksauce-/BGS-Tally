@@ -172,7 +172,9 @@ class UI:
         for system_id in system_list:
             system = activity.systems[system_id]
 
-            if self.bgstally.state.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF and system['zero_system_activity']: continue
+            if self.bgstally.state.ShowZeroActivitySystems.get() == CheckStates.STATE_OFF \
+                and system['zero_system_activity'] \
+                and str(system_id) != self.bgstally.state.current_system_id: continue
 
             tab = ttk.Frame(TabParent)
             tab.columnconfigure(1, weight=1) # Make the second column (faction name) fill available space
