@@ -3,15 +3,16 @@ from os import path
 
 from config import appname
 
+
 class Debug:
     logger = None
 
-    def __init__(self, plugin_name: str):
+    def __init__(self, bgstally):
         # A Logger is used per 'found' plugin to make it easy to include the plugin's
         # folder name in the logging output format.
         # NB: plugin_name here *must* be the plugin's folder name as per the preceding
         #     code, else the logger won't be properly set up.
-        Debug.logger = logging.getLogger(f'{appname}.{plugin_name}')
+        Debug.logger = logging.getLogger(f'{appname}.{bgstally.plugin_name}')
 
         # If the Logger has handlers then it was already set up by the core code, else
         # it needs setting up here.

@@ -1,11 +1,10 @@
 from copy import deepcopy
-from os import listdir, mkdir, path, remove
+from os import listdir, mkdir, path
 
 from config import config
 
 from bgstally.activity import Activity
 from bgstally.debug import Debug
-from bgstally.missionlog import MissionLog
 from bgstally.tick import Tick
 
 FILE_LEGACY_CURRENTDATA = "Today Data.txt"
@@ -20,14 +19,13 @@ class ActivityManager:
     the data storage of Activity logs.
     """
 
-    def __init__(self, plugin_dir: str, mission_log: MissionLog, current_tick: Tick):
-        self.plugin_dir = plugin_dir
-        self.mission_log = mission_log
+    def __init__(self, bgstally):
+        self.bgstally = bgstally
 
         self.activity_data = []
         self.current_activity = None
 
-        self._load(current_tick)
+        self._load()
 
 
     def save(self):
@@ -35,7 +33,7 @@ class ActivityManager:
         Save all activity data
         """
         for activity in self.activity_data:
-            activity.save(path.join(self.plugin_dir, FOLDER_ACTIVITYDATA, activity.tick_id + FILE_SUFFIX))
+            activity.save(path.join(self.bgstally.plugin_dir, FOLDER_ACTIVITYDATA, activity.tick_id + FILE_SUFFIX))
 
 
     def get_current_activity(self):
@@ -63,31 +61,31 @@ class ActivityManager:
         new_activity.tick_id = tick.tick_id
         new_activity.tick_time = tick.tick_time
         new_activity.discord_messageid = None
-        new_activity.clear_activity(self.mission_log)
+        new_activity.clear_activity(self.bgstally.mission_log)
         self.activity_data.append(new_activity)
         self.activity_data.sort(reverse=True)
         self.current_activity = new_activity
 
 
-    def _load(self, current_tick: Tick):
+    def _load(self):
         """
         Load all activity data
         """
         # Handle modern data from subfolder
-        filepath = path.join(self.plugin_dir, FOLDER_ACTIVITYDATA)
+        filepath = path.join(self.bgstally.plugin_dir, FOLDER_ACTIVITYDATA)
         if not path.exists(filepath): mkdir(filepath)
         for activityfilename in listdir(filepath):
             if activityfilename.endswith(FILE_SUFFIX):
-                activity = Activity(self.plugin_dir, Tick())
+                activity = Activity(self.bgstally, Tick(self.bgstally))
                 activity.load(path.join(filepath, activityfilename))
                 self.activity_data.append(activity)
-                if activity.tick_id == current_tick.tick_id: self.current_activity = activity
+                if activity.tick_id == self.bgstally.tick.tick_id: self.current_activity = activity
 
         # Handle legacy data if it exists - parse and migrate to new format
-        filepath = path.join(self.plugin_dir, FILE_LEGACY_PREVIOUSDATA)
-        if path.exists(filepath): self._convert_legacy_data(filepath, Tick(), config.get_str('XDiscordPreviousMessageID')) # Fake a tick for previous legacy - we don't have tick_id or tick_time
-        filepath = path.join(self.plugin_dir, FILE_LEGACY_CURRENTDATA)
-        if path.exists(filepath): self._convert_legacy_data(filepath, current_tick, config.get_str('XDiscordCurrentMessageID'))
+        filepath = path.join(self.bgstally.plugin_dir, FILE_LEGACY_PREVIOUSDATA)
+        if path.exists(filepath): self._convert_legacy_data(filepath, Tick(self.bgstally), config.get_str('XDiscordPreviousMessageID')) # Fake a tick for previous legacy - we don't have tick_id or tick_time
+        filepath = path.join(self.bgstally.plugin_dir, FILE_LEGACY_CURRENTDATA)
+        if path.exists(filepath): self._convert_legacy_data(filepath, self.bgstally.tick, config.get_str('XDiscordCurrentMessageID'))
 
         self.activity_data.sort(reverse=True)
 
@@ -103,7 +101,7 @@ class ActivityManager:
                 # TODO: remove(filepath) - Can be done in a future version of the plugin, when we are sure everything is solid
                 return
 
-        activity = Activity(self.plugin_dir, tick, discordmessageid)
+        activity = Activity(self.bgstally, tick, discordmessageid)
         activity.load_legacy_data(filepath)
         self.activity_data.append(activity)
         if activity.tick_id == tick.tick_id: self.current_activity = activity
