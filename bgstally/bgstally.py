@@ -86,7 +86,7 @@ class BGSTally:
         tick_success = self.tick.fetch_tick()
 
         if tick_success:
-            self._new_tick(False, uipolicy)
+            self.new_tick(False, uipolicy)
             return True
         else:
             return tick_success
@@ -102,12 +102,12 @@ class BGSTally:
         self.state.save()
 
 
-    def _new_tick(self, force: bool, uipolicy: UpdateUIPolicy):
+    def new_tick(self, force: bool, uipolicy: UpdateUIPolicy):
         """
         Start a new tick.
         """
         if force: self.tick.force_tick()
-        self.activity_manager.new_tick(self.bgstally.tick)
+        self.activity_manager.new_tick(self.tick)
 
         match uipolicy:
             case UpdateUIPolicy.IMMEDIATE:

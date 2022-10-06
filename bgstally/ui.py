@@ -15,7 +15,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.debug import Debug
-from bgstally.enums import CheckStates, CZs
+from bgstally.enums import CheckStates, CZs, UpdateUIPolicy
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
@@ -319,7 +319,7 @@ class UI:
         Force a tick when user clicks button
         """
         answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?", default="no")
-        if answer: self.bgstally.new_tick(True, True)
+        if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
 
 
     def _version_tuple(self, version: str):
