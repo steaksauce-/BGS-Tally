@@ -57,6 +57,7 @@ class ActivityManager:
         """
         New tick detected, duplicate the current Activity object
         """
+        # Note Activity uses a customised __deepcopy__ that only deep copies data, not class instances.
         new_activity = deepcopy(self.current_activity)
         new_activity.tick_id = tick.tick_id
         new_activity.tick_time = tick.tick_time
