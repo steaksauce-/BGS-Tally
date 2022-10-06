@@ -65,6 +65,16 @@ class BGSTally:
         return True
 
 
+    def new_tick(self, force: bool, updateui: bool):
+        """
+        Start a new tick.
+        """
+        if force: self.tick.force_tick()
+        self.activity_manager.new_tick(self.bgstally.tick)
+        if updateui: self.ui.update_plugin_frame()
+        self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
+
+
     def save_data(self):
         """
         Save all data structures

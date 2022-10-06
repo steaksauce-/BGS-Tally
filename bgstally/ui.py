@@ -307,17 +307,7 @@ class UI:
         Force a tick when user clicks button
         """
         answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?", default="no")
-        if answer: self.new_tick(True, True)
-
-
-    def new_tick(self, force: bool, updateui: bool):
-        """
-        Start a new tick.  This isn't really the best place for this, but it's here for now.
-        """
-        if force: self.bgstally.tick.force_tick()
-        self.bgstally.activity_manager.new_tick(self.bgstally.tick)
-        if updateui: self.update_plugin_frame()
-        self.bgstally.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
+        if answer: self.bgstally.new_tick(True, True)
 
 
     def _version_tuple(self, version: str):

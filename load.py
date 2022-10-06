@@ -22,7 +22,7 @@ def plugin_start3(plugin_dir):
         # Cannot continue if we couldn't fetch a tick
         raise Exception("BGS-Tally couldn't continue because the current tick could not be fetched")
     elif tick_success == True:
-        this.ui.new_tick(False, False)
+        this.new_tick(False, False)
 
     return this.plugin_name
 
@@ -60,7 +60,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry['event'] in ['Location', 'FSDJump', 'CarrierJump']:
         # Check for a new tick
         if this.tick.fetch_tick():
-            this.ui.new_tick(False, True)
+            this.new_tick(False, True)
             activity = this.activity_manager.get_current_activity() # New activity will be generated with a new tick
 
         activity.system_entered(entry, this.state)
