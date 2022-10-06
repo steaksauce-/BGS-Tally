@@ -16,7 +16,8 @@ class Tick:
     Information about a tick
     """
 
-    def __init__(self, load: bool = False):
+    def __init__(self, bgstally, load: bool = False):
+        self.bgstally = bgstally
         self.tick_id = TICKID_UNKNOWN
         self.tick_time = (datetime.utcnow() - timedelta(days = 30)) # Default to a tick a month old
         if load: self.load()

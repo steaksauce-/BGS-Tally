@@ -11,7 +11,8 @@ class State:
     Manage plugin user state and preferences
     """
 
-    def __init__(self):
+    def __init__(self, bgstally):
+        self.bgstally = bgstally
         self.load()
 
 
@@ -19,7 +20,6 @@ class State:
         """
         Load our state
         """
-
         # UI preference fields
         self.Status:str = tk.StringVar(value=config.get_str('XStatus', default="Active"))
         self.ShowZeroActivitySystems:str = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
