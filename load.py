@@ -1,45 +1,21 @@
 from os import path
 
-import plug
-import requests
-
 from bgstally.activity import Activity
-from bgstally.activitymanager import ActivityManager
-from bgstally.debug import Debug
-from bgstally.discord import Discord
-from bgstally.missionlog import MissionLog
-from bgstally.overlay import Overlay
-from bgstally.state import State
-from bgstally.tick import Tick
-from bgstally.ui import UI
+from bgstally.bgstally import BGSTally
 
+PLUGIN_VERSION = "1.10.0"
 
-class BGSTally:
-    """
-    For holding module globals
-    """
-    plugin_name:str = path.basename(path.dirname(__file__))
-    version:str = "1.10.0"
-    git_version:str = "0.0.0"
-
-this:BGSTally = BGSTally()
+# Initialise the main plugin class
+this:BGSTally = BGSTally(path.basename(path.dirname(__file__)), PLUGIN_VERSION)
 
 
 def plugin_start3(plugin_dir):
     """
     Load this plugin into EDMC
     """
-    # Classes
-    this.debug: Debug = Debug(this.plugin_name)
-    this.state: State = State()
-    this.mission_log: MissionLog = MissionLog(plugin_dir)
-    this.discord: Discord = Discord(this.state)
-    this.tick: Tick = Tick(True)
-    this.overlay = Overlay()
-    this.activity_manager: ActivityManager = ActivityManager(plugin_dir, this.mission_log, this.tick)
-    this.ui: UI = UI(plugin_dir, this.state, this.activity_manager, this.tick, this.discord, this.overlay, this.version)
+    this.plugin_start(plugin_dir)
 
-    version_success = check_version()
+    version_success = this.check_version()
     tick_success = this.tick.fetch_tick()
 
     if tick_success == None:
@@ -55,8 +31,7 @@ def plugin_stop():
     """
     EDMC is closing
     """
-    this.ui.shut_down()
-    save_data()
+    this.plugin_stop()
 
 
 def plugin_app(parent):
@@ -157,32 +132,4 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             activity.cb_received(entry, this.state)
             dirty = True
 
-    if dirty: save_data()
-
-
-def check_version():
-    """
-    Check for a new plugin version
-    """
-    try:
-        response = requests.get("https://api.github.com/repos/aussig/BGS-Tally/releases/latest", timeout=10)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        this.debug.logger.warning(f"Unable to fetch latest plugin version", exc_info=e)
-        plug.show_error(f"BGS-Tally: Unable to fetch latest plugin version")
-        return None
-    else:
-        latest = response.json()
-        this.git_version = latest['tag_name']
-
-    return True
-
-
-def save_data():
-    """
-    Save all data structures
-    """
-    this.mission_log.save()
-    this.tick.save()
-    this.activity_manager.save()
-    this.state.save()
+    if dirty: this.save_data()

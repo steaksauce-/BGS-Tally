@@ -7,8 +7,11 @@ from bgstally.debug import Debug
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 
 class MissionLog:
-    def __init__(self, plugindir: str):
-        self.plugindir = plugindir
+    """
+    Handle a log of all in-progress missions
+    """
+    def __init__(self, bgstally):
+        self.bgstally = bgstally
         self.missionlog = []
         self.load()
 
@@ -17,7 +20,7 @@ class MissionLog:
         """
         Load missionlog status from file
         """
-        file = os.path.join(self.plugindir, "MissionLog.txt")
+        file = os.path.join(self.bgstally.plugin_dir, "MissionLog.txt")
         if os.path.exists(file):
             with open(file) as json_file:
                 self.missionlog = json.load(json_file)
@@ -26,7 +29,7 @@ class MissionLog:
         """
         Save missionlog to file
         """
-        file = os.path.join(self.plugindir, "MissionLog.txt")
+        file = os.path.join(self.bgstally.plugin_dir, "MissionLog.txt")
         with open(file, 'w') as outfile:
             json.dump(self.missionlog, outfile)
 
