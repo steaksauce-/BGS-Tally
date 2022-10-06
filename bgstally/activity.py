@@ -106,7 +106,7 @@ class Activity:
         """
         Get an ordered list of the systems we are tracking, with the current system first, followed by those with activity, and finally those without
         """
-        return sorted(self.systems.keys(), key=lambda x: (self.systems[x]['zero_system_activity'], self.systems[x]['System']))
+        return sorted(self.systems.keys(), key=lambda x: (str(x) != self.bgstally.state.current_system_id, self.systems[x]['zero_system_activity'], self.systems[x]['System']))
 
 
     def clear_activity(self, mission_log: MissionLog):
