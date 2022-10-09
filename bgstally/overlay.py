@@ -1,4 +1,5 @@
 from bgstally.debug import Debug
+from bgstally.enums import CheckStates
 
 try:
     from EDMCOverlay import edmcoverlay
@@ -23,6 +24,7 @@ class Overlay:
         Display a message in the overlay
         """
         if self.edmcoverlay == None: return
+        if self.bgstally.state.EnableOverlay.get() == CheckStates.STATE_OFF: return
 
         try:
             fi = self._get_frame_info(frame_name)
