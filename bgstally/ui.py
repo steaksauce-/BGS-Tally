@@ -6,7 +6,7 @@ from threading import Thread
 from time import sleep
 from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import myNotebook as nb
 from ScrollableNotebook import ScrollableNotebook
@@ -78,8 +78,9 @@ class UI:
         TitleVersion.grid(row=0, column=1, sticky=tk.W)
         if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=0, column=1, sticky=tk.W)
-        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies", command=self._previous_ticks_popup)
+        self.PreviousButton.grid(row=1, column=1, padx=3)
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=2, column=1, sticky=tk.W)
@@ -88,13 +89,26 @@ class UI:
         return self.frame
 
 
+    def _previous_ticks_popup(self):
+        menu = tk.Menu(self.frame, tearoff = 0)
+
+        activities: List = self.bgstally.activity_manager.get_previous_activities()
+
+        for activity in activities:
+            menu.add_command(label=activity.tick_time, command=partial(self._show_activity_window, activity))
+
+        try:
+            menu.tk_popup(self.PreviousButton.winfo_rootx(), self.PreviousButton.winfo_rooty())
+        finally:
+            menu.grab_release()
+
+
     def update_plugin_frame(self):
         """
-        Update the tick time label in the plugin frame
+        Update the tick time label and current activity button in the plugin frame
         """
         self.TimeLabel = tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
-        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
 
         theme.update(self.frame)
 
