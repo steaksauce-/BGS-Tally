@@ -347,7 +347,7 @@ class UI:
         """
         Force a tick when user clicks button
         """
-        answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?", default="no")
+        answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: It is not usually necessary to force a tick. Only do this if you know FOR CERTAIN there has been a tick but BGS-Tally is not showing it.\n\nAre you sure that you want to do this?", default="no")
         if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
 
 
