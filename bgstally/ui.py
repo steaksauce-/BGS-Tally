@@ -34,6 +34,7 @@ class UI:
     def __init__(self, bgstally):
         self.bgstally = bgstally
 
+        self.image_button_dropdown_menu = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "button_dropdown_menu.png"))
         self.image_tab_active_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
         self.image_tab_active_part_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
         self.image_tab_active_disabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_disabled.png"))
@@ -79,7 +80,7 @@ class UI:
         if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=0, column=1, sticky=tk.W)
         tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies", command=self._previous_ticks_popup)
+        self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=1, column=1, padx=3)
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
@@ -87,20 +88,6 @@ class UI:
         self.TimeLabel = tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
 
         return self.frame
-
-
-    def _previous_ticks_popup(self):
-        menu = tk.Menu(self.frame, tearoff = 0)
-
-        activities: List = self.bgstally.activity_manager.get_previous_activities()
-
-        for activity in activities:
-            menu.add_command(label=activity.tick_time, command=partial(self._show_activity_window, activity))
-
-        try:
-            menu.tk_popup(self.PreviousButton.winfo_rootx(), self.PreviousButton.winfo_rooty())
-        finally:
-            menu.grab_release()
 
 
     def update_plugin_frame(self):
@@ -156,6 +143,20 @@ class UI:
                 self.bgstally.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
 
             sleep(TIME_WORKER_PERIOD_S)
+
+
+    def _previous_ticks_popup(self):
+        menu = tk.Menu(self.frame, tearoff = 0)
+
+        activities: List = self.bgstally.activity_manager.get_previous_activities()
+
+        for activity in activities:
+            menu.add_command(label=activity.tick_time, command=partial(self._show_activity_window, activity))
+
+        try:
+            menu.tk_popup(self.PreviousButton.winfo_rootx(), self.PreviousButton.winfo_rooty())
+        finally:
+            menu.grab_release()
 
 
     def _show_activity_window(self, activity: Activity):

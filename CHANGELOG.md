@@ -7,7 +7,7 @@
 * In game overlay implemented!  Currently this just displays the current tick time, and if the next predicted tick is in the next hour, will alert that it's upcoming. The overlay requires *either* installing the separate [EDMCOverlay plugin from here](https://github.com/inorton/EDMCOverlay/releases/latest) *or* having another plugin running that has EDMCOverlay built in (for example the EDR plugin). _Many more things are planned for the overlay in future versions of BGS-Tally_.
 * In the activity window, there are now markers against every system, showing at a glance whether there is activity (&#129001; / &#11036;) and also whether you are reporting all, some, or none of the activity (&#9745; / &#9632; / &#9633;).
 * The system you are currently in is always displayed as the first tab in the activity log, whether or not you've done any activity in it and whether or not you have "Show Inactive Systems" switched on. This allows you to always add activity manually in the system you're in, e.g. Space CZ wins.
-* The 'Previous BGS Tally' button is gone, and replaced by a 'Previous BGS Tallies' selector, where you can look at all your history of previous work.
+* The 'Previous BGS Tally' button has been replaced by a 'Previous BGS Tallies &#x25bc;' selector, where you can look at all your history of previous work.
 
 ### Changes:
 
