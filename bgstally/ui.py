@@ -42,6 +42,8 @@ class UI:
         self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
         self.image_tab_inactive_disabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
 
+        self.heading_font = ("Helvetica", 11, "bold")
+
         self.shutting_down: bool = False
         self.frame_needs_updating: bool = False
 
@@ -85,7 +87,7 @@ class UI:
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=2, column=1, sticky=tk.W)
-        self.TimeLabel = tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
 
         return self.frame
 
@@ -94,7 +96,7 @@ class UI:
         """
         Update the tick time label and current activity button in the plugin frame
         """
-        self.TimeLabel = tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
         tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
 
         theme.update(self.frame)
@@ -109,20 +111,30 @@ class UI:
         # Make the second column fill available space
         frame.columnconfigure(1, weight=1)
 
-        HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + self.bgstally.version, background=nb.Label().cget('background'), url=URL_WIKI, underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
+        nb.Label(frame, text=f"BGS Tally (modified by Aussi) v{self.bgstally.version}", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W)
+        HyperlinkLabel(frame, text="Instructions for Use", background=nb.Label().cget('background'), url=URL_WIKI, underline=True).grid(column=1, padx=10, sticky=tk.W)
+
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+        nb.Label(frame, text="General", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W)
         nb.Checkbutton(frame, text="BGS Tally Active", variable=self.bgstally.state.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
         nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=self.bgstally.state.ShowZeroActivitySystems, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
-        nb.Label(frame, text="Discord Settings").grid(column=0, padx=10, sticky=tk.W)
+
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+        nb.Label(frame, text="Discord", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W)
         nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
         nb.Checkbutton(frame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
         nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=9)
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=9)
         nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=10)
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=10)
+
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
-        tk.Button(frame, text="FORCE Tick", command=self._confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=12)
+        nb.Label(frame, text="In-game Overlay", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W)
+        nb.Checkbutton(frame, text="Show In-game Overlay", variable=self.bgstally.state.EnableOverlay, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
+
+        ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
+        nb.Label(frame, text="Advanced", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W)
+        tk.Button(frame, text="FORCE Tick", command=self._confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=16)
 
         return frame
 
@@ -163,7 +175,6 @@ class UI:
         """
         Display the data window, using data from the passed in activity object
         """
-        heading_font = ("Helvetica", 11, "bold")
         Form = tk.Toplevel(self.frame)
         Form.title("BGS Tally - After Tick at: " + activity.tick_time.strftime(DATETIME_FORMAT_WINDOWTITLE))
         Form.geometry("1200x800")
@@ -175,8 +186,8 @@ class UI:
 
         DiscordFrame = ttk.Frame(ContainerFrame)
         DiscordFrame.pack(fill=tk.BOTH, padx=5, pady=5)
-        ttk.Label(DiscordFrame, text="Discord Report", font=heading_font).grid(row=0, column=0, sticky=tk.W)
-        ttk.Label(DiscordFrame, text="Discord Options", font=heading_font).grid(row=0, column=1, sticky=tk.W)
+        ttk.Label(DiscordFrame, text="Discord Report", font=self.heading_font).grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(DiscordFrame, text="Discord Options", font=self.heading_font).grid(row=0, column=1, sticky=tk.W)
         ttk.Label(DiscordFrame, text="Double-check on-ground CZ tallies, sizes are not always correct", foreground='#f00').grid(row=1, column=0, columnspan=2, sticky=tk.W)
 
         DiscordTextFrame = ttk.Frame(DiscordFrame)
@@ -209,35 +220,35 @@ class UI:
 
             FactionEnableCheckbuttons = []
 
-            ttk.Label(tab, text="Include", font=heading_font).grid(row=0, column=0, padx=2, pady=2)
+            ttk.Label(tab, text="Include", font=self.heading_font).grid(row=0, column=0, padx=2, pady=2)
             EnableAllCheckbutton = ttk.Checkbutton(tab)
             EnableAllCheckbutton.grid(row=1, column=0, padx=2, pady=2)
             EnableAllCheckbutton.configure(command=partial(self._enable_all_factions_change, TabParent, tab_index, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity, system))
             EnableAllCheckbutton.state(['!alternate'])
-            ttk.Label(tab, text="Faction", font=heading_font).grid(row=0, column=1, padx=2, pady=2)
-            ttk.Label(tab, text="State", font=heading_font).grid(row=0, column=2, padx=2, pady=2)
-            ttk.Label(tab, text="INF", font=heading_font, anchor=tk.CENTER).grid(row=0, column=3, columnspan=2, padx=2)
-            ttk.Label(tab, text="Pri", font=heading_font).grid(row=1, column=3, padx=2, pady=2)
-            ttk.Label(tab, text="Sec", font=heading_font).grid(row=1, column=4, padx=2, pady=2)
-            ttk.Label(tab, text="Trade", font=heading_font, anchor=tk.CENTER).grid(row=0, column=5, columnspan=3, padx=2)
-            ttk.Label(tab, text="Purch", font=heading_font).grid(row=1, column=5, padx=2, pady=2)
-            ttk.Label(tab, text="Prof", font=heading_font).grid(row=1, column=6, padx=2, pady=2)
-            ttk.Label(tab, text="BM Prof", font=heading_font).grid(row=1, column=7, padx=2, pady=2)
-            ttk.Label(tab, text="BVs", font=heading_font).grid(row=0, column=8, padx=2, pady=2)
-            ttk.Label(tab, text="Expl", font=heading_font).grid(row=0, column=9, padx=2, pady=2)
-            ttk.Label(tab, text="Exo", font=heading_font).grid(row=0, column=10, padx=2, pady=2)
-            ttk.Label(tab, text="CBs", font=heading_font).grid(row=0, column=11, padx=2, pady=2)
-            ttk.Label(tab, text="Fails", font=heading_font).grid(row=0, column=12, padx=2, pady=2)
-            ttk.Label(tab, text="Murders", font=heading_font).grid(row=0, column=13, padx=2, pady=2)
-            ttk.Label(tab, text="Scens", font=heading_font).grid(row=0, column=14, padx=2, pady=2)
-            ttk.Label(tab, text="Space CZs", font=heading_font, anchor=tk.CENTER).grid(row=0, column=15, columnspan=3, padx=2)
-            ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=15, padx=2, pady=2)
-            ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=16, padx=2, pady=2)
-            ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=17, padx=2, pady=2)
-            ttk.Label(tab, text="On-foot CZs", font=heading_font, anchor=tk.CENTER).grid(row=0, column=18, columnspan=3, padx=2)
-            ttk.Label(tab, text="L", font=heading_font).grid(row=1, column=18, padx=2, pady=2)
-            ttk.Label(tab, text="M", font=heading_font).grid(row=1, column=19, padx=2, pady=2)
-            ttk.Label(tab, text="H", font=heading_font).grid(row=1, column=20, padx=2, pady=2)
+            ttk.Label(tab, text="Faction", font=self.heading_font).grid(row=0, column=1, padx=2, pady=2)
+            ttk.Label(tab, text="State", font=self.heading_font).grid(row=0, column=2, padx=2, pady=2)
+            ttk.Label(tab, text="INF", font=self.heading_font, anchor=tk.CENTER).grid(row=0, column=3, columnspan=2, padx=2)
+            ttk.Label(tab, text="Pri", font=self.heading_font).grid(row=1, column=3, padx=2, pady=2)
+            ttk.Label(tab, text="Sec", font=self.heading_font).grid(row=1, column=4, padx=2, pady=2)
+            ttk.Label(tab, text="Trade", font=self.heading_font, anchor=tk.CENTER).grid(row=0, column=5, columnspan=3, padx=2)
+            ttk.Label(tab, text="Purch", font=self.heading_font).grid(row=1, column=5, padx=2, pady=2)
+            ttk.Label(tab, text="Prof", font=self.heading_font).grid(row=1, column=6, padx=2, pady=2)
+            ttk.Label(tab, text="BM Prof", font=self.heading_font).grid(row=1, column=7, padx=2, pady=2)
+            ttk.Label(tab, text="BVs", font=self.heading_font).grid(row=0, column=8, padx=2, pady=2)
+            ttk.Label(tab, text="Expl", font=self.heading_font).grid(row=0, column=9, padx=2, pady=2)
+            ttk.Label(tab, text="Exo", font=self.heading_font).grid(row=0, column=10, padx=2, pady=2)
+            ttk.Label(tab, text="CBs", font=self.heading_font).grid(row=0, column=11, padx=2, pady=2)
+            ttk.Label(tab, text="Fails", font=self.heading_font).grid(row=0, column=12, padx=2, pady=2)
+            ttk.Label(tab, text="Murders", font=self.heading_font).grid(row=0, column=13, padx=2, pady=2)
+            ttk.Label(tab, text="Scens", font=self.heading_font).grid(row=0, column=14, padx=2, pady=2)
+            ttk.Label(tab, text="Space CZs", font=self.heading_font, anchor=tk.CENTER).grid(row=0, column=15, columnspan=3, padx=2)
+            ttk.Label(tab, text="L", font=self.heading_font).grid(row=1, column=15, padx=2, pady=2)
+            ttk.Label(tab, text="M", font=self.heading_font).grid(row=1, column=16, padx=2, pady=2)
+            ttk.Label(tab, text="H", font=self.heading_font).grid(row=1, column=17, padx=2, pady=2)
+            ttk.Label(tab, text="On-foot CZs", font=self.heading_font, anchor=tk.CENTER).grid(row=0, column=18, columnspan=3, padx=2)
+            ttk.Label(tab, text="L", font=self.heading_font).grid(row=1, column=18, padx=2, pady=2)
+            ttk.Label(tab, text="M", font=self.heading_font).grid(row=1, column=19, padx=2, pady=2)
+            ttk.Label(tab, text="H", font=self.heading_font).grid(row=1, column=20, padx=2, pady=2)
             ttk.Separator(tab, orient=tk.HORIZONTAL).grid(columnspan=21, padx=2, pady=5, sticky=tk.EW)
 
             header_rows = 3

@@ -27,6 +27,7 @@ class State:
         self.IncludeSecondaryInf:str = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
         self.DiscordWebhook:str = tk.StringVar(value=config.get_str('XDiscordWebhook'))
         self.DiscordUsername:str = tk.StringVar(value=config.get_str('XDiscordUsername'))
+        self.EnableOverlay:str = tk.StringVar(value=config.get_str('XEnableOverlay', default=CheckStates.STATE_ON))
 
         # Persistent values
         self.current_system_id:str = config.get_str('XCurrentSystemID')
@@ -50,6 +51,7 @@ class State:
         config.set('XSecondaryInf', self.IncludeSecondaryInf.get())
         config.set('XDiscordWebhook', self.DiscordWebhook.get())
         config.set('XDiscordUsername', self.DiscordUsername.get())
+        config.set('XEnableOverlay', self.EnableOverlay.get())
 
         # Persistent values
         config.set('XCurrentSystemID', self.current_system_id if self.current_system_id != None else "")

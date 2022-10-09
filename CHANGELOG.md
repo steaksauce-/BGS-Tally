@@ -15,6 +15,7 @@
 * Changed the date / time format in Discord posts to avoid localised text (days of week and month names).
 * Big improvement in detecting new ticks. Previously, it would only check when you jump to a new system. Now, it checks every minute. This means that even if you stay in the same place (e.g. doing multiple CZs in one system), the tick should tock correctly.
 * This version includes a complete and fundamental rewrite of the code for ease of maintenance. This includes a change in how activity is stored on disk - the plugin is now no longer limited to just 'Latest' and 'Previous' activity, but activity logs are kept for many previous ticks - all stored in the `activitydata` folder.
+* Revamped the plugin settings panel.
 
 ### Bug Fixes:
 
