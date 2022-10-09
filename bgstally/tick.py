@@ -9,6 +9,7 @@ from bgstally.debug import Debug
 DATETIME_FORMAT_ELITEBGS = "%Y-%m-%dT%H:%M:%S.%fZ"
 DATETIME_FORMAT_DISPLAY = "%Y-%m-%d %H:%M:%S"
 TICKID_UNKNOWN = "unknown_tickid"
+URL_TICK_DETECTOR = "https://elitebgs.app/api/ebgs/v5/ticks"
 
 
 class Tick:
@@ -28,7 +29,7 @@ class Tick:
         Tick check and counter reset
         """
         try:
-            response = requests.get('https://elitebgs.app/api/ebgs/v5/ticks', timeout=10)
+            response = requests.get(URL_TICK_DETECTOR, timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             Debug.logger.error(f"Unable to fetch latest tick from elitebgs.app", exc_info=e)

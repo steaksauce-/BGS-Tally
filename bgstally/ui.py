@@ -6,8 +6,7 @@ from threading import Thread
 from time import sleep
 from tkinter import PhotoImage, ttk
 from tkinter.messagebox import askyesno
-from typing import Dict, Optional
-from xmlrpc.client import boolean
+from typing import Dict, List, Optional
 
 import myNotebook as nb
 from ScrollableNotebook import ScrollableNotebook
@@ -16,13 +15,15 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.debug import Debug
-from bgstally.enums import CheckStates, CZs
+from bgstally.enums import CheckStates, CZs, UpdateUIPolicy
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
 FOLDER_ASSETS = "assets"
 TIME_WORKER_PERIOD_S = 2
 TIME_TICK_ALERT_M = 60
+URL_LATEST_RELEASE = "https://github.com/aussig/BGS-Tally/releases/latest"
+URL_WIKI = "https://github.com/aussig/BGS-Tally/wiki"
 
 
 class UI:
@@ -33,6 +34,7 @@ class UI:
     def __init__(self, bgstally):
         self.bgstally = bgstally
 
+        self.image_button_dropdown_menu = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "button_dropdown_menu.png"))
         self.image_tab_active_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_enabled.png"))
         self.image_tab_active_part_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_part_enabled.png"))
         self.image_tab_active_disabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_active_disabled.png"))
@@ -40,9 +42,10 @@ class UI:
         self.image_tab_inactive_part_enabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_inactive_part_enabled.png"))
         self.image_tab_inactive_disabled = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "tab_inactive_disabled.png"))
 
-        self.shutting_down: boolean = False
+        self.shutting_down: bool = False
+        self.frame_needs_updating: bool = False
 
-        self.thread: Optional[Thread] = Thread(target=self.worker, name="BGSTally worker")
+        self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally UI worker")
         self.thread.daemon = True
         self.thread.start()
 
@@ -54,22 +57,14 @@ class UI:
         self.shutting_down = True
 
 
-    def worker(self) -> None:
+    def update(self):
         """
-        Handle thread work
+        Perform any UI updates that have been deferred. This is to allow worker threads to safely update UI
+        elements outside the thread.
         """
-        Debug.logger.debug("Starting Worker...")
-
-        while True:
-            if self.shutting_down:
-                Debug.logger.debug("Shutting down Worker...")
-                return
-
-            self.bgstally.overlay.display_message("tick", f"Curr Tick: {self.bgstally.tick.get_formatted(DATETIME_FORMAT_OVERLAY)}", True)
-            if (datetime.utcnow() > self.bgstally.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
-                self.bgstally.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
-
-            sleep(TIME_WORKER_PERIOD_S)
+        if self.frame_needs_updating:
+            self.update_plugin_frame()
+            self.frame_needs_updating = False
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):
@@ -83,9 +78,10 @@ class UI:
         TitleVersion = tk.Label(self.frame, text="v" + self.bgstally.version)
         TitleVersion.grid(row=0, column=1, sticky=tk.W)
         if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
-            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/releases/latest", underline=True).grid(row=0, column=1, sticky=tk.W)
-        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=0, column=1, sticky=tk.W)
+        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+        self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
+        self.PreviousButton.grid(row=1, column=1, padx=3)
         tk.Button(self.frame, text="Carrier Mats", command=partial(self.bgstally.discord.post_to_fcjump_discord, self.bgstally.fleet_carrier.get_formatted_materials())).grid(row=1, column=2, padx=3)
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=2, column=0, sticky=tk.W)
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
@@ -97,11 +93,10 @@ class UI:
 
     def update_plugin_frame(self):
         """
-        Update the tick time label in the plugin frame
+        Update the tick time label and current activity button in the plugin frame
         """
         self.TimeLabel = tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
-        self.CurrentButton = tk.Button(self.frame, text="Latest BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tally", command=partial(self.show_activity_window, self.bgstally.activity_manager.get_previous_activity())).grid(row=1, column=1, padx=3)
+        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
 
         theme.update(self.frame)
 
@@ -115,7 +110,7 @@ class UI:
         # Make the second column fill available space
         frame.columnconfigure(1, weight=1)
 
-        HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + self.bgstally.version, background=nb.Label().cget('background'), url="https://github.com/aussig/BGS-Tally/wiki", underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
+        HyperlinkLabel(frame, text="BGS Tally (modified by Aussi) v" + self.bgstally.version, background=nb.Label().cget('background'), url=URL_WIKI, underline=True).grid(columnspan=2, padx=10, sticky=tk.W)
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
         nb.Checkbutton(frame, text="BGS Tally Active", variable=self.bgstally.state.Status, onvalue="Active", offvalue="Paused").grid(column=1, padx=10, sticky=tk.W)
         nb.Checkbutton(frame, text="Show Systems with Zero Activity", variable=self.bgstally.state.ShowZeroActivitySystems, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W)
@@ -130,12 +125,44 @@ class UI:
         nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=11)
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=11)
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW)
-        tk.Button(frame, text="FORCE Tick", command=self.confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=13)
+        tk.Button(frame, text="FORCE Tick", command=self._confirm_force_tick, bg="red", fg="white").grid(column=1, padx=10, sticky=tk.W, row=13)
 
         return frame
 
 
-    def show_activity_window(self, activity: Activity):
+    def _worker(self) -> None:
+        """
+        Handle thread work
+        """
+        Debug.logger.debug("Starting UI Worker...")
+
+        while True:
+            if self.shutting_down:
+                Debug.logger.debug("Shutting down UI Worker...")
+                return
+
+            self.bgstally.overlay.display_message("tick", f"Curr Tick: {self.bgstally.tick.get_formatted(DATETIME_FORMAT_OVERLAY)}", True)
+            if (datetime.utcnow() > self.bgstally.tick.next_predicted() - timedelta(minutes = TIME_TICK_ALERT_M)):
+                self.bgstally.overlay.display_message("tickwarn", f"Within {TIME_TICK_ALERT_M}m of next tick (est)", True)
+
+            sleep(TIME_WORKER_PERIOD_S)
+
+
+    def _previous_ticks_popup(self):
+        menu = tk.Menu(self.frame, tearoff = 0)
+
+        activities: List = self.bgstally.activity_manager.get_previous_activities()
+
+        for activity in activities:
+            menu.add_command(label=activity.tick_time, command=partial(self._show_activity_window, activity))
+
+        try:
+            menu.tk_popup(self.PreviousButton.winfo_rootx(), self.PreviousButton.winfo_rooty())
+        finally:
+            menu.grab_release()
+
+
+    def _show_activity_window(self, activity: Activity):
         """
         Display the data window, using data from the passed in activity object
         """
@@ -305,22 +332,12 @@ class UI:
         Form.bind_class('TSpinbox', '<MouseWheel>', lambda event : "break")
 
 
-    def confirm_force_tick(self):
+    def _confirm_force_tick(self):
         """
         Force a tick when user clicks button
         """
         answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?", default="no")
-        if answer: self.new_tick(True, True)
-
-
-    def new_tick(self, force: bool, updateui: bool):
-        """
-        Start a new tick.  This isn't really the best place for this, but it's here for now.
-        """
-        if force: self.bgstally.tick.force_tick()
-        self.bgstally.activity_manager.new_tick(self.bgstally.tick)
-        if updateui: self.update_plugin_frame()
-        self.bgstally.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
+        if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
 
 
     def _version_tuple(self, version: str):
