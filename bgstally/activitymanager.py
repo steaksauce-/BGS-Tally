@@ -43,14 +43,11 @@ class ActivityManager:
         return self.current_activity
 
 
-    def get_previous_activity(self):
+    def get_previous_activities(self):
         """
-        Get the previous Activity. This is hacky as we just return the second item in the sorted activity list.
-        We'll probably do away with this specific function in future, and generalise this into being able to
-        access any previous available activity, with a UI to choose from previous activities.
+        Get a list of previous Activities.
         """
-        if len(self.activity_data) < 2: return None
-        else: return self.activity_data[1]
+        return self.activity_data[1:]
 
 
     def new_tick(self, tick: Tick):
