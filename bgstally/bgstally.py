@@ -1,14 +1,15 @@
 from threading import Thread
 from time import sleep
 from typing import Optional
-from bgstally.enums import UpdateUIPolicy
 
 import plug
 import requests
+from config import config
 
 from bgstally.activitymanager import ActivityManager
 from bgstally.debug import Debug
 from bgstally.discord import Discord
+from bgstally.enums import UpdateUIPolicy
 from bgstally.missionlog import MissionLog
 from bgstally.overlay import Overlay
 from bgstally.state import State
@@ -45,8 +46,6 @@ class BGSTally:
         self.activity_manager: ActivityManager = ActivityManager(self)
         self.ui: UI = UI(self)
 
-        self.shutting_down: bool = False
-
         self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally Main worker")
         self.thread.daemon = True
         self.thread.start()
@@ -56,7 +55,6 @@ class BGSTally:
         """
         The plugin is shutting down.
         """
-        self.shutting_down = True
         self.ui.shut_down()
         self.save_data()
 
@@ -125,7 +123,7 @@ class BGSTally:
         Debug.logger.debug("Starting Main Worker...")
 
         while True:
-            if self.shutting_down:
+            if config.shutting_down:
                 Debug.logger.debug("Shutting down Main Worker...")
                 return
 

@@ -9,6 +9,7 @@ from tkinter.messagebox import askyesno
 from typing import Dict, List, Optional
 
 import myNotebook as nb
+from config import config
 from ScrollableNotebook import ScrollableNotebook
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
@@ -44,7 +45,6 @@ class UI:
 
         self.heading_font = ("Helvetica", 11, "bold")
 
-        self.shutting_down: bool = False
         self.frame_needs_updating: bool = False
 
         self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally UI worker")
@@ -56,7 +56,6 @@ class UI:
         """
         Shut down all worker threads.
         """
-        self.shutting_down = True
 
 
     def update(self):
@@ -149,7 +148,7 @@ class UI:
         Debug.logger.debug("Starting UI Worker...")
 
         while True:
-            if self.shutting_down:
+            if config.shutting_down:
                 Debug.logger.debug("Shutting down UI Worker...")
                 return
 
