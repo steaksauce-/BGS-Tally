@@ -21,13 +21,13 @@ class State:
         Load our state
         """
         # UI preference fields
-        self.Status:str = tk.StringVar(value=config.get_str('XStatus', default="Active"))
-        self.ShowZeroActivitySystems:str = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
-        self.AbbreviateFactionNames:str = tk.StringVar(value=config.get_str('XAbbreviate', default=CheckStates.STATE_OFF))
-        self.IncludeSecondaryInf:str = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
-        self.DiscordWebhook:str = tk.StringVar(value=config.get_str('XDiscordWebhook'))
-        self.DiscordUsername:str = tk.StringVar(value=config.get_str('XDiscordUsername'))
-        self.EnableOverlay:str = tk.StringVar(value=config.get_str('XEnableOverlay', default=CheckStates.STATE_ON))
+        self.Status:tk.StringVar = tk.StringVar(value=config.get_str('XStatus', default="Active"))
+        self.ShowZeroActivitySystems:tk.StringVar = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
+        self.AbbreviateFactionNames:tk.StringVar = tk.StringVar(value=config.get_str('XAbbreviate', default=CheckStates.STATE_OFF))
+        self.IncludeSecondaryInf:tk.StringVar = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
+        self.DiscordWebhook:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordWebhook'))
+        self.DiscordUsername:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordUsername'))
+        self.EnableOverlay:tk.StringVar = tk.StringVar(value=config.get_str('XEnableOverlay', default=CheckStates.STATE_ON))
 
         # Persistent values
         self.current_system_id:str = config.get_str('XCurrentSystemID')
