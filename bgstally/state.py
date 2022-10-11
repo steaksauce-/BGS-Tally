@@ -38,6 +38,15 @@ class State:
         self.last_settlement_approached:Dict = {}
         self.last_ship_targeted:Dict = {}
 
+        self.refresh()
+
+
+    def refresh(self):
+        """
+        Update all our mirror thread-safe values from their tk equivalents
+        """
+        self.enable_overlay:bool = (self.EnableOverlay.get() == CheckStates.STATE_ON)
+
 
     def save(self):
         """
