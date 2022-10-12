@@ -38,13 +38,18 @@ The plugin includes both automatic and manual tracking of BGS activity data.
 
 If you're concerned about the privacy of your BGS activity, note that this plugin **does not send your data anywhere, unless you specifically choose to by configuring the Discord Integration** (see above for instructions).
 
-It writes the following three files, all in the BGS-Tally folder:
+## Local Files and Folders
 
-1. `Today.txt` - This contains your activity since the last tick.
-2. `Yesterday.txt` - This contains your activity in your previous session before the last tick.
-3. `MissionLog.txt` - This contains your currently active list of missions.
+It writes to the following locations, both in the `BGS-Tally` folder:
 
-All three of these files use the JSON format, so can be easily viewed in a text editor or JSON viewer.
+1. `MissionLog.txt` - This file contains your currently active list of missions.
+2. `activitydata\` - This folder contains all your BGS activity, organised in one file per tick.
+
+All of these files use the JSON format, so can be easily viewed in a text editor or JSON viewer.
+
+(N.B. Older versions of BGS-Tally wrote to `Today Data.txt` and `Yesterday Data.txt` in your `BGS-Tally` folder. If you run BGS-Tally v2.0.0 or later, these files are automatically converted to the new format inside `activitydata\`, but the old files are left in place in case you want to revert to the previous v1.x plugin.)
+
+## Network Connections
 
 The plugin makes the following network connections:
 

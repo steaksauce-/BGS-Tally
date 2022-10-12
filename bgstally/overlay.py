@@ -24,7 +24,7 @@ class Overlay:
         Display a message in the overlay
         """
         if self.edmcoverlay == None: return
-        if self.bgstally.state.EnableOverlay.get() == CheckStates.STATE_OFF: return
+        if not self.bgstally.state.enable_overlay: return
 
         try:
             fi = self._get_frame_info(frame_name)

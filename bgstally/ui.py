@@ -9,6 +9,7 @@ from tkinter.messagebox import askyesno
 from typing import Dict, List, Optional
 
 import myNotebook as nb
+from config import config
 from ScrollableNotebook import ScrollableNotebook
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
@@ -44,7 +45,6 @@ class UI:
 
         self.heading_font = ("Helvetica", 11, "bold")
 
-        self.shutting_down: bool = False
         self.frame_needs_updating: bool = False
 
         self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally UI worker")
@@ -56,7 +56,6 @@ class UI:
         """
         Shut down all worker threads.
         """
-        self.shutting_down = True
 
 
     def update(self):
@@ -134,7 +133,7 @@ class UI:
 
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW); current_row += 1
         nb.Label(frame, text="In-game Overlay", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
-        nb.Checkbutton(frame, text="Show In-game Overlay", variable=self.bgstally.state.EnableOverlay, state="disabled" if self.bgstally.overlay.edmcoverlay == None else "enabled", onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
+        nb.Checkbutton(frame, text="Show In-game Overlay", variable=self.bgstally.state.EnableOverlay, state="disabled" if self.bgstally.overlay.edmcoverlay == None else "enabled", onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=self.bgstally.state.refresh).grid(column=1, padx=10, sticky=tk.W); current_row += 1
         if self.bgstally.overlay.edmcoverlay == None:
             nb.Label(frame, text="In-game overlay support requires the separate EDMCOverlay plugin to be installed - see the instructions for more information.").grid(columnspan=2, padx=10, sticky=tk.W); current_row += 1
 
@@ -152,7 +151,7 @@ class UI:
         Debug.logger.debug("Starting UI Worker...")
 
         while True:
-            if self.shutting_down:
+            if config.shutting_down:
                 Debug.logger.debug("Shutting down UI Worker...")
                 return
 
@@ -350,7 +349,7 @@ class UI:
         """
         Force a tick when user clicks button
         """
-        answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: If you have any missions in progress where the destination system is different to the originating system (e.g. courier missions), INF will not be counted unless you revisit the originating system before handing in.\n\nAre you sure that you want to do this?", default="no")
+        answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: It is not usually necessary to force a tick. Only do this if you know FOR CERTAIN there has been a tick but BGS-Tally is not showing it.\n\nAre you sure that you want to do this?", default="no")
         if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
 
 
