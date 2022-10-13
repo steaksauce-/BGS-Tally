@@ -45,8 +45,6 @@ class UI:
 
         self.heading_font = ("Helvetica", 11, "bold")
 
-        self.frame_needs_updating: bool = False
-
         self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally UI worker")
         self.thread.daemon = True
         self.thread.start()
@@ -56,16 +54,6 @@ class UI:
         """
         Shut down all worker threads.
         """
-
-
-    def update(self):
-        """
-        Perform any UI updates that have been deferred. This is to allow worker threads to safely update UI
-        elements outside the thread.
-        """
-        if self.frame_needs_updating:
-            self.update_plugin_frame()
-            self.frame_needs_updating = False
 
 
     def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):

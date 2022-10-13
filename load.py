@@ -53,8 +53,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
     if this.state.Status.get() != "Active": return
 
-    this.ui.update()
-
     activity: Activity = this.activity_manager.get_current_activity()
     dirty: bool = False
 
