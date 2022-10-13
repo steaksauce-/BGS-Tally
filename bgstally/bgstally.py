@@ -111,7 +111,7 @@ class BGSTally:
             case UpdateUIPolicy.IMMEDIATE:
                 self.ui.update_plugin_frame()
             case UpdateUIPolicy.LATER:
-                self.ui.frame_needs_updating = True
+                self.ui.frame.after(1000, self.ui.update_plugin_frame())
 
         self.overlay.display_message("tickwarn", f"NEW TICK DETECTED!", True, 180, "green")
 
