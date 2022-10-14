@@ -62,19 +62,19 @@ class UI:
         """
         self.frame = tk.Frame(parent_frame)
 
-        TitleLabel = tk.Label(self.frame, text="BGS Tally (Aussi)")
-        TitleLabel.grid(row=0, column=0, sticky=tk.W)
-        TitleVersion = tk.Label(self.frame, text="v" + self.bgstally.version)
-        TitleVersion.grid(row=0, column=1, sticky=tk.W)
+        current_row = 0
+        tk.Label(self.frame, text="BGS Tally (Aussi)").grid(row=current_row, column=0, sticky=tk.W)
+        tk.Label(self.frame, text="v" + self.bgstally.version).grid(row=current_row, column=1, sticky=tk.W)
         if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
-            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=0, column=1, sticky=tk.W)
-        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=current_row, column=1, sticky=tk.W)
+        current_row += 1
+        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=current_row, column=0, padx=3)
         self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
-        self.PreviousButton.grid(row=1, column=1, padx=3)
-        tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
-        tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
-        tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=2, column=1, sticky=tk.W)
-        tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        self.PreviousButton.grid(row=current_row, column=1, padx=3)
+        tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=current_row, column=0, sticky=tk.W)
+        tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
+        tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
+        tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
 
         return self.frame
 
