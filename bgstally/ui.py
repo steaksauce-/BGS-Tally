@@ -71,6 +71,7 @@ class UI:
         tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=current_row, column=0, padx=3)
         self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
+        tk.Button(self.frame, text = "CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3); current_row += 1
         tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
@@ -604,6 +605,34 @@ class UI:
         Form.update()
 
 
+    def _show_cmdr_list_window(self):
+        Window = tk.Toplevel(self.frame)
+        Window.title("Targeted CMDR Information")
+        Window.geometry("1200x800")
+
+        arrlbHeader = ["Name" , "System", "Squadron", "Time"]
+        treeview = TreeviewPlus(Window, columns=arrlbHeader, show="headings")
+        vsb = tk.Scrollbar(Window, orient=tk.VERTICAL, command=treeview.yview)
+        vsb.pack(fill=tk.Y, side=tk.RIGHT)
+        treeview.configure(yscrollcommand=vsb.set)
+        treeview.pack(fill=tk.BOTH, expand=1)
+
+        arrRows = [["Aussi", "Phiagre", "Ghost Legion", "2021-08-20 10:33:22"],
+                ["Numa", "Synteini", "Ghost Legion", "2021-09-20 10:33:22"],
+                ["Ryan Murdoc", "Jera", "Ghost Legion", "2021-07-20 10:33:22"],
+                ["Tuzo", "Afli", "Ghost Legion", "2021-06-20 10:33:22"]]
+        arrColAlignment = [tk.W, tk.W, tk.W, tk.CENTER]
+
+        arrSortType = ["name", "name", "name", "datetime"]
+        for iCount in range(len(arrlbHeader)):
+            strHdr = arrlbHeader[iCount]
+            treeview.heading(strHdr, text=strHdr.title(), sort_by=arrSortType[iCount])
+            treeview.column(arrlbHeader[iCount], anchor=arrColAlignment[iCount])
+
+        for iCount in range(len(arrRows)):
+            treeview.insert("", "end", values=arrRows[iCount])
+
+
 
 
 class TextPlus(tk.Text):
@@ -642,6 +671,56 @@ class EntryPlus(ttk.Entry):
 
     def show_menu(self, e):
         self.menu.tk_popup(e.x_root, e.y_root)
+
+
+
+class TreeviewPlus(ttk.Treeview):
+    def __init__(self, parent, *args, **kwargs):
+        ttk.Treeview.__init__(self, parent, *args, **kwargs)
+        self.bind('<ButtonRelease-1>', self._select_item)
+
+
+    def heading(self, column, sort_by=None, **kwargs):
+        if sort_by and not hasattr(kwargs, 'command'):
+            func = getattr(self, f"_sort_by_{sort_by}", None)
+            if func:
+                kwargs['command'] = partial(func, column, False)
+
+        return super().heading(column, **kwargs)
+
+    def _select_item(self, event):
+        clicked_item = self.item(self.focus())
+        clicked_column_ref = self.identify_column(event.x)
+        if type(clicked_item['values']) is not list: return
+
+        clicked_column = int(clicked_column_ref[1:]) - 1
+        if clicked_column < 0: return
+
+        cell_value = clicked_item['values'][clicked_column]
+
+        Debug.logger.debug(f"cell_value = {cell_value}")
+
+    def _sort(self, column, reverse, data_type, callback):
+        l = [(self.set(k, column), k) for k in self.get_children('')]
+        l.sort(key=lambda t: data_type(t[0]), reverse=reverse)
+        for index, (_, k) in enumerate(l):
+            self.move(k, '', index)
+
+        self.heading(column, command=partial(callback, column, not reverse))
+
+    def _sort_by_num(self, column, reverse):
+        self._sort(column, reverse, int, self._sort_by_num)
+
+    def _sort_by_name(self, column, reverse):
+        self._sort(column, reverse, str, self._sort_by_name)
+
+    def _sort_by_datetime(self, column, reverse):
+        def _str_to_datetime(string):
+            return datetime.strptime(string, "%Y-%m-%d %H:%M:%S")
+
+        self._sort(column, reverse, _str_to_datetime, self._sort_by_datetime)
+
+
 
 
 def _rc_menu_install(w):
