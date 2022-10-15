@@ -10,7 +10,7 @@ from bgstally.activity import Activity
 from bgstally.activitymanager import ActivityManager
 from bgstally.debug import Debug
 from bgstally.discord import Discord
-from bgstally.enums import UpdateUIPolicy
+from bgstally.constants import UpdateUIPolicy
 from bgstally.missionlog import MissionLog
 from bgstally.overlay import Overlay
 from bgstally.state import State
