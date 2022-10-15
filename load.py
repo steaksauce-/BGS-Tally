@@ -1,7 +1,7 @@
 from os import path
 
 from bgstally.bgstally import BGSTally
-from bgstally.enums import UpdateUIPolicy
+from bgstally.constants import UpdateUIPolicy
 
 PLUGIN_VERSION = "1.10.0"
 

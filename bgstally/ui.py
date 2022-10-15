@@ -16,7 +16,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.debug import Debug
-from bgstally.enums import CheckStates, CZs, UpdateUIPolicy
+from bgstally.constants import CheckStates, CZs, UpdateUIPolicy
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"

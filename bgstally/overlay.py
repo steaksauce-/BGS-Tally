@@ -1,5 +1,5 @@
 from bgstally.debug import Debug
-from bgstally.enums import CheckStates
+from bgstally.constants import CheckStates
 
 try:
     from EDMCOverlay import edmcoverlay

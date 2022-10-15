@@ -4,9 +4,9 @@ import os.path
 from typing import Dict
 from datetime import datetime, timedelta
 
+from bgstally.constants import DATETIME_FORMAT_JOURNAL
 from bgstally.debug import Debug
 
-DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 FILENAME = "targetlog.json"
 TIME_TARGET_LOG_EXPIRY_D = 30
 
