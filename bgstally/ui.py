@@ -610,23 +610,39 @@ class UI:
         Window.title("Targeted CMDR Information")
         Window.geometry("1200x800")
 
-        column_info = [{'title': "Name", 'type': "name", 'align': tk.W},
-                        {'title': "System", 'type': "name", 'align': tk.W},
-                        {'title': "Squadron ID", 'type': "name", 'align': tk.CENTER},
-                        {'title': "Ship", 'type': "name", 'align': tk.W},
-                        {'title': "Legal Status", 'type': "name", 'align': tk.W},
-                        {'title': "Date / Time", 'type': "datetime", 'align': tk.CENTER}]
+        ContainerFrame = ttk.Frame(Window)
+        ContainerFrame.pack(fill=tk.BOTH, expand=1)
+
+        ListFrame = ttk.Frame(ContainerFrame)
+        ListFrame.pack(fill=tk.BOTH, padx=5, pady=5, expand=1)
+
+        DetailsFrame = ttk.Frame(ContainerFrame)
+        DetailsFrame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
+
+        column_info = [{'title': "Name", 'type': "name", 'align': tk.W, 'stretch': tk.YES, 'width': 200},
+                        {'title': "System", 'type': "name", 'align': tk.W, 'stretch': tk.YES, 'width': 200},
+                        {'title': "Squadron ID", 'type': "name", 'align': tk.CENTER, 'stretch': tk.NO, 'width': 50},
+                        {'title': "Ship", 'type': "name", 'align': tk.W, 'stretch': tk.YES, 'width': 200},
+                        {'title': "Legal", 'type': "name", 'align': tk.W, 'stretch': tk.NO, 'width': 60},
+                        {'title': "Date / Time", 'type': "datetime", 'align': tk.CENTER, 'stretch': tk.NO, 'width': 100}]
         target_data = self.bgstally.target_log.get_targetlog()
 
-        treeview = TreeviewPlus(Window, columns=[d['title'] for d in column_info], show="headings")
-        vsb = tk.Scrollbar(Window, orient=tk.VERTICAL, command=treeview.yview)
+        treeview = TreeviewPlus(ListFrame, columns=[d['title'] for d in column_info], show="headings")
+        vsb = tk.Scrollbar(ListFrame, orient=tk.VERTICAL, command=treeview.yview)
         vsb.pack(fill=tk.Y, side=tk.RIGHT)
         treeview.configure(yscrollcommand=vsb.set)
         treeview.pack(fill=tk.BOTH, expand=1)
 
+        current_row = 0
+        ttk.Label(DetailsFrame, text="CMDR Details", font=self.heading_font).grid(row=current_row, column=0, sticky=tk.W); current_row += 1
+        ttk.Label(DetailsFrame, text="Name: ", font=self.heading_font).grid(row=current_row, column=0, sticky=tk.W)
+        HyperlinkLabel(DetailsFrame, text="Commander Name Here", background=nb.Label().cget('background'), url="https://inara.cz/elite/cmdrs/?search=aussi", underline=True).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
+        ttk.Label(DetailsFrame, text="Squadron: ", font=self.heading_font).grid(row=current_row, column=0, sticky=tk.W)
+        HyperlinkLabel(DetailsFrame, text="Squadron ID Here", background=nb.Label().cget('background'), url="https://inara.cz/elite/squadrons-search/?search=ghst", underline=True).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
+
         for column in column_info:
             treeview.heading(column['title'], text=column['title'].title(), sort_by=column['type'])
-            treeview.column(column['title'], anchor=column['align'])
+            treeview.column(column['title'], anchor=column['align'], stretch=column['stretch'], width=column['width'])
 
         for target in target_data:
             target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], target['Timestamp']]
