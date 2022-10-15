@@ -6,6 +6,7 @@ import plug
 import requests
 from config import config
 
+from bgstally.activity import Activity
 from bgstally.activitymanager import ActivityManager
 from bgstally.debug import Debug
 from bgstally.discord import Discord
@@ -57,6 +58,90 @@ class BGSTally:
         """
         self.ui.shut_down()
         self.save_data()
+
+
+    def journal_entry(self, cmdr, is_beta, system, station, entry, state):
+        """
+        Parse an incoming journal entry and store the data we need
+        """
+        activity: Activity = self.activity_manager.get_current_activity()
+        dirty: bool = False
+
+        if entry['event'] in ['Location', 'FSDJump', 'CarrierJump']:
+            if self.check_tick(UpdateUIPolicy.IMMEDIATE):
+                # New activity will be generated with a new tick
+                activity = self.activity_manager.get_current_activity()
+
+            activity.system_entered(entry, self.state)
+            dirty = True
+
+        match entry['event']:
+            case 'Docked':
+                self.state.station_faction = entry['StationFaction']['Name']
+                self.state.station_type = entry['StationType']
+                dirty = True
+
+            case 'Location' | 'StartUp' if entry['Docked'] == True:
+                self.state.station_type = entry['StationType']
+                dirty = True
+
+            case 'SellExplorationData' | 'MultiSellExplorationData':
+                activity.exploration_data_sold(entry, self.state)
+                dirty = True
+
+            case 'SellOrganicData':
+                activity.organic_data_sold(entry, self.state)
+                dirty = True
+
+            case 'RedeemVoucher' if entry['Type'] == 'bounty':
+                activity.bv_redeemed(entry, self.state)
+                dirty = True
+
+            case 'RedeemVoucher' if entry['Type'] == 'CombatBond':
+                activity.cb_redeemed(entry, self.state)
+                dirty = True
+
+            case 'MarketBuy':
+                activity.trade_purchased(entry, self.state)
+                dirty = True
+
+            case 'MarketSell':
+                activity.trade_sold(entry, self.state)
+                dirty = True
+
+            case 'MissionAccepted':
+                self.mission_log.add_mission(entry['Name'], entry['Faction'], entry['MissionID'], entry['Expiry'], system)
+                dirty = True
+
+            case 'MissionAbandoned':
+                self.mission_log.delete_mission_by_id(entry['MissionID'])
+                dirty = True
+
+            case 'MissionFailed':
+                activity.mission_failed(entry, self.mission_log)
+                dirty = True
+
+            case 'MissionCompleted':
+                activity.mission_completed(entry, self.mission_log)
+                dirty = True
+
+            case 'ShipTargeted':
+                activity.ship_targeted(entry, self.state)
+                dirty = True
+
+            case 'CommitCrime':
+                activity.crime_committed(entry, self.state)
+                dirty = True
+
+            case 'ApproachSettlement' if state['Odyssey']:
+                activity.settlement_approached(entry, self.state)
+                dirty = True
+
+            case 'FactionKillBond' if state['Odyssey']:
+                activity.cb_received(entry, self.state)
+                dirty = True
+
+        if dirty: self.save_data()
 
 
     def check_version(self):
