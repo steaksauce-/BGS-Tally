@@ -610,27 +610,27 @@ class UI:
         Window.title("Targeted CMDR Information")
         Window.geometry("1200x800")
 
-        column_titles = ["Name" , "System", "Squadron", "Date / Time"]
-        column_types = ["name", "name", "name", "datetime"]
-        column_alignment = [tk.W, tk.W, tk.W, tk.CENTER]
-        arrRows = [["Aussi", "Phiagre", "Ghost Legion", "2021-08-20 10:33:22"],
-                ["Numa", "Synteini", "Ghost Legion", "2021-09-20 10:33:22"],
-                ["Ryan Murdoc", "Jera", "Ghost Legion", "2021-07-20 10:33:22"],
-                ["Tuzo", "Afli", "Ghost Legion", "2021-06-20 10:33:22"]]
+        column_info = [{'title': "Name", 'type': "name", 'align': tk.W},
+                        {'title': "System", 'type': "name", 'align': tk.W},
+                        {'title': "Squadron ID", 'type': "name", 'align': tk.CENTER},
+                        {'title': "Ship", 'type': "name", 'align': tk.W},
+                        {'title': "Legal Status", 'type': "name", 'align': tk.W},
+                        {'title': "Date / Time", 'type': "datetime", 'align': tk.CENTER}]
+        target_data = self.bgstally.target_log.get_targetlog()
 
-        treeview = TreeviewPlus(Window, columns=column_titles, show="headings")
+        treeview = TreeviewPlus(Window, columns=[d['title'] for d in column_info], show="headings")
         vsb = tk.Scrollbar(Window, orient=tk.VERTICAL, command=treeview.yview)
         vsb.pack(fill=tk.Y, side=tk.RIGHT)
         treeview.configure(yscrollcommand=vsb.set)
         treeview.pack(fill=tk.BOTH, expand=1)
 
-        for iCount in range(len(column_titles)):
-            strHdr = column_titles[iCount]
-            treeview.heading(strHdr, text=strHdr.title(), sort_by=column_types[iCount])
-            treeview.column(column_titles[iCount], anchor=column_alignment[iCount])
+        for column in column_info:
+            treeview.heading(column['title'], text=column['title'].title(), sort_by=column['type'])
+            treeview.column(column['title'], anchor=column['align'])
 
-        for iCount in range(len(arrRows)):
-            treeview.insert("", "end", values=arrRows[iCount])
+        for target in target_data:
+            target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], target['Timestamp']]
+            treeview.insert("", 'end', values=target_values)
 
 
 class TextPlus(tk.Text):
