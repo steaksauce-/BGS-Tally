@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 from bgstally.debug import Debug
-from bgstally.enums import CheckStates
+from bgstally.constants import CheckStates
 from bgstally.missionlog import MissionLog
 from bgstally.state import State
 from bgstally.tick import Tick

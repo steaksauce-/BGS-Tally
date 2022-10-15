@@ -2,9 +2,8 @@ import json
 import os.path
 from datetime import datetime, timedelta
 
+from bgstally.constants import DATETIME_FORMAT_JOURNAL
 from bgstally.debug import Debug
-
-DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 
 class MissionLog:
     """

@@ -3,7 +3,7 @@ from typing import Dict
 
 from config import config
 
-from bgstally.enums import CheckStates
+from bgstally.constants import CheckStates
 
 
 class State:
