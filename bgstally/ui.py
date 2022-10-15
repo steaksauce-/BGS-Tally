@@ -610,29 +610,27 @@ class UI:
         Window.title("Targeted CMDR Information")
         Window.geometry("1200x800")
 
-        arrlbHeader = ["Name" , "System", "Squadron", "Time"]
-        treeview = TreeviewPlus(Window, columns=arrlbHeader, show="headings")
+        column_titles = ["Name" , "System", "Squadron", "Date / Time"]
+        column_types = ["name", "name", "name", "datetime"]
+        column_alignment = [tk.W, tk.W, tk.W, tk.CENTER]
+        arrRows = [["Aussi", "Phiagre", "Ghost Legion", "2021-08-20 10:33:22"],
+                ["Numa", "Synteini", "Ghost Legion", "2021-09-20 10:33:22"],
+                ["Ryan Murdoc", "Jera", "Ghost Legion", "2021-07-20 10:33:22"],
+                ["Tuzo", "Afli", "Ghost Legion", "2021-06-20 10:33:22"]]
+
+        treeview = TreeviewPlus(Window, columns=column_titles, show="headings")
         vsb = tk.Scrollbar(Window, orient=tk.VERTICAL, command=treeview.yview)
         vsb.pack(fill=tk.Y, side=tk.RIGHT)
         treeview.configure(yscrollcommand=vsb.set)
         treeview.pack(fill=tk.BOTH, expand=1)
 
-        arrRows = [["Aussi", "Phiagre", "Ghost Legion", "2021-08-20 10:33:22"],
-                ["Numa", "Synteini", "Ghost Legion", "2021-09-20 10:33:22"],
-                ["Ryan Murdoc", "Jera", "Ghost Legion", "2021-07-20 10:33:22"],
-                ["Tuzo", "Afli", "Ghost Legion", "2021-06-20 10:33:22"]]
-        arrColAlignment = [tk.W, tk.W, tk.W, tk.CENTER]
-
-        arrSortType = ["name", "name", "name", "datetime"]
-        for iCount in range(len(arrlbHeader)):
-            strHdr = arrlbHeader[iCount]
-            treeview.heading(strHdr, text=strHdr.title(), sort_by=arrSortType[iCount])
-            treeview.column(arrlbHeader[iCount], anchor=arrColAlignment[iCount])
+        for iCount in range(len(column_titles)):
+            strHdr = column_titles[iCount]
+            treeview.heading(strHdr, text=strHdr.title(), sort_by=column_types[iCount])
+            treeview.column(column_titles[iCount], anchor=column_alignment[iCount])
 
         for iCount in range(len(arrRows)):
             treeview.insert("", "end", values=arrRows[iCount])
-
-
 
 
 class TextPlus(tk.Text):
