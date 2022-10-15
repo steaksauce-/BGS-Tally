@@ -16,10 +16,11 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.debug import Debug
-from bgstally.constants import CheckStates, CZs, UpdateUIPolicy
+from bgstally.constants import CheckStates, CZs, DATETIME_FORMAT_JOURNAL, UpdateUIPolicy
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
+DATETIME_FORMAT_CMDRLIST = "%Y-%m-%d %H:%M:%S"
 FOLDER_ASSETS = "assets"
 TIME_WORKER_PERIOD_S = 2
 TIME_TICK_ALERT_M = 60
@@ -624,7 +625,7 @@ class UI:
                         {'title': "Squadron ID", 'type': "name", 'align': tk.CENTER, 'stretch': tk.NO, 'width': 50},
                         {'title': "Ship", 'type': "name", 'align': tk.W, 'stretch': tk.YES, 'width': 200},
                         {'title': "Legal", 'type': "name", 'align': tk.W, 'stretch': tk.NO, 'width': 60},
-                        {'title': "Date / Time", 'type': "datetime", 'align': tk.CENTER, 'stretch': tk.NO, 'width': 100}]
+                        {'title': "Date / Time", 'type': "datetime", 'align': tk.CENTER, 'stretch': tk.NO, 'width': 150}]
         target_data = self.bgstally.target_log.get_targetlog()
 
         treeview = TreeviewPlus(ListFrame, columns=[d['title'] for d in column_info], show="headings")
@@ -645,7 +646,7 @@ class UI:
             treeview.column(column['title'], anchor=column['align'], stretch=column['stretch'], width=column['width'])
 
         for target in target_data:
-            target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], target['Timestamp']]
+            target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
             treeview.insert("", 'end', values=target_values)
 
 
@@ -730,7 +731,7 @@ class TreeviewPlus(ttk.Treeview):
 
     def _sort_by_datetime(self, column, reverse):
         def _str_to_datetime(string):
-            return datetime.strptime(string, "%Y-%m-%d %H:%M:%S")
+            return datetime.strptime(string, DATETIME_FORMAT_CMDRLIST)
 
         self._sort(column, reverse, _str_to_datetime, self._sort_by_datetime)
 
