@@ -29,3 +29,6 @@ class UpdateUIPolicy(Enum):
     NEVER = 0
     IMMEDIATE = 1
     LATER = 2
+
+
+DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
