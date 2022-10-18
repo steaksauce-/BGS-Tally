@@ -216,6 +216,6 @@ class BGSTally:
                 Debug.logger.debug("Shutting down Main Worker...")
                 return
 
-            self.check_tick(UpdateUIPolicy.LATER) # Must not update UI directly from a thread
-
             sleep(TIME_WORKER_PERIOD_S)
+
+            self.check_tick(UpdateUIPolicy.LATER) # Must not update UI directly from a thread
