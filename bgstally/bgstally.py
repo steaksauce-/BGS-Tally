@@ -8,6 +8,7 @@ from config import config
 
 from bgstally.activity import Activity
 from bgstally.activitymanager import ActivityManager
+from bgstally.config import Config
 from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.constants import UpdateUIPolicy
@@ -40,6 +41,7 @@ class BGSTally:
 
         # Classes
         self.debug: Debug = Debug(self)
+        self.config: Config = Config(self)
         self.state: State = State(self)
         self.mission_log: MissionLog = MissionLog(self)
         self.target_log: TargetLog = TargetLog(self)
