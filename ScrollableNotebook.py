@@ -32,6 +32,7 @@ class ScrollableNotebook(ttk.Frame):
         rightArrow.pack(side=RIGHT)
         self.notebookContent.bind("<Configure>", self._resetSlide)
         self.contentsManaged = []
+        self.timer = None
 
     def _wheelscroll(self, event):
         if event.delta > 0:
