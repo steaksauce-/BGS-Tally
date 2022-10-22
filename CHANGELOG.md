@@ -2,6 +2,10 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Bug Fixes:
+
+* The latest activity window was failing to display on a clean install of BGS-Tally.
+
 
 ## v2.0.0 - 2022-10-22
 

@@ -23,7 +23,7 @@ class ActivityManager:
         self.bgstally = bgstally
 
         self.activity_data = []
-        self.current_activity = None
+        self.current_activity = Activity(self.bgstally, self.bgstally.tick)
 
         self._load()
 
