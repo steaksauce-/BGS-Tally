@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+
+## v2.0.0 - 2022-10-22
+
 ### New Features:
 
 * In game overlay implemented!  Currently this just displays the current tick time, and if the next predicted tick is in the next hour, will alert that it's upcoming. The overlay requires *either* installing the separate [EDMCOverlay plugin from here](https://github.com/inorton/EDMCOverlay/releases/latest) *or* having another plugin running that has EDMCOverlay built in (for example the EDR plugin). _Many more things are planned for the overlay in future versions of BGS-Tally_.
