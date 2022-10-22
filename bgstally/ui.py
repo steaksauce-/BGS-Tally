@@ -645,7 +645,7 @@ class UI:
             treeview.heading(column['title'], text=column['title'].title(), sort_by=column['type'])
             treeview.column(column['title'], anchor=column['align'], stretch=column['stretch'], width=column['width'])
 
-        for target in target_data:
+        for target in reversed(target_data):
             target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
             treeview.insert("", 'end', values=target_values)
 
