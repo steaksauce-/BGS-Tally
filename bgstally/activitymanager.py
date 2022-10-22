@@ -23,9 +23,13 @@ class ActivityManager:
         self.bgstally = bgstally
 
         self.activity_data = []
-        self.current_activity = Activity(self.bgstally, self.bgstally.tick)
+        self.current_activity = None
 
         self._load()
+
+        if self.activity_data == []:
+            self.current_activity = Activity(self.bgstally, self.bgstally.tick)
+            self.activity_data.append(self.current_activity)
 
 
     def save(self):
