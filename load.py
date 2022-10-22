@@ -3,7 +3,7 @@ from os import path
 from bgstally.bgstally import BGSTally
 from bgstally.constants import UpdateUIPolicy
 
-PLUGIN_VERSION = "2.0.0"
+PLUGIN_VERSION = "2.0.1"
 
 # Initialise the main plugin class
 this:BGSTally = BGSTally(path.basename(path.dirname(__file__)), PLUGIN_VERSION)
