@@ -37,6 +37,7 @@ class TargetLog:
             with open(file) as json_file:
                 self.targetlog = json.load(json_file)
 
+
     def save(self):
         """
         Save state to file
@@ -51,6 +52,13 @@ class TargetLog:
         Get the current target log
         """
         return self.targetlog
+
+
+    def get_target_info(self, cmdr_name:str):
+        """
+        Look up and return information on a CMDR
+        """
+        return next((item for item in self.targetlog if item['TargetName'] == cmdr_name), None)
 
 
     def ship_targeted(self, journal_entry: Dict, system: str):
@@ -73,14 +81,11 @@ class TargetLog:
                     'LegalStatus': journal_entry['LegalStatus'],
                     'Timestamp': journal_entry['timestamp']}
 
-        cmdr_data = self.fetch_cmdr_info(cmdr_name, cmdr_data)
+        cmdr_data = self._fetch_cmdr_info(cmdr_name, cmdr_data)
         self.targetlog.append(cmdr_data)
 
-        Debug.logger.info(cmdr_data)
 
-
-
-    def fetch_cmdr_info(self, cmdr_name:str, cmdr_data:Dict):
+    def _fetch_cmdr_info(self, cmdr_name:str, cmdr_data:Dict):
         """
         Fetch additional CMDR data from Inara and enhance the cmdr_data Dict with it
         """
