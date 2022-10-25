@@ -25,8 +25,8 @@ class State:
         self.ShowZeroActivitySystems:tk.StringVar = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
         self.AbbreviateFactionNames:tk.StringVar = tk.StringVar(value=config.get_str('XAbbreviate', default=CheckStates.STATE_OFF))
         self.IncludeSecondaryInf:tk.StringVar = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
-        self.DiscordWebhook:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordWebhook'))
-        self.DiscordUsername:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordUsername'))
+        self.DiscordWebhook:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordWebhook', default=""))
+        self.DiscordUsername:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordUsername', default=""))
         self.EnableOverlay:tk.StringVar = tk.StringVar(value=config.get_str('XEnableOverlay', default=CheckStates.STATE_ON))
 
         # Persistent values
