@@ -133,3 +133,6 @@ dmypy.json
 
 # project specific
 config/config.ini
+
+# custom
+test.py
