@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Bug Fixes:
+
+* Some state was not being initialised correctly on first install of BGS-Tally.
 
 
 ## v2.0.1 - 2022-10-22
