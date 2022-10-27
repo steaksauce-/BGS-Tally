@@ -61,7 +61,7 @@ class Tick:
         Load tick status from config
         """
         self.tick_id = config.get_str("XLastTick")
-        self.tick_time = datetime.strptime(config.get_str("XTickTime"), DATETIME_FORMAT_ELITEBGS)
+        self.tick_time = datetime.strptime(config.get_str("XTickTime", default=self.tick_time.strftime(DATETIME_FORMAT_ELITEBGS)), DATETIME_FORMAT_ELITEBGS)
 
 
     def save(self):

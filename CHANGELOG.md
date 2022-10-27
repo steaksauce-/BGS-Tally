@@ -2,6 +2,16 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* You now have the ability to post your Fleet Carrier materials sell and buy orders to a Discord channel.
+
+
+## v2.0.2 - 2022-10-27
+
+### Bug Fixes:
+
+* Some state was not being initialised correctly on first install of BGS-Tally.
 
 
 ## v2.0.1 - 2022-10-22
@@ -19,7 +29,6 @@
 * In the activity window, there are now markers against every system, showing at a glance whether there is activity (&#129001; / &#11036;) and also whether you are reporting all, some, or none of the activity (&#9745; / &#9632; / &#9633;).
 * The system you are currently in is always displayed as the first tab in the activity log, whether or not you've done any activity in it and whether or not you have "Show Inactive Systems" switched on. This allows you to always add activity manually in the system you're in, e.g. Space CZ wins.
 * The 'Previous BGS Tally' button has been replaced by a 'Previous BGS Tallies &#x25bc;' selector, where you can look at all your history of previous work.
-* We now have the ability to post your Fleet Carrier materials sell and buy orders to a Discord channel.
 
 ### Changes:
 
