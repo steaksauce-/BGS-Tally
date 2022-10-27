@@ -1,6 +1,6 @@
 # Change Log
 
-## vx.x.x - xxxx-xx-xx
+## v2.0.2 - 2022-10-27
 
 ### Bug Fixes:
 
