@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import Dict, List
 
 import requests
 
 from bgstally.debug import Debug
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S (in-game time)"
+URL_CLOCK_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Fxemoji_u1F556.svg/240px-Fxemoji_u1F556.svg.png"
 
 class Discord:
     """
@@ -16,7 +18,7 @@ class Discord:
 
     def post_to_discord_plaintext(self, discord_text: str, previous_messageid: str):
         """
-        Get all text from the Discord field and post it to the webhook
+        Post plain text to Discord
         """
         if not self.is_webhook_valid(): return
 
@@ -65,6 +67,30 @@ class Discord:
                     Debug.logger.error(f"Unable to delete previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
         return new_messageid
+
+
+    def _get_embed(self, title: str, description: str, fields: List, update: bool):
+        """
+        Create a Discord embed JSON structure. If supplied, `fields` should be a List of Dicts, with each Dict containing 'name' (the field title) and
+        'value' (the field contents)
+        """
+        if not self.is_webhook_valid(): return
+        footer_timestamp = f"Updated at {datetime.utcnow().strftime(DATETIME_FORMAT)}" if update else f"Posted at {datetime.utcnow().strftime(DATETIME_FORMAT)}"
+        footer_version = f"{self.bgstally.plugin_name} v{self.bgstally.version}"
+        footer_pad = 136 - len(footer_timestamp) - len(footer_version)
+
+        embed:Dict = {
+            "color": 10682531,
+            "footer": {
+                "text": f"{footer_timestamp} <{footer_pad}{footer_version}",
+                "icon_url": URL_CLOCK_IMAGE
+            }}
+
+        if title: embed['title'] = title
+        if description: embed['description'] = description
+        if fields: embed['fields'] = fields
+
+        return embed
 
 
     def is_webhook_valid(self):
