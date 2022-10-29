@@ -324,7 +324,7 @@ class UI:
         DiscordText.focus()
 
         ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
-        if self.bgstally.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self.bgstally.discord.post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
+        if self.bgstally.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self._post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
 
         theme.update(ContainerFrame)
 
@@ -349,6 +349,14 @@ class UI:
         except:
             ret = (0,)
         return ret
+
+
+    def _post_to_discord(self, DiscordText, activity: Activity):
+        """
+        Callback to post to discord
+        """
+        discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
+        activity.discord_messageid = self.bgstally.discord.post_to_discord_plaintext(discord_text, activity.discord_messageid)
 
 
     def _option_change(self, DiscordText, activity: Activity):
