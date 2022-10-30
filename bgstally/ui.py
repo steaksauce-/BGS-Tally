@@ -189,9 +189,8 @@ class UI:
         """
         title = f"Materials List for Carrier {self.bgstally.fleet_carrier.name}"
         description = self.bgstally.fleet_carrier.get_materials_plaintext()
-        fields = None
 
-        self.bgstally.discord.post_to_discord_embed(title, description, fields, None, DiscordChannel.FLEETCARRIER)
+        self.bgstally.discord.post_embed(title, description, None, None, DiscordChannel.FLEETCARRIER)
 
 
     def _version_tuple(self, version: str):

@@ -17,7 +17,7 @@ class Discord:
         self.bgstally = bgstally
 
 
-    def post_to_discord_plaintext(self, discord_text: str, previous_messageid: str, channel: DiscordChannel):
+    def post_plaintext(self, discord_text: str, previous_messageid: str, channel: DiscordChannel):
         """
         Post plain text to Discord
         """
@@ -71,7 +71,7 @@ class Discord:
         return new_messageid
 
 
-    def post_to_discord_embed(self, title: str, description: str, fields: List, previous_messageid: str, channel: DiscordChannel):
+    def post_embed(self, title: str, description: str, fields: List, previous_messageid: str, channel: DiscordChannel):
         """
         Post an embed to Discord
         """

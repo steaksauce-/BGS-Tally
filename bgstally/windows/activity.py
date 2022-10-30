@@ -206,7 +206,7 @@ class WindowActivity:
         Callback to post to discord
         """
         discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
-        activity.discord_messageid = self.bgstally.discord.post_to_discord_plaintext(discord_text, activity.discord_messageid, DiscordChannel.BGS)
+        activity.discord_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_messageid, DiscordChannel.BGS)
 
 
     def _option_change(self, DiscordText, activity: Activity):
