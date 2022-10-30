@@ -17,6 +17,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.debug import Debug
 from bgstally.constants import CheckStates, CZs, UpdateUIPolicy
+from bgstally.windows.cmdrs import WindowCMDRs
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
@@ -62,19 +63,20 @@ class UI:
         """
         self.frame = tk.Frame(parent_frame)
 
-        TitleLabel = tk.Label(self.frame, text="BGS Tally (Aussi)")
-        TitleLabel.grid(row=0, column=0, sticky=tk.W)
-        TitleVersion = tk.Label(self.frame, text="v" + self.bgstally.version)
-        TitleVersion.grid(row=0, column=1, sticky=tk.W)
+        current_row = 0
+        tk.Label(self.frame, text="BGS Tally (Aussi)").grid(row=current_row, column=0, sticky=tk.W)
+        tk.Label(self.frame, text="v" + self.bgstally.version).grid(row=current_row, column=1, sticky=tk.W)
         if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
-            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=0, column=1, sticky=tk.W)
-        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=1, column=0, padx=3)
+            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=current_row, column=1, sticky=tk.W)
+        current_row += 1
+        tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=current_row, column=0, padx=3)
         self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
-        self.PreviousButton.grid(row=1, column=1, padx=3)
-        tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=2, column=0, sticky=tk.W)
-        tk.Label(self.frame, text="Last BGS Tick:").grid(row=3, column=0, sticky=tk.W)
-        tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=2, column=1, sticky=tk.W)
-        tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=3, column=1, sticky=tk.W)
+        self.PreviousButton.grid(row=current_row, column=1, padx=3)
+        tk.Button(self.frame, text = "CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3); current_row += 1
+        tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=current_row, column=0, sticky=tk.W)
+        tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
+        tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
+        tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
 
         return self.frame
 
@@ -159,6 +161,13 @@ class UI:
             menu.tk_popup(self.PreviousButton.winfo_rootx(), self.PreviousButton.winfo_rooty())
         finally:
             menu.grab_release()
+
+
+    def _show_cmdr_list_window(self):
+        """
+        Display the CMDR list window
+        """
+        WindowCMDRs(self.bgstally, self)
 
 
     def _show_activity_window(self, activity: Activity):
@@ -321,7 +330,7 @@ class UI:
         DiscordText.focus()
 
         ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
-        if self.bgstally.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self.bgstally.discord.post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
+        if self.bgstally.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self._post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
 
         theme.update(ContainerFrame)
 
@@ -346,6 +355,14 @@ class UI:
         except:
             ret = (0,)
         return ret
+
+
+    def _post_to_discord(self, DiscordText, activity: Activity):
+        """
+        Callback to post to discord
+        """
+        discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
+        activity.discord_messageid = self.bgstally.discord.post_to_discord_plaintext(discord_text, activity.discord_messageid)
 
 
     def _option_change(self, DiscordText, activity: Activity):
@@ -602,8 +619,6 @@ class UI:
         Form.event_generate("<<TextModified>>")
         Form.clipboard_append(DiscordText.get('1.0', 'end-1c'))
         Form.update()
-
-
 
 
 class TextPlus(tk.Text):

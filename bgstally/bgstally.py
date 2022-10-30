@@ -8,12 +8,14 @@ from config import config
 
 from bgstally.activity import Activity
 from bgstally.activitymanager import ActivityManager
+from bgstally.config import Config
 from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.constants import UpdateUIPolicy
 from bgstally.missionlog import MissionLog
 from bgstally.overlay import Overlay
 from bgstally.state import State
+from bgstally.targetlog import TargetLog
 from bgstally.tick import Tick
 from bgstally.ui import UI
 
@@ -39,8 +41,10 @@ class BGSTally:
 
         # Classes
         self.debug: Debug = Debug(self)
+        self.config: Config = Config(self)
         self.state: State = State(self)
         self.mission_log: MissionLog = MissionLog(self)
+        self.target_log: TargetLog = TargetLog(self)
         self.discord: Discord = Discord(self)
         self.tick: Tick = Tick(self, True)
         self.overlay = Overlay(self)
@@ -127,6 +131,7 @@ class BGSTally:
 
             case 'ShipTargeted':
                 activity.ship_targeted(entry, self.state)
+                self.target_log.ship_targeted(entry, system)
                 dirty = True
 
             case 'CommitCrime':
@@ -180,6 +185,7 @@ class BGSTally:
         Save all data structures
         """
         self.mission_log.save()
+        self.target_log.save()
         self.tick.save()
         self.activity_manager.save()
         self.state.save()
