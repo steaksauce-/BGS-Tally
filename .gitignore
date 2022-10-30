@@ -130,3 +130,9 @@ dmypy.json
 
 # data files
 *.txt
+
+# project specific
+config/config.ini
+
+# custom
+test.py

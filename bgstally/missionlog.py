@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 from bgstally.constants import DATETIME_FORMAT_JOURNAL
 from bgstally.debug import Debug
 
+FILENAME = "MissionLog.txt"
+TIME_MISSION_EXPIRY_D = 7
+
 class MissionLog:
     """
     Handle a log of all in-progress missions
@@ -17,18 +20,18 @@ class MissionLog:
 
     def load(self):
         """
-        Load missionlog status from file
+        Load state from file
         """
-        file = os.path.join(self.bgstally.plugin_dir, "MissionLog.txt")
+        file = os.path.join(self.bgstally.plugin_dir, FILENAME)
         if os.path.exists(file):
             with open(file) as json_file:
                 self.missionlog = json.load(json_file)
 
     def save(self):
         """
-        Save missionlog to file
+        Save state to file
         """
-        file = os.path.join(self.bgstally.plugin_dir, "MissionLog.txt")
+        file = os.path.join(self.bgstally.plugin_dir, FILENAME)
         with open(file, 'w') as outfile:
             json.dump(self.missionlog, outfile)
 
@@ -44,7 +47,7 @@ class MissionLog:
         """
         Add a mission to the missionlog
         """
-        self.missionlog.append({"Name": name, "Faction": faction, "MissionID": missionid, "Expiry": expiry, "System": system_name})
+        self.missionlog.append({'Name': name, 'Faction': faction, 'MissionID': missionid, 'Expiry': expiry, 'System': system_name})
 
 
     def delete_mission_by_id(self, missionid: str):
@@ -52,7 +55,7 @@ class MissionLog:
         Delete the mission with the given id from the missionlog
         """
         for i in range(len(self.missionlog)):
-            if self.missionlog[i]["MissionID"] == missionid:
+            if self.missionlog[i]['MissionID'] == missionid:
                 self.missionlog.pop(i)
                 break
 
@@ -79,9 +82,9 @@ class MissionLog:
         """
         for mission in reversed(self.missionlog):
             # Old missions pre v1.11.0 don't have Expiry stored. Set to 7 days ahead for safety
-            if not "Expiry" in mission: mission["Expiry"] = (datetime.utcnow() + timedelta(days = 7)).strftime(DATETIME_FORMAT_JOURNAL)
+            if not "Expiry" in mission: mission['Expiry'] = (datetime.utcnow() + timedelta(days = TIME_MISSION_EXPIRY_D)).strftime(DATETIME_FORMAT_JOURNAL)
 
-            timedifference = datetime.utcnow() - datetime.strptime(mission["Expiry"], DATETIME_FORMAT_JOURNAL)
-            if timedifference > timedelta(days=7):
+            timedifference = datetime.utcnow() - datetime.strptime(mission['Expiry'], DATETIME_FORMAT_JOURNAL)
+            if timedifference > timedelta(days = TIME_MISSION_EXPIRY_D):
                 # Keep missions for a while after they have expired, so we can log failed missions correctly
                 self.missionlog.remove(mission)
