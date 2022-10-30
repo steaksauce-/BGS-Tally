@@ -3,6 +3,10 @@
 ## vx.x.x - xxxx-xx-xx
 
 
+### Bug Fixes:
+
+* BGS-Tally was intentionally omitting secondary INF when a faction was in conflict, but it turns out some mission types can have -ve INF effects on those factions. So we now report all secondary INF.
+
 
 ## v2.0.2 - 2022-10-27
 

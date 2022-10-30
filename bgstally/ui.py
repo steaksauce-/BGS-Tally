@@ -271,10 +271,9 @@ class UI:
                 MissionPointsVar = tk.IntVar(value=faction['MissionPoints'])
                 ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsVar).grid(row=x + header_rows, column=3, sticky=tk.N, padx=2, pady=2)
                 MissionPointsVar.trace('w', partial(self._mission_points_change, TabParent, tab_index, MissionPointsVar, True, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
-                if (faction['FactionState'] not in CONFLICT_STATES and faction['FactionState'] not in ELECTION_STATES):
-                    MissionPointsSecVar = tk.IntVar(value=faction['MissionPointsSecondary'])
-                    ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, sticky=tk.N, padx=2, pady=2)
-                    MissionPointsSecVar.trace('w', partial(self._mission_points_change, TabParent, tab_index, MissionPointsSecVar, False, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
+                MissionPointsSecVar = tk.IntVar(value=faction['MissionPointsSecondary'])
+                ttk.Spinbox(tab, from_=-999, to=999, width=3, textvariable=MissionPointsSecVar).grid(row=x + header_rows, column=4, sticky=tk.N, padx=2, pady=2)
+                MissionPointsSecVar.trace('w', partial(self._mission_points_change, TabParent, tab_index, MissionPointsSecVar, False, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
                 ttk.Label(tab, text=self._human_format(faction['TradePurchase'])).grid(row=x + header_rows, column=5, sticky=tk.N)
                 ttk.Label(tab, text=self._human_format(faction['TradeProfit'])).grid(row=x + header_rows, column=6, sticky=tk.N)
                 ttk.Label(tab, text=self._human_format(faction['BlackMarketProfit'])).grid(row=x + header_rows, column=7, sticky=tk.N)
@@ -532,13 +531,14 @@ class UI:
 
                 faction_discord_text = ""
 
+                inf = faction['MissionPoints']
+                if self.bgstally.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
+
                 if faction['FactionState'] in ELECTION_STATES:
-                    faction_discord_text += f".ElectionINF {faction['MissionPoints']}; " if faction['MissionPoints'] > 0 else ""
+                    faction_discord_text += f".ElectionINF +{inf}; " if inf > 0 else f".ElectionINF {inf}; " if inf < 0 else ""
                 elif faction['FactionState'] in CONFLICT_STATES:
-                    faction_discord_text += f".WarINF {faction['MissionPoints']}; " if faction['MissionPoints'] > 0 else ""
+                    faction_discord_text += f".WarINF +{inf}; " if inf > 0 else f".WarINF {inf}; " if inf < 0 else ""
                 else:
-                    inf = faction['MissionPoints']
-                    if self.bgstally.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
                     faction_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
 
                 faction_discord_text += f".BVs {self._human_format(faction['Bounties'])}; " if faction['Bounties'] != 0 else ""
