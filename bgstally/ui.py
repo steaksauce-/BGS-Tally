@@ -73,7 +73,7 @@ class UI:
         self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
         tk.Button(self.frame, text = "CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3); current_row += 1
-        tk.Label(self.frame, text="BGS Tally Plugin Status:").grid(row=current_row, column=0, sticky=tk.W)
+        tk.Label(self.frame, text="BGS Tally Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, text=self.bgstally.tick.get_formatted()).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
