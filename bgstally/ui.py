@@ -13,7 +13,7 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import Activity
-from bgstally.constants import FOLDER_ASSETS, CheckStates, UpdateUIPolicy
+from bgstally.constants import FOLDER_ASSETS, CheckStates, DiscordChannel, UpdateUIPolicy
 from bgstally.debug import Debug
 from bgstally.widgets import EntryPlus
 from bgstally.windows.activity import WindowActivity
@@ -64,7 +64,8 @@ class UI:
         tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=current_row, column=0, padx=3)
         self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
-        tk.Button(self.frame, text = "CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3); current_row += 1
+        tk.Button(self.frame, text="CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3)
+        tk.Button(self.frame, text="Carrier Mats", command=self._post_fc_to_discord).grid(row=current_row, column=3, padx=3); current_row += 1
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
@@ -105,8 +106,10 @@ class UI:
         nb.Label(frame, text="Discord", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
         nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Checkbutton(frame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
-        nb.Label(frame, text="Discord Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
-        EntryPlus(frame, textvariable=self.bgstally.state.DiscordWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
+        nb.Label(frame, text="Discord BGS Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
+        EntryPlus(frame, textvariable=self.bgstally.state.DiscordBGSWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
+        nb.Label(frame, text="Discord FC Jump Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
+        EntryPlus(frame, textvariable=self.bgstally.state.DiscordFCJumpWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
         nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=current_row)
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=current_row); current_row += 1
 
@@ -178,6 +181,17 @@ class UI:
         """
         answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: It is not usually necessary to force a tick. Only do this if you know FOR CERTAIN there has been a tick but BGS-Tally is not showing it.\n\nAre you sure that you want to do this?", default="no")
         if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
+
+
+    def _post_fc_to_discord(self):
+        """
+        Post Fleet Carrier materials list to Discord
+        """
+        title = f"Materials List for Carrier {self.bgstally.fleet_carrier.name}"
+        description = self.bgstally.fleet_carrier.get_materials_plaintext()
+        fields = None
+
+        self.bgstally.discord.post_to_discord_embed(title, description, fields, None, DiscordChannel.FLEETCARRIER)
 
 
     def _version_tuple(self, version: str):

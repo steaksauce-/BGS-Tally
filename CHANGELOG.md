@@ -4,6 +4,7 @@
 
 ### New Features:
 
+* You now have the ability to post your Fleet Carrier materials sell and buy orders to a Discord channel.
 * CMDR Spotting. The plugin now keeps track of the players you target and scan, together with when it happened and in which system. It also looks up any public CMDR and Squadron information on Inara. All this information is presented in a new window where you can review the list of all CMDRs you've targeted. There is also a 'Post to Discord' feature so you can post the CMDR information to your Discord server if you wish (manual only).
 
 ### Bug Fixes:

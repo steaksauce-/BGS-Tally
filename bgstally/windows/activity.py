@@ -5,7 +5,7 @@ from tkinter import PhotoImage, ttk
 from typing import Dict
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
-from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs
+from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordChannel
 from bgstally.debug import Debug
 from bgstally.widgets import TextPlus
 from ScrollableNotebook import ScrollableNotebook
@@ -193,7 +193,7 @@ class WindowActivity:
         DiscordText.focus()
 
         ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
-        if self.bgstally.discord.is_webhook_valid(): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self._post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
+        if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self._post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
 
         theme.update(ContainerFrame)
 
@@ -206,7 +206,7 @@ class WindowActivity:
         Callback to post to discord
         """
         discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
-        activity.discord_messageid = self.bgstally.discord.post_to_discord_plaintext(discord_text, activity.discord_messageid)
+        activity.discord_messageid = self.bgstally.discord.post_to_discord_plaintext(discord_text, activity.discord_messageid, DiscordChannel.BGS)
 
 
     def _option_change(self, DiscordText, activity: Activity):

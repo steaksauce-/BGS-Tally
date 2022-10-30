@@ -31,5 +31,10 @@ class UpdateUIPolicy(Enum):
     LATER = 2
 
 
+class DiscordChannel(Enum):
+    BGS = 0
+    FLEETCARRIER = 1
+
+
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 FOLDER_ASSETS = "assets"

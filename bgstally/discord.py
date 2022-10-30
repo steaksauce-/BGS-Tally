@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import requests
 
+from bgstally.constants import DiscordChannel
 from bgstally.debug import Debug
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S (in-game time)"
@@ -16,11 +17,12 @@ class Discord:
         self.bgstally = bgstally
 
 
-    def post_to_discord_plaintext(self, discord_text: str, previous_messageid: str):
+    def post_to_discord_plaintext(self, discord_text: str, previous_messageid: str, channel: DiscordChannel):
         """
         Post plain text to Discord
         """
-        if not self.is_webhook_valid(): return
+        webhook_url = self._get_webhook(channel)
+        if not self._is_webhook_valid(webhook_url): return
 
         utc_time_now = datetime.utcnow().strftime(DATETIME_FORMAT)
         new_messageid = previous_messageid
@@ -29,7 +31,7 @@ class Discord:
             # No previous post
             if discord_text != "":
                 discord_text += f"```md\n# Posted at: {utc_time_now}```" # Blue text instead of gray
-                url = self.bgstally.state.DiscordWebhook.get()
+                url = webhook_url
                 response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get()})
                 if response.ok:
                     # Store the Message ID
@@ -42,14 +44,14 @@ class Discord:
             # Previous post, amend or delete it
             if discord_text != '':
                 discord_text += f"```diff\n+ Updated at: {utc_time_now}```"
-                url = f"{self.bgstally.state.DiscordWebhook.get()}/messages/{previous_messageid}"
+                url = f"{webhook_url}/messages/{previous_messageid}"
                 response = requests.patch(url=url, data={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get()})
                 if not response.ok:
                     new_messageid = ""
                     Debug.logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
                     # Try to post new message instead
-                    url = self.bgstally.state.DiscordWebhook.get()
+                    url = webhook_url
                     response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get()})
                     if response.ok:
                         # Store the Message ID
@@ -58,7 +60,7 @@ class Discord:
                     else:
                         Debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
             else:
-                url = f"{self.bgstally.state.DiscordWebhook.get()}/messages/{previous_messageid}"
+                url = f"{webhook_url}/messages/{previous_messageid}"
                 response = requests.delete(url=url)
                 if response.ok:
                     # Clear the Message ID
@@ -69,18 +71,19 @@ class Discord:
         return new_messageid
 
 
-    def post_to_discord_embed(self, title: str, description: str, fields: List, previous_messageid: str):
+    def post_to_discord_embed(self, title: str, description: str, fields: List, previous_messageid: str, channel: DiscordChannel):
         """
         Post an embed to Discord
         """
-        if not self.is_webhook_valid(): return
+        webhook_url = self._get_webhook(channel)
+        if not self._is_webhook_valid(webhook_url): return
 
         new_messageid = previous_messageid
 
         if previous_messageid == "" or previous_messageid == None:
             # No previous post
             embed = self._get_embed(title, description, fields, False)
-            url = self.bgstally.state.DiscordWebhook.get()
+            url = webhook_url
             response = requests.post(url=url, params={'wait': 'true'}, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
             if response.ok:
                 # Store the Message ID
@@ -92,14 +95,14 @@ class Discord:
         else:
             # Previous post, amend or delete it
             embed = self._get_embed(title, description, fields, True)
-            url = f"{self.bgstally.state.DiscordWebhook.get()}/messages/{previous_messageid}"
+            url = f"{webhook_url}/messages/{previous_messageid}"
             response = requests.patch(url=url, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
             if not response.ok:
                 new_messageid = ""
                 Debug.logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
                 # Try to post new message instead
-                url = self.bgstally.state.DiscordWebhook.get()
+                url = webhook_url
                 response = requests.post(url=url, params={'wait': 'true'}, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
                 if response.ok:
                     # Store the Message ID
@@ -116,7 +119,6 @@ class Discord:
         Create a Discord embed JSON structure. If supplied, `fields` should be a List of Dicts, with each Dict containing 'name' (the field title) and
         'value' (the field contents)
         """
-        if not self.is_webhook_valid(): return
         footer_timestamp = f"Updated at {datetime.utcnow().strftime(DATETIME_FORMAT)}" if update else f"Posted at {datetime.utcnow().strftime(DATETIME_FORMAT)}"
         footer_version = f"{self.bgstally.plugin_name} v{self.bgstally.version}"
         footer_pad = 111 - len(footer_version)
@@ -135,11 +137,28 @@ class Discord:
         return embed
 
 
-    def is_webhook_valid(self):
+    def is_webhook_valid(self, channel: DiscordChannel):
         """
-        Do a basic check on the user specified Discord webhook
+        Check a channel's webhook is valid
         """
-        webhook = self.bgstally.state.DiscordWebhook.get()
+        return self._is_webhook_valid(self._get_webhook(channel))
+
+
+    def _get_webhook(self, channel: DiscordChannel):
+        """
+        Get the webhook url for the given channel
+        """
+        match channel:
+            case DiscordChannel.BGS:
+                return self.bgstally.state.DiscordBGSWebhook.get()
+            case DiscordChannel.FLEETCARRIER:
+                return self.bgstally.state.DiscordFCJumpWebhook.get()
+
+
+    def _is_webhook_valid(self, webhook:str):
+        """
+        Do a basic check on a Discord webhook
+        """
         return webhook.startswith('https://discordapp.com/api/webhooks/') \
                 or webhook.startswith('https://discord.com/api/webhooks/') \
                 or webhook.startswith('https://ptb.discord.com/api/webhooks/') \

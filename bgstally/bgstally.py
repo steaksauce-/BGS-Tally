@@ -12,6 +12,7 @@ from bgstally.config import Config
 from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.constants import UpdateUIPolicy
+from bgstally.fleetcarrier import FleetCarrier
 from bgstally.missionlog import MissionLog
 from bgstally.overlay import Overlay
 from bgstally.state import State
@@ -49,6 +50,7 @@ class BGSTally:
         self.tick: Tick = Tick(self, True)
         self.overlay = Overlay(self)
         self.activity_manager: ActivityManager = ActivityManager(self)
+        self.fleet_carrier = FleetCarrier(self)
         self.ui: UI = UI(self)
 
         self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally Main worker")
