@@ -1,13 +1,11 @@
-
 import tkinter as tk
-from tkinter import ttk
-from functools import partial
 from datetime import datetime
-
-from ttkHyperlinkLabel import HyperlinkLabel
+from functools import partial
+from tkinter import ttk
 
 from bgstally.constants import DATETIME_FORMAT_JOURNAL, DiscordChannel
 from bgstally.debug import Debug
+from ttkHyperlinkLabel import HyperlinkLabel
 
 DATETIME_FORMAT_CMDRLIST = "%Y-%m-%d %H:%M:%S"
 
@@ -27,6 +25,9 @@ class WindowCMDRs:
 
 
     def _show(self):
+        """
+        Show our window
+        """
         window = tk.Toplevel(self.ui.frame)
         window.title("Targeted CMDR Information")
         window.geometry("1200x800")
@@ -77,7 +78,7 @@ class WindowCMDRs:
             target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
             treeview.insert("", 'end', values=target_values)
 
-        if self.bgstally.discord.is_webhook_valid(DiscordChannel.FLEETCARRIER):
+        if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS):
             self.post_button =ttk.Button(details_frame, text="Post to Discord", command=partial(self._post_to_discord))
             self.post_button.grid(row=current_row, column=0, sticky=tk.W); current_row += 1
             self.post_button['state'] = tk.DISABLED
