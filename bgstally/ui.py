@@ -16,7 +16,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.debug import Debug
-from bgstally.constants import CheckStates, CZs, UpdateUIPolicy
+from bgstally.constants import CheckStates, CZs, DiscordChannel, UpdateUIPolicy
 from bgstally.windows.cmdrs import WindowCMDRs
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
@@ -73,7 +73,7 @@ class UI:
         self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
         tk.Button(self.frame, text="CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3)
-        tk.Button(self.frame, text="Carrier Mats", command=partial(self.bgstally.discord.post_to_fcjump_discord, self.bgstally.fleet_carrier.get_formatted_materials())).grid(row=current_row, column=3, padx=3); current_row += 1
+        tk.Button(self.frame, text="Carrier Mats", command=partial(self.bgstally.discord.post_to_discord_plaintext, self.bgstally.fleet_carrier.get_formatted_materials(), None, DiscordChannel.FLEETCARRIER)).grid(row=current_row, column=3, padx=3); current_row += 1
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
@@ -365,7 +365,7 @@ class UI:
         Callback to post to discord
         """
         discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
-        activity.discord_messageid = self.bgstally.discord.post_to_discord_plaintext(discord_text, activity.discord_messageid)
+        activity.discord_messageid = self.bgstally.discord.post_to_discord_plaintext(discord_text, activity.discord_messageid, DiscordChannel.BGS)
 
 
     def _option_change(self, DiscordText, activity: Activity):

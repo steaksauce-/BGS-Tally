@@ -6,7 +6,7 @@ from datetime import datetime
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from bgstally.constants import DATETIME_FORMAT_JOURNAL
+from bgstally.constants import DATETIME_FORMAT_JOURNAL, DiscordChannel
 from bgstally.debug import Debug
 
 DATETIME_FORMAT_CMDRLIST = "%Y-%m-%d %H:%M:%S"
@@ -77,7 +77,7 @@ class WindowCMDRs:
             target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
             treeview.insert("", 'end', values=target_values)
 
-        if self.bgstally.discord.is_webhook_valid():
+        if self.bgstally.discord.is_webhook_valid(DiscordChannel.FLEETCARRIER):
             self.post_button =ttk.Button(details_frame, text="Post to Discord", command=partial(self._post_to_discord))
             self.post_button.grid(row=current_row, column=0, sticky=tk.W); current_row += 1
             self.post_button['state'] = tk.DISABLED
@@ -162,7 +162,7 @@ class WindowCMDRs:
                     "inline": True
                     })
 
-        self.bgstally.discord.post_to_discord_embed(f"CMDR {self.selected_cmdr['TargetName']} Spotted", None, embed_fields, None)
+        self.bgstally.discord.post_to_discord_embed(f"CMDR {self.selected_cmdr['TargetName']} Spotted", None, embed_fields, None, DiscordChannel.BGS)
 
 
 class TreeviewPlus(ttk.Treeview):
