@@ -16,11 +16,11 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
 from bgstally.debug import Debug
-from bgstally.constants import CheckStates, CZs, DATETIME_FORMAT_JOURNAL, UpdateUIPolicy
+from bgstally.constants import CheckStates, CZs, UpdateUIPolicy
+from bgstally.windows.cmdrs import WindowCMDRs
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
-DATETIME_FORMAT_CMDRLIST = "%Y-%m-%d %H:%M:%S"
 FOLDER_ASSETS = "assets"
 TIME_WORKER_PERIOD_S = 2
 TIME_TICK_ALERT_M = 60
@@ -161,6 +161,13 @@ class UI:
             menu.tk_popup(self.PreviousButton.winfo_rootx(), self.PreviousButton.winfo_rooty())
         finally:
             menu.grab_release()
+
+
+    def _show_cmdr_list_window(self):
+        """
+        Display the CMDR list window
+        """
+        WindowCMDRs(self.bgstally, self)
 
 
     def _show_activity_window(self, activity: Activity):
@@ -614,80 +621,6 @@ class UI:
         Form.update()
 
 
-    def _show_cmdr_list_window(self):
-        Window = tk.Toplevel(self.frame)
-        Window.title("Targeted CMDR Information")
-        Window.geometry("1200x800")
-
-        ContainerFrame = ttk.Frame(Window)
-        ContainerFrame.pack(fill=tk.BOTH, expand=1)
-
-        ListFrame = ttk.Frame(ContainerFrame)
-        ListFrame.pack(fill=tk.BOTH, padx=5, pady=5, expand=1)
-
-        DetailsFrame = ttk.Frame(ContainerFrame)
-        DetailsFrame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
-
-        column_info = [{'title': "Name", 'type': "name", 'align': tk.W, 'stretch': tk.YES, 'width': 200},
-                        {'title': "System", 'type': "name", 'align': tk.W, 'stretch': tk.YES, 'width': 200},
-                        {'title': "Squadron ID", 'type': "name", 'align': tk.CENTER, 'stretch': tk.NO, 'width': 50},
-                        {'title': "Ship", 'type': "name", 'align': tk.W, 'stretch': tk.YES, 'width': 200},
-                        {'title': "Legal", 'type': "name", 'align': tk.W, 'stretch': tk.NO, 'width': 60},
-                        {'title': "Date / Time", 'type': "datetime", 'align': tk.CENTER, 'stretch': tk.NO, 'width': 150}]
-        target_data = self.bgstally.target_log.get_targetlog()
-
-        treeview = TreeviewPlus(ListFrame, columns=[d['title'] for d in column_info], show="headings", callback=self._cmdr_selected)
-        vsb = tk.Scrollbar(ListFrame, orient=tk.VERTICAL, command=treeview.yview)
-        vsb.pack(fill=tk.Y, side=tk.RIGHT)
-        treeview.configure(yscrollcommand=vsb.set)
-        treeview.pack(fill=tk.BOTH, expand=1)
-
-        current_row = 0
-        ttk.Label(DetailsFrame, text="CMDR Details", font=self.heading_font).grid(row=current_row, column=0, sticky=tk.W); current_row += 1
-        ttk.Label(DetailsFrame, text="Name: ", font=self.heading_font).grid(row=current_row, column=0, sticky=tk.W)
-        self.cmdr_details_name = ttk.Label(DetailsFrame, text="")
-        self.cmdr_details_name.grid(row=current_row, column=1, sticky=tk.W)
-        ttk.Label(DetailsFrame, text="Inara: ", font=self.heading_font).grid(row=current_row, column=2, sticky=tk.W)
-        self.cmdr_details_name_inara = HyperlinkLabel(DetailsFrame, text="", background=nb.Label().cget('background'), url="https://inara.cz/elite/cmdrs/?search=aussi", underline=True)
-        self.cmdr_details_name_inara.grid(row=current_row, column=3, sticky=tk.W); current_row += 1
-        ttk.Label(DetailsFrame, text="Squadron: ", font=self.heading_font).grid(row=current_row, column=0, sticky=tk.W)
-        self.cmdr_details_squadron = ttk.Label(DetailsFrame, text="")
-        self.cmdr_details_squadron.grid(row=current_row, column=1, sticky=tk.W)
-        ttk.Label(DetailsFrame, text="Inara: ", font=self.heading_font).grid(row=current_row, column=2, sticky=tk.W)
-        self.cmdr_details_squadron_inara = HyperlinkLabel(DetailsFrame, text="", background=nb.Label().cget('background'), url="https://inara.cz/elite/squadrons-search/?search=ghst", underline=True)
-        self.cmdr_details_squadron_inara.grid(row=current_row, column=3, sticky=tk.W); current_row += 1
-
-        for column in column_info:
-            treeview.heading(column['title'], text=column['title'].title(), sort_by=column['type'])
-            treeview.column(column['title'], anchor=column['align'], stretch=column['stretch'], width=column['width'])
-
-        for target in reversed(target_data):
-            target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
-            treeview.insert("", 'end', values=target_values)
-
-
-    def _cmdr_selected(self, values, column):
-        """
-        A CMDR row has been clicked in the list, show details
-        """
-        Debug.logger.debug(f"cell_values: {values} column: {column}")
-
-        self.cmdr_details_name.config(text = "")
-        self.cmdr_details_name_inara.configure(text = "", url = "")
-        self.cmdr_details_squadron.config(text = "")
-        self.cmdr_details_squadron_inara.configure(text = "", url = "")
-
-        cmdr_info = self.bgstally.target_log.get_target_info(values[0])
-        if not cmdr_info: return
-
-        if 'TargetName' in cmdr_info: self.cmdr_details_name.config(text = cmdr_info['TargetName'])
-        if 'inaraURL' in cmdr_info: self.cmdr_details_name_inara.configure(text = "Inara Info Available", url = cmdr_info['inaraURL'])
-        if 'squadron' in cmdr_info:
-            squadron_info = cmdr_info['squadron']
-            if 'squadronName' in squadron_info: self.cmdr_details_squadron.config(text = f"{squadron_info['squadronName']} ({squadron_info['squadronMemberRank']})")
-            if 'inaraURL' in squadron_info: self.cmdr_details_squadron_inara.configure(text = "Inara Info Available", url = squadron_info['inaraURL'])
-
-
 class TextPlus(tk.Text):
     """
     Subclass of tk.Text to install a context-sensitive menu on right-click
@@ -724,55 +657,6 @@ class EntryPlus(ttk.Entry):
 
     def show_menu(self, e):
         self.menu.tk_popup(e.x_root, e.y_root)
-
-
-
-class TreeviewPlus(ttk.Treeview):
-    def __init__(self, parent, callback, *args, **kwargs):
-        ttk.Treeview.__init__(self, parent, *args, **kwargs)
-        self.callback = callback
-        self.bind('<ButtonRelease-1>', self._select_item)
-
-
-    def heading(self, column, sort_by=None, **kwargs):
-        if sort_by and not hasattr(kwargs, 'command'):
-            func = getattr(self, f"_sort_by_{sort_by}", None)
-            if func:
-                kwargs['command'] = partial(func, column, False)
-
-        return super().heading(column, **kwargs)
-
-    def _select_item(self, event):
-        clicked_item = self.item(self.focus())
-        clicked_column_ref = self.identify_column(event.x)
-        if type(clicked_item['values']) is not list: return
-
-        clicked_column = int(clicked_column_ref[1:]) - 1
-        if clicked_column < 0: return
-
-        self.callback(clicked_item['values'], clicked_column)
-
-    def _sort(self, column, reverse, data_type, callback):
-        l = [(self.set(k, column), k) for k in self.get_children('')]
-        l.sort(key=lambda t: data_type(t[0]), reverse=reverse)
-        for index, (_, k) in enumerate(l):
-            self.move(k, '', index)
-
-        self.heading(column, command=partial(callback, column, not reverse))
-
-    def _sort_by_num(self, column, reverse):
-        self._sort(column, reverse, int, self._sort_by_num)
-
-    def _sort_by_name(self, column, reverse):
-        self._sort(column, reverse, str, self._sort_by_name)
-
-    def _sort_by_datetime(self, column, reverse):
-        def _str_to_datetime(string):
-            return datetime.strptime(string, DATETIME_FORMAT_CMDRLIST)
-
-        self._sort(column, reverse, _str_to_datetime, self._sort_by_datetime)
-
-
 
 
 def _rc_menu_install(w):

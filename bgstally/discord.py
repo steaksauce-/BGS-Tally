@@ -69,6 +69,48 @@ class Discord:
         return new_messageid
 
 
+    def post_to_discord_embed(self, title: str, description: str, fields: List, previous_messageid: str):
+        """
+        Post an embed to Discord
+        """
+        if not self.is_webhook_valid(): return
+
+        new_messageid = previous_messageid
+
+        if previous_messageid == "" or previous_messageid == None:
+            # No previous post
+            embed = self._get_embed(title, description, fields, False)
+            url = self.bgstally.state.DiscordWebhook.get()
+            response = requests.post(url=url, params={'wait': 'true'}, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
+            if response.ok:
+                # Store the Message ID
+                response_json = response.json()
+                new_messageid = response_json['id']
+            else:
+                Debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+
+        else:
+            # Previous post, amend or delete it
+            embed = self._get_embed(title, description, fields, True)
+            url = f"{self.bgstally.state.DiscordWebhook.get()}/messages/{previous_messageid}"
+            response = requests.patch(url=url, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
+            if not response.ok:
+                new_messageid = ""
+                Debug.logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+
+                # Try to post new message instead
+                url = self.bgstally.state.DiscordWebhook.get()
+                response = requests.post(url=url, params={'wait': 'true'}, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
+                if response.ok:
+                    # Store the Message ID
+                    response_json = response.json()
+                    new_messageid = response_json['id']
+                else:
+                    Debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+
+        return new_messageid
+
+
     def _get_embed(self, title: str, description: str, fields: List, update: bool):
         """
         Create a Discord embed JSON structure. If supplied, `fields` should be a List of Dicts, with each Dict containing 'name' (the field title) and
@@ -77,12 +119,12 @@ class Discord:
         if not self.is_webhook_valid(): return
         footer_timestamp = f"Updated at {datetime.utcnow().strftime(DATETIME_FORMAT)}" if update else f"Posted at {datetime.utcnow().strftime(DATETIME_FORMAT)}"
         footer_version = f"{self.bgstally.plugin_name} v{self.bgstally.version}"
-        footer_pad = 136 - len(footer_timestamp) - len(footer_version)
+        footer_pad = 111 - len(footer_version)
 
         embed:Dict = {
             "color": 10682531,
             "footer": {
-                "text": f"{footer_timestamp} <{footer_pad}{footer_version}",
+                "text": f"{footer_timestamp: <{footer_pad}}{footer_version}",
                 "icon_url": URL_CLOCK_IMAGE
             }}
 
