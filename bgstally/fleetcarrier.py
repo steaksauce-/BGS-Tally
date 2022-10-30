@@ -38,19 +38,17 @@ class FleetCarrier:
             Debug.logger.error(f"Unable to load FCMaterials.json from the player journal folder", exc_info=e)
 
 
-    def get_formatted_materials(self):
+    def get_materials_plaintext(self):
         """
         Return a list of formatted materials for posting to Discord
         """
-        result = f"```css\nMaterials List for Carrier {self.name}\n\n"
         selling = ""
         buying = ""
+
         for material in self.materials:
             if material["Stock"] > 0:
                 selling += f" {material['Name_Localised']} x {material['Stock']} @ {material['Price']}\n"
             else:
                 buying += f" {material['Name_Localised']} x {material['Demand']} @ {material['Price']}\n"
 
-        result += f"Selling:\n{selling}\nBuying\n{buying}```"
-
-        return result
+        return f"```css\nSelling:\n{selling}\nBuying\n{buying}```"

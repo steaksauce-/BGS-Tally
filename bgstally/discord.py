@@ -137,21 +137,6 @@ class Discord:
         return embed
 
 
-    def post_to_fcjump_discord(self, discord_text:str):
-        """
-        Get all text from the Discord field and post it to the webhook
-        """
-        if not self.is_fcjump_webhook_valid(): return
-
-        Debug.logger.info(discord_text)
-
-        # Try to post new message instead
-        url = self.bgstally.state.DiscordFCJumpWebhook.get()
-        response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get()})
-        if not response.ok:
-            Debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
-
-
     def is_webhook_valid(self, channel: DiscordChannel):
         """
         Check a channel's webhook is valid

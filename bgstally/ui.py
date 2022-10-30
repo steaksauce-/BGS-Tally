@@ -65,7 +65,7 @@ class UI:
         self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
         tk.Button(self.frame, text="CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3)
-        tk.Button(self.frame, text="Carrier Mats", command=partial(self.bgstally.discord.post_to_discord_plaintext, self.bgstally.fleet_carrier.get_formatted_materials(), None, DiscordChannel.FLEETCARRIER)).grid(row=current_row, column=3, padx=3); current_row += 1
+        tk.Button(self.frame, text="Carrier Mats", command=self._post_fc_to_discord).grid(row=current_row, column=3, padx=3); current_row += 1
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
@@ -181,6 +181,17 @@ class UI:
         """
         answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: It is not usually necessary to force a tick. Only do this if you know FOR CERTAIN there has been a tick but BGS-Tally is not showing it.\n\nAre you sure that you want to do this?", default="no")
         if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
+
+
+    def _post_fc_to_discord(self):
+        """
+        Post Fleet Carrier materials list to Discord
+        """
+        title = f"Materials List for Carrier {self.bgstally.fleet_carrier.name}"
+        description = self.bgstally.fleet_carrier.get_materials_plaintext()
+        fields = None
+
+        self.bgstally.discord.post_to_discord_embed(title, description, fields, None, DiscordChannel.FLEETCARRIER)
 
 
     def _version_tuple(self, version: str):
