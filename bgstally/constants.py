@@ -32,3 +32,4 @@ class UpdateUIPolicy(Enum):
 
 
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
+FOLDER_ASSETS = "assets"

@@ -1,13 +1,11 @@
-
 import tkinter as tk
-from tkinter import ttk
-from functools import partial
 from datetime import datetime
-
-from ttkHyperlinkLabel import HyperlinkLabel
+from functools import partial
+from tkinter import ttk
 
 from bgstally.constants import DATETIME_FORMAT_JOURNAL
 from bgstally.debug import Debug
+from ttkHyperlinkLabel import HyperlinkLabel
 
 DATETIME_FORMAT_CMDRLIST = "%Y-%m-%d %H:%M:%S"
 
@@ -27,6 +25,9 @@ class WindowCMDRs:
 
 
     def _show(self):
+        """
+        Show our window
+        """
         window = tk.Toplevel(self.ui.frame)
         window.title("Targeted CMDR Information")
         window.geometry("1200x800")
