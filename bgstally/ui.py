@@ -36,6 +36,9 @@ class UI:
         self.bgstally = bgstally
 
         self.image_button_dropdown_menu = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "button_dropdown_menu.png"))
+        self.image_button_cmdrs = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "button_cmdrs.png"))
+        self.image_button_carrier = PhotoImage(file = path.join(self.bgstally.plugin_dir, FOLDER_ASSETS, "button_carrier.png"))
+
         self.heading_font = ("Helvetica", 11, "bold")
 
         self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally UI worker")
@@ -62,10 +65,10 @@ class UI:
             HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=current_row, column=1, sticky=tk.W)
         current_row += 1
         tk.Button(self.frame, text="Latest BGS Tally", command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=current_row, column=0, padx=3)
-        self.PreviousButton = tk.Button(self.frame, text = "Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
+        self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tallies ", image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
-        tk.Button(self.frame, text="CMDRs", compound=tk.RIGHT, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3)
-        tk.Button(self.frame, text="Carrier Mats", command=self._post_fc_to_discord).grid(row=current_row, column=3, padx=3); current_row += 1
+        tk.Button(self.frame, image=self.image_button_cmdrs, height=30, width=30, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3)
+        tk.Button(self.frame, image=self.image_button_carrier, height=30, width=30, command=self._post_fc_to_discord).grid(row=current_row, column=3, padx=3); current_row += 1
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
