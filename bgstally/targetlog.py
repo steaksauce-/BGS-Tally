@@ -3,6 +3,7 @@ import os.path
 import re
 from datetime import datetime, timedelta
 from typing import Dict
+from copy import copy
 
 import requests
 
@@ -89,7 +90,16 @@ class TargetLog:
         """
         Fetch additional CMDR data from Inara and enhance the cmdr_data Dict with it
         """
-        if cmdr_name in self.cmdr_cache: return self.cmdr_cache[cmdr_name]
+        if cmdr_name in self.cmdr_cache:
+            # We have cached data. Make a copy and update the fields that may have changed in the latest data. This ensures we avoid
+            # expensive multiple calls to the Inara API, but keep a record of every sighting of the same CMDR. We assume Inara info
+            # (squadron, ranks, URLs) stay the same.
+            cmdr_data_copy = copy(self.cmdr_cache[cmdr_name])
+            cmdr_data_copy['System'] = cmdr_data['System']
+            cmdr_data_copy['Ship'] = cmdr_data['Ship']
+            cmdr_data_copy['LegalStatus'] = cmdr_data['LegalStatus']
+            cmdr_data_copy['Timestamp'] = cmdr_data['Timestamp']
+            return cmdr_data_copy
 
         payload = {
             'header': {
