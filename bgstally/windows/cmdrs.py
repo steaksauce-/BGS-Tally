@@ -38,6 +38,9 @@ class WindowCMDRs:
         list_frame = ttk.Frame(container_frame)
         list_frame.pack(fill=tk.BOTH, padx=5, pady=5, expand=1)
 
+        buttons_frame = ttk.Frame(container_frame)
+        buttons_frame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
+
         details_frame = ttk.Frame(container_frame)
         details_frame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
 
@@ -79,8 +82,8 @@ class WindowCMDRs:
             treeview.insert("", 'end', values=target_values)
 
         if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS):
-            self.post_button =ttk.Button(details_frame, text="Post to Discord", command=partial(self._post_to_discord))
-            self.post_button.grid(row=current_row, column=0, sticky=tk.W); current_row += 1
+            self.post_button =ttk.Button(buttons_frame, text="Post to Discord", command=partial(self._post_to_discord))
+            self.post_button.pack(side=tk.RIGHT, padx=5, pady=5)
             self.post_button['state'] = tk.DISABLED
 
 
