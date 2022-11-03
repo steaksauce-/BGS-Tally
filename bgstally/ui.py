@@ -13,11 +13,12 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import Activity
-from bgstally.constants import FOLDER_ASSETS, CheckStates, DiscordChannel, UpdateUIPolicy
+from bgstally.constants import FOLDER_ASSETS, CheckStates, UpdateUIPolicy
 from bgstally.debug import Debug
 from bgstally.widgets import EntryPlus
 from bgstally.windows.activity import WindowActivity
 from bgstally.windows.cmdrs import WindowCMDRs
+from bgstally.windows.fleetcarrier import WindowFleetCarrier
 from config import config
 
 DATETIME_FORMAT_OVERLAY = "%Y-%m-%d %H:%M"
@@ -69,7 +70,9 @@ class UI:
         self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tallies ", height=SIZE_BUTTON_PIXELS-2, image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
         tk.Button(self.frame, image=self.image_button_cmdrs, height=SIZE_BUTTON_PIXELS, width=SIZE_BUTTON_PIXELS, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3)
-        tk.Button(self.frame, image=self.image_button_carrier, height=SIZE_BUTTON_PIXELS, width=SIZE_BUTTON_PIXELS, command=self._post_fc_to_discord).grid(row=current_row, column=3, padx=3); current_row += 1
+        if self.bgstally.fleet_carrier.available():
+            tk.Button(self.frame, image=self.image_button_carrier, height=SIZE_BUTTON_PIXELS, width=SIZE_BUTTON_PIXELS, command=self._show_fc_window).grid(row=current_row, column=3, padx=3)
+        current_row += 1
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
         tk.Label(self.frame, text="Last BGS Tick:").grid(row=current_row, column=0, sticky=tk.W)
@@ -179,22 +182,19 @@ class UI:
         WindowActivity(self.bgstally, self, activity)
 
 
+    def _show_fc_window(self):
+        """
+        Display the Fleet Carrier Window
+        """
+        WindowFleetCarrier(self.bgstally, self)
+
+
     def _confirm_force_tick(self):
         """
         Force a tick when user clicks button
         """
         answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: It is not usually necessary to force a tick. Only do this if you know FOR CERTAIN there has been a tick but BGS-Tally is not showing it.\n\nAre you sure that you want to do this?", default="no")
         if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
-
-
-    def _post_fc_to_discord(self):
-        """
-        Post Fleet Carrier materials list to Discord
-        """
-        title = f"Materials List for Carrier {self.bgstally.fleet_carrier.name}"
-        description = self.bgstally.fleet_carrier.get_materials_plaintext()
-
-        self.bgstally.discord.post_embed(title, description, None, None, DiscordChannel.FLEETCARRIER)
 
 
     def _version_tuple(self, version: str):

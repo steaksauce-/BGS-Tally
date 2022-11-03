@@ -36,5 +36,10 @@ class DiscordChannel(Enum):
     FLEETCARRIER = 1
 
 
+class MaterialsCategory(Enum):
+    SELLING = 0
+    BUYING = 1
+
+
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 FOLDER_ASSETS = "assets"
