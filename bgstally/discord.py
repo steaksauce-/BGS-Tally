@@ -32,7 +32,7 @@ class Discord:
             if discord_text != "":
                 discord_text += f"```md\n# Posted at: {utc_time_now}```" # Blue text instead of gray
                 url = webhook_url
-                response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get()})
+                response = requests.post(url=url, params={'wait': 'true'}, json={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get(), 'embeds': []})
                 if response.ok:
                     # Store the Message ID
                     response_json = response.json()
@@ -45,14 +45,14 @@ class Discord:
             if discord_text != '':
                 discord_text += f"```diff\n+ Updated at: {utc_time_now}```"
                 url = f"{webhook_url}/messages/{previous_messageid}"
-                response = requests.patch(url=url, data={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get()})
+                response = requests.patch(url=url, json={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get(), 'embeds': []})
                 if not response.ok:
                     new_messageid = ""
                     Debug.logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
                     # Try to post new message instead
                     url = webhook_url
-                    response = requests.post(url=url, params={'wait': 'true'}, data={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get()})
+                    response = requests.post(url=url, params={'wait': 'true'}, json={'content': discord_text, 'username': self.bgstally.state.DiscordUsername.get(), 'embeds': []})
                     if response.ok:
                         # Store the Message ID
                         response_json = response.json()
@@ -84,7 +84,7 @@ class Discord:
             # No previous post
             embed = self._get_embed(title, description, fields, False)
             url = webhook_url
-            response = requests.post(url=url, params={'wait': 'true'}, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
+            response = requests.post(url=url, params={'wait': 'true'}, json={'content': "", 'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
             if response.ok:
                 # Store the Message ID
                 response_json = response.json()
@@ -94,22 +94,31 @@ class Discord:
 
         else:
             # Previous post, amend or delete it
-            embed = self._get_embed(title, description, fields, True)
-            url = f"{webhook_url}/messages/{previous_messageid}"
-            response = requests.patch(url=url, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
-            if not response.ok:
-                new_messageid = ""
-                Debug.logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+            if fields is not None:
+                embed = self._get_embed(title, description, fields, True)
+                url = f"{webhook_url}/messages/{previous_messageid}"
+                response = requests.patch(url=url, json={'content': "", 'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
+                if not response.ok:
+                    new_messageid = ""
+                    Debug.logger.error(f"Unable to update previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
-                # Try to post new message instead
-                url = webhook_url
-                response = requests.post(url=url, params={'wait': 'true'}, json={'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
+                    # Try to post new message instead
+                    url = webhook_url
+                    response = requests.post(url=url, params={'wait': 'true'}, json={'content': "", 'username': self.bgstally.state.DiscordUsername.get(), 'embeds': [embed]})
+                    if response.ok:
+                        # Store the Message ID
+                        response_json = response.json()
+                        new_messageid = response_json['id']
+                    else:
+                        Debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+            else:
+                url = f"{webhook_url}/messages/{previous_messageid}"
+                response = requests.delete(url=url)
                 if response.ok:
-                    # Store the Message ID
-                    response_json = response.json()
-                    new_messageid = response_json['id']
+                    # Clear the Message ID
+                    new_messageid = ""
                 else:
-                    Debug.logger.error(f"Unable to create new discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
+                    Debug.logger.error(f"Unable to delete previous discord post. Reason: '{response.reason}' Content: '{response.content}' URL: '{url}'")
 
         return new_messageid
 

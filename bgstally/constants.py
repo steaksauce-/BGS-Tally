@@ -41,5 +41,10 @@ class MaterialsCategory(Enum):
     BUYING = 1
 
 
+class DiscordPostStyle(str, Enum):
+    TEXT = 'Text'
+    EMBED = 'Embed'
+
+
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
 FOLDER_ASSETS = "assets"

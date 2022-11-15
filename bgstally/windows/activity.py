@@ -5,8 +5,9 @@ from tkinter import PhotoImage, ttk
 from typing import Dict
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
-from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordChannel
+from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordChannel, DiscordPostStyle
 from bgstally.debug import Debug
+from bgstally.discord import DATETIME_FORMAT
 from bgstally.widgets import TextPlus
 from ScrollableNotebook import ScrollableNotebook
 from theme import theme
@@ -205,8 +206,12 @@ class WindowActivity:
         """
         Callback to post to discord
         """
-        discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
-        activity.discord_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_messageid, DiscordChannel.BGS)
+        if self.bgstally.state.DiscordPostStyle.get() == DiscordPostStyle.TEXT:
+            discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
+            activity.discord_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_messageid, DiscordChannel.BGS)
+        else:
+            discord_fields:Dict = self._generate_discord_embed_fields(activity)
+            activity.discord_messageid = self.bgstally.discord.post_embed(f"Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_messageid, DiscordChannel.BGS)
 
 
     def _option_change(self, DiscordText, activity: Activity):
@@ -380,7 +385,7 @@ class WindowActivity:
 
     def _generate_discord_text(self, activity: Activity):
         """
-        Generate the Discord-formatted version of the tally data
+        Generate text for a plain text Discord post
         """
         discord_text = ""
 
@@ -389,43 +394,74 @@ class WindowActivity:
 
             for faction in system['Factions'].values():
                 if faction['Enabled'] != CheckStates.STATE_ON: continue
+                system_discord_text += self._generate_faction_discord_text(faction)
 
-                faction_discord_text = ""
-
-                inf = faction['MissionPoints']
-                if self.bgstally.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
-
-                if faction['FactionState'] in ELECTION_STATES:
-                    faction_discord_text += f".ElectionINF +{inf}; " if inf > 0 else f".ElectionINF {inf}; " if inf < 0 else ""
-                elif faction['FactionState'] in CONFLICT_STATES:
-                    faction_discord_text += f".WarINF +{inf}; " if inf > 0 else f".WarINF {inf}; " if inf < 0 else ""
-                else:
-                    faction_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
-
-                faction_discord_text += f".BVs {self._human_format(faction['Bounties'])}; " if faction['Bounties'] != 0 else ""
-                faction_discord_text += f".CBs {self._human_format(faction['CombatBonds'])}; " if faction['CombatBonds'] != 0 else ""
-                faction_discord_text += f".TrdPurchase {self._human_format(faction['TradePurchase'])}; " if faction['TradePurchase'] != 0 else ""
-                faction_discord_text += f".TrdProfit {self._human_format(faction['TradeProfit'])}; " if faction['TradeProfit'] != 0 else ""
-                faction_discord_text += f".TrdBMProfit {self._human_format(faction['BlackMarketProfit'])}; " if faction['BlackMarketProfit'] != 0 else ""
-                faction_discord_text += f".Expl {self._human_format(faction['CartData'])}; " if faction['CartData'] != 0 else ""
-                faction_discord_text += f".Exo {self._human_format(faction['ExoData'])}; " if faction['ExoData'] != 0 else ""
-                faction_discord_text += f".Murders {faction['Murdered']}; " if faction['Murdered'] != 0 else ""
-                faction_discord_text += f".Scenarios {faction['Scenarios']}; " if faction['Scenarios'] != 0 else ""
-                faction_discord_text += f".Fails {faction['MissionFailed']}; " if faction['MissionFailed'] != 0 else ""
-                space_cz = self._build_cz_text(faction.get('SpaceCZ', {}), "SpaceCZs")
-                faction_discord_text += f"{space_cz}; " if space_cz != "" else ""
-                ground_cz = self._build_cz_text(faction.get('GroundCZ', {}), "GroundCZs")
-                faction_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
-                faction_name = self._process_faction_name(faction['Faction'])
-                system_discord_text += f"[{faction_name}] - {faction_discord_text}\n" if faction_discord_text != "" else ""
-
-                for settlement_name in faction.get('GroundCZSettlements', {}):
-                    if faction['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON:
-                        system_discord_text += f"  - {settlement_name} x {faction['GroundCZSettlements'][settlement_name]['count']}\n"
-
-            discord_text += f"```css\n{system['System']}\n{system_discord_text}```" if system_discord_text != "" else ""
+            if system_discord_text != "":
+                discord_text += f"```css\n{system['System']}\n{system_discord_text}```"
 
         return discord_text.replace("'", "")
+
+
+    def _generate_discord_embed_fields(self, activity: Activity):
+        """
+        Generate fields for a Discord post with embed
+        """
+        discord_fields = []
+
+        for system in activity.systems.values():
+            system_discord_text = ""
+
+            for faction in system['Factions'].values():
+                if faction['Enabled'] != CheckStates.STATE_ON: continue
+                system_discord_text += self._generate_faction_discord_text(faction)
+
+            if system_discord_text != "":
+                system_discord_text = system_discord_text.replace("'", "")
+                discord_field = {'name': system['System'], 'value': f"```css\n{system_discord_text}```"}
+                discord_fields.append(discord_field)
+
+        return discord_fields
+
+
+    def _generate_faction_discord_text(self, faction:Dict):
+        """
+        Generate formatted Discord text for a faction
+        """
+        activity_discord_text = ""
+
+        inf = faction['MissionPoints']
+        if self.bgstally.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
+
+        if faction['FactionState'] in ELECTION_STATES:
+            activity_discord_text += f".ElectionINF +{inf}; " if inf > 0 else f".ElectionINF {inf}; " if inf < 0 else ""
+        elif faction['FactionState'] in CONFLICT_STATES:
+            activity_discord_text += f".WarINF +{inf}; " if inf > 0 else f".WarINF {inf}; " if inf < 0 else ""
+        else:
+            activity_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
+
+        activity_discord_text += f".BVs {self._human_format(faction['Bounties'])}; " if faction['Bounties'] != 0 else ""
+        activity_discord_text += f".CBs {self._human_format(faction['CombatBonds'])}; " if faction['CombatBonds'] != 0 else ""
+        activity_discord_text += f".TrdPurchase {self._human_format(faction['TradePurchase'])}; " if faction['TradePurchase'] != 0 else ""
+        activity_discord_text += f".TrdProfit {self._human_format(faction['TradeProfit'])}; " if faction['TradeProfit'] != 0 else ""
+        activity_discord_text += f".TrdBMProfit {self._human_format(faction['BlackMarketProfit'])}; " if faction['BlackMarketProfit'] != 0 else ""
+        activity_discord_text += f".Expl {self._human_format(faction['CartData'])}; " if faction['CartData'] != 0 else ""
+        activity_discord_text += f".Exo {self._human_format(faction['ExoData'])}; " if faction['ExoData'] != 0 else ""
+        activity_discord_text += f".Murders {faction['Murdered']}; " if faction['Murdered'] != 0 else ""
+        activity_discord_text += f".Scenarios {faction['Scenarios']}; " if faction['Scenarios'] != 0 else ""
+        activity_discord_text += f".Fails {faction['MissionFailed']}; " if faction['MissionFailed'] != 0 else ""
+        space_cz = self._build_cz_text(faction.get('SpaceCZ', {}), "SpaceCZs")
+        activity_discord_text += f"{space_cz}; " if space_cz != "" else ""
+        ground_cz = self._build_cz_text(faction.get('GroundCZ', {}), "GroundCZs")
+        activity_discord_text += f"{ground_cz}; " if ground_cz != "" else ""
+
+        faction_name = self._process_faction_name(faction['Faction'])
+        faction_discord_text = f"[{faction_name}] - {activity_discord_text}\n" if activity_discord_text != "" else ""
+
+        for settlement_name in faction.get('GroundCZSettlements', {}):
+            if faction['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON:
+                faction_discord_text += f"  - {settlement_name} x {faction['GroundCZSettlements'][settlement_name]['count']}\n"
+
+        return faction_discord_text
 
 
     def _build_cz_text(self, cz_data, prefix):
