@@ -73,7 +73,7 @@ class BGSTally:
         activity: Activity = self.activity_manager.get_current_activity()
         dirty: bool = False
 
-        if entry['event'] in ['Location', 'FSDJump', 'CarrierJump']:
+        if entry.get('event') in ['Location', 'FSDJump', 'CarrierJump']:
             if self.check_tick(UpdateUIPolicy.IMMEDIATE):
                 # New activity will be generated with a new tick
                 activity = self.activity_manager.get_current_activity()
@@ -81,13 +81,13 @@ class BGSTally:
             activity.system_entered(entry, self.state)
             dirty = True
 
-        match entry['event']:
+        match entry.get('event'):
             case 'Docked':
                 self.state.station_faction = entry['StationFaction']['Name']
                 self.state.station_type = entry['StationType']
                 dirty = True
 
-            case 'Location' | 'StartUp' if entry['Docked'] == True:
+            case 'Location' | 'StartUp' if entry.get('Docked') == True:
                 self.state.station_type = entry['StationType']
                 dirty = True
 
@@ -99,11 +99,11 @@ class BGSTally:
                 activity.organic_data_sold(entry, self.state)
                 dirty = True
 
-            case 'RedeemVoucher' if entry['Type'] == 'bounty':
+            case 'RedeemVoucher' if entry.get('Type') == 'bounty':
                 activity.bv_redeemed(entry, self.state)
                 dirty = True
 
-            case 'RedeemVoucher' if entry['Type'] == 'CombatBond':
+            case 'RedeemVoucher' if entry.get('Type') == 'CombatBond':
                 activity.cb_redeemed(entry, self.state)
                 dirty = True
 
@@ -116,11 +116,11 @@ class BGSTally:
                 dirty = True
 
             case 'MissionAccepted':
-                self.mission_log.add_mission(entry['Name'], entry['Faction'], entry['MissionID'], entry['Expiry'], system)
+                self.mission_log.add_mission(entry.get('Name', ""), entry.get('Faction', ""), entry.get('MissionID', ""), entry.get('Expiry', ""), system)
                 dirty = True
 
             case 'MissionAbandoned':
-                self.mission_log.delete_mission_by_id(entry['MissionID'])
+                self.mission_log.delete_mission_by_id(entry.get('MissionID'))
                 dirty = True
 
             case 'MissionFailed':

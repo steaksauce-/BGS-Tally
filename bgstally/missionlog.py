@@ -81,8 +81,8 @@ class MissionLog:
         Clear out all missions older than 7 days from the mission log
         """
         for mission in reversed(self.missionlog):
-            # Old missions pre v1.11.0 don't have Expiry stored. Set to 7 days ahead for safety
-            if not "Expiry" in mission: mission['Expiry'] = (datetime.utcnow() + timedelta(days = TIME_MISSION_EXPIRY_D)).strftime(DATETIME_FORMAT_JOURNAL)
+            # Old missions pre v1.11.0 and missions with missing expiry dates don't have Expiry stored. Set to 7 days ahead for safety
+            if not 'Expiry' in mission or mission['Expiry'] == "": mission['Expiry'] = (datetime.utcnow() + timedelta(days = TIME_MISSION_EXPIRY_D)).strftime(DATETIME_FORMAT_JOURNAL)
 
             timedifference = datetime.utcnow() - datetime.strptime(mission['Expiry'], DATETIME_FORMAT_JOURNAL)
             if timedifference > timedelta(days = TIME_MISSION_EXPIRY_D):
