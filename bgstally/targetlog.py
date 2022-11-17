@@ -82,8 +82,8 @@ class TargetLog:
                     'LegalStatus': journal_entry['LegalStatus'],
                     'Timestamp': journal_entry['timestamp']}
 
-        cmdr_data = self._fetch_cmdr_info(cmdr_name, cmdr_data)
-        self.targetlog.append(cmdr_data)
+        cmdr_data, different = self._fetch_cmdr_info(cmdr_name, cmdr_data)
+        if different: self.targetlog.append(cmdr_data)
 
 
     def _fetch_cmdr_info(self, cmdr_name:str, cmdr_data:Dict):
@@ -91,15 +91,25 @@ class TargetLog:
         Fetch additional CMDR data from Inara and enhance the cmdr_data Dict with it
         """
         if cmdr_name in self.cmdr_cache:
-            # We have cached data. Make a copy and update the fields that may have changed in the latest data. This ensures we avoid
+            # We have cached data. Check whether it's different enough to make a new log entry for this CMDR.
+            cmdr_cache_data = self.cmdr_cache[cmdr_name]
+            if cmdr_data['System'] == cmdr_cache_data['System'] \
+                and cmdr_data['SquadronID'] == cmdr_cache_data['SquadronID'] \
+                and cmdr_data['Ship'] == cmdr_cache_data['Ship'] \
+                and cmdr_data['LegalStatus'] == cmdr_cache_data['LegalStatus']:
+                return cmdr_cache_data, False
+
+            # It's different, make a copy and update the fields that may have changed in the latest data. This ensures we avoid
             # expensive multiple calls to the Inara API, but keep a record of every sighting of the same CMDR. We assume Inara info
-            # (squadron, ranks, URLs) stay the same.
+            # (squadron name, ranks, URLs) stay the same during a play session.
             cmdr_data_copy = copy(self.cmdr_cache[cmdr_name])
             cmdr_data_copy['System'] = cmdr_data['System']
             cmdr_data_copy['Ship'] = cmdr_data['Ship']
             cmdr_data_copy['LegalStatus'] = cmdr_data['LegalStatus']
             cmdr_data_copy['Timestamp'] = cmdr_data['Timestamp']
-            return cmdr_data_copy
+            # Re-cache the data with the latest updates
+            self.cmdr_cache[cmdr_name] = cmdr_data_copy
+            return cmdr_data_copy, True
 
         payload = {
             'header': {
@@ -124,10 +134,10 @@ class TargetLog:
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             Debug.logger.error(f"Unable to fetch CMDR Profile from Inara", exc_info=e)
-            return cmdr_data
+            return cmdr_data, True
 
         data = response.json()
-        if not 'events' in data or len(data['events']) == 0 or not 'eventData' in data['events'][0]: return cmdr_data
+        if not 'events' in data or len(data['events']) == 0 or not 'eventData' in data['events'][0]: return cmdr_data, True
 
         event_data = data['events'][0]['eventData']
 
@@ -139,7 +149,7 @@ class TargetLog:
             cmdr_data['inaraURL'] = event_data['inaraURL']
 
         self.cmdr_cache[cmdr_name] = cmdr_data
-        return cmdr_data
+        return cmdr_data, True
 
 
     def _expire_old_targets(self):
