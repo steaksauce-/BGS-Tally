@@ -1,3 +1,4 @@
+from os import mkdir, path
 from threading import Thread
 from time import sleep
 from typing import Optional
@@ -9,6 +10,7 @@ from config import config
 from bgstally.activity import Activity
 from bgstally.activitymanager import ActivityManager
 from bgstally.config import Config
+from bgstally.constants import FOLDER_DATA
 from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.constants import UpdateUIPolicy
@@ -20,8 +22,8 @@ from bgstally.targetlog import TargetLog
 from bgstally.tick import Tick
 from bgstally.ui import UI
 
-URL_PLUGIN_VERSION = "https://api.github.com/repos/aussig/BGS-Tally/releases/latest"
 TIME_WORKER_PERIOD_S = 60
+URL_PLUGIN_VERSION = "https://api.github.com/repos/aussig/BGS-Tally/releases/latest"
 
 
 class BGSTally:
@@ -39,6 +41,9 @@ class BGSTally:
         The plugin is starting up. Initialise all our objects.
         """
         self.plugin_dir = plugin_dir
+
+        data_filepath = path.join(self.plugin_dir, FOLDER_DATA)
+        if not path.exists(data_filepath): mkdir(data_filepath)
 
         # Classes
         self.debug: Debug = Debug(self)

@@ -1,12 +1,14 @@
 import json
-import os.path
+from os import path, remove
 from datetime import datetime, timedelta
 
-from bgstally.constants import DATETIME_FORMAT_JOURNAL
+from bgstally.constants import DATETIME_FORMAT_JOURNAL, FOLDER_DATA
 from bgstally.debug import Debug
 
-FILENAME = "MissionLog.txt"
+FILENAME = "missionlog.json"
+FILENAME_LEGACY = "MissionLog.txt"
 TIME_MISSION_EXPIRY_D = 7
+
 
 class MissionLog:
     """
@@ -22,16 +24,26 @@ class MissionLog:
         """
         Load state from file
         """
-        file = os.path.join(self.bgstally.plugin_dir, FILENAME)
-        if os.path.exists(file):
+        # New location
+        file = path.join(self.bgstally.plugin_dir, FOLDER_DATA, FILENAME)
+        if path.exists(file):
             with open(file) as json_file:
                 self.missionlog = json.load(json_file)
+                return
+
+        # Legacy location
+        file = path.join(self.bgstally.plugin_dir, FILENAME_LEGACY)
+        if path.exists(file):
+            with open(file) as json_file:
+                self.missionlog = json.load(json_file)
+            remove(file)
+
 
     def save(self):
         """
         Save state to file
         """
-        file = os.path.join(self.bgstally.plugin_dir, FILENAME)
+        file = path.join(self.bgstally.plugin_dir, FOLDER_DATA, FILENAME)
         with open(file, 'w') as outfile:
             json.dump(self.missionlog, outfile)
 
