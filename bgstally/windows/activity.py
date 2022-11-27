@@ -9,7 +9,7 @@ from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordChannel, 
 from bgstally.debug import Debug
 from bgstally.discord import DATETIME_FORMAT
 from bgstally.widgets import TextPlus
-from ScrollableNotebook import ScrollableNotebook
+from thirdparty.ScrollableNotebook import ScrollableNotebook
 from theme import theme
 
 DATETIME_FORMAT_WINDOWTITLE = "%Y-%m-%d %H:%M:%S"
