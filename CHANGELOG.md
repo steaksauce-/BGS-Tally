@@ -10,6 +10,7 @@
 
 ### Changes:
 
+* After the game mode split in Odyssey Update 14, BGS-Tally only operates in `Live` game mode, not `Legacy`.
 * Additional data files created by BGS-Tally (such as the mission log) are now saved in an `otherdata` subfolder to keep the top level folder as tidy as possible.
 
 ### Bug Fixes:

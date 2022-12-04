@@ -6,6 +6,7 @@ from typing import Optional
 import plug
 import requests
 from config import config
+from monitor import monitor
 
 from bgstally.activity import Activity
 from bgstally.activitymanager import ActivityManager
@@ -75,6 +76,14 @@ class BGSTally:
         """
         Parse an incoming journal entry and store the data we need
         """
+
+        # Live galaxy check
+        try:
+            if not monitor.is_live_galaxy(): return
+        except Exception as e:
+            self.debug.logger.error(f"The EDMC Version is too old, please upgrade to v5.6.0 or later", exc_info=e)
+            return
+
         activity: Activity = self.activity_manager.get_current_activity()
         dirty: bool = False
 
