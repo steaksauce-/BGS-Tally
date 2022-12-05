@@ -42,12 +42,12 @@ If you're concerned about the privacy of your BGS activity, note that this plugi
 
 It writes to the following locations, both in the `BGS-Tally` folder:
 
-1. `MissionLog.txt` - This file contains your currently active list of missions.
-2. `activitydata\` - This folder contains all your BGS activity, organised in one file per tick.
+1. `activitydata\` - This folder contains all your BGS activity, organised in one file per tick.
+2. `otherdata\` - This folder contains other data collected by BGS-Tally, including your currently active list of missions and the CMDRs you have targeted.
 
 All of these files use the JSON format, so can be easily viewed in a text editor or JSON viewer.
 
-(N.B. Older versions of BGS-Tally wrote to `Today Data.txt` and `Yesterday Data.txt` in your `BGS-Tally` folder. If you run BGS-Tally v2.0.0 or later, these files are automatically converted to the new format inside `activitydata\`, but the old files are left in place in case you want to revert to the previous v1.x plugin.)
+(N.B. Older versions of BGS-Tally wrote to `Today Data.txt`, `Yesterday Data.txt` and `MissionLog.txt` in your `BGS-Tally` folder. If you run BGS-Tally v2.0.0 or later, these files are automatically converted to the new formats inside `activitydata\` and `otherdata\`, but the old files are left in place in case you want to revert to the previous v1.x plugin.)
 
 ## Network Connections
 
@@ -55,4 +55,5 @@ The plugin makes the following network connections:
 
 1. To [EliteBGS](https://elitebgs.app/api/ebgs/v5/ticks) to grab the date and time of the lastest tick.
 2. To [GitHub](https://api.github.com/repos/aussig/BGS-Tally/releases/latest) to check the version of the plugin to see whether there is a newer version available.
-3. **Only if configured by you** to a specific Discord webhook on a Discord server of your choice, and only when you explicitly click the _Post to Discord_ button.
+3. To [Inara](https://inara.cz/elite/) to anonymously check for available information on targeted CMDRs.
+4. **Only if configured by you** to a specific Discord webhook on a Discord server of your choice, and only when you explicitly click the _Post to Discord_ button.
