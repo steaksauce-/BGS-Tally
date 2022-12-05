@@ -16,7 +16,7 @@ class FleetCarrier:
         self.buying:List = []
         self.selling:List = []
 
-        self._parse_materials()
+        #self._parse_materials()
 
 
     def available(self):
@@ -51,7 +51,7 @@ class FleetCarrier:
 
 
         except Exception as e:
-            Debug.logger.error(f"Unable to load FCMaterials.json from the player journal folder", exc_info=e)
+            Debug.logger.info(f"Unable to load FCMaterials.json from the player journal folder (No Fleet Carrier?)")
 
 
     def _get_materials(self, category: MaterialsCategory):
