@@ -1,3 +1,4 @@
+from os import mkdir, path
 from threading import Thread
 from time import sleep
 from typing import Optional
@@ -5,20 +6,25 @@ from typing import Optional
 import plug
 import requests
 from config import config
+from monitor import monitor
 
 from bgstally.activity import Activity
 from bgstally.activitymanager import ActivityManager
+from bgstally.config import Config
+from bgstally.constants import FOLDER_DATA
 from bgstally.debug import Debug
 from bgstally.discord import Discord
 from bgstally.constants import UpdateUIPolicy
+from bgstally.fleetcarrier import FleetCarrier
 from bgstally.missionlog import MissionLog
 from bgstally.overlay import Overlay
 from bgstally.state import State
+from bgstally.targetlog import TargetLog
 from bgstally.tick import Tick
 from bgstally.ui import UI
 
-URL_PLUGIN_VERSION = "https://api.github.com/repos/aussig/BGS-Tally/releases/latest"
 TIME_WORKER_PERIOD_S = 60
+URL_PLUGIN_VERSION = "https://api.github.com/repos/aussig/BGS-Tally/releases/latest"
 
 
 class BGSTally:
@@ -37,14 +43,20 @@ class BGSTally:
         """
         self.plugin_dir = plugin_dir
 
+        data_filepath = path.join(self.plugin_dir, FOLDER_DATA)
+        if not path.exists(data_filepath): mkdir(data_filepath)
+
         # Classes
         self.debug: Debug = Debug(self)
+        self.config: Config = Config(self)
         self.state: State = State(self)
         self.mission_log: MissionLog = MissionLog(self)
+        self.target_log: TargetLog = TargetLog(self)
         self.discord: Discord = Discord(self)
         self.tick: Tick = Tick(self, True)
         self.overlay = Overlay(self)
         self.activity_manager: ActivityManager = ActivityManager(self)
+        self.fleet_carrier = FleetCarrier(self)
         self.ui: UI = UI(self)
 
         self.thread: Optional[Thread] = Thread(target=self._worker, name="BGSTally Main worker")
@@ -64,10 +76,18 @@ class BGSTally:
         """
         Parse an incoming journal entry and store the data we need
         """
+
+        # Live galaxy check
+        try:
+            if not monitor.is_live_galaxy(): return
+        except Exception as e:
+            self.debug.logger.error(f"The EDMC Version is too old, please upgrade to v5.6.0 or later", exc_info=e)
+            return
+
         activity: Activity = self.activity_manager.get_current_activity()
         dirty: bool = False
 
-        if entry['event'] in ['Location', 'FSDJump', 'CarrierJump']:
+        if entry.get('event') in ['Location', 'FSDJump', 'CarrierJump']:
             if self.check_tick(UpdateUIPolicy.IMMEDIATE):
                 # New activity will be generated with a new tick
                 activity = self.activity_manager.get_current_activity()
@@ -75,13 +95,13 @@ class BGSTally:
             activity.system_entered(entry, self.state)
             dirty = True
 
-        match entry['event']:
+        match entry.get('event'):
             case 'Docked':
                 self.state.station_faction = entry['StationFaction']['Name']
                 self.state.station_type = entry['StationType']
                 dirty = True
 
-            case 'Location' | 'StartUp' if entry['Docked'] == True:
+            case 'Location' | 'StartUp' if entry.get('Docked') == True:
                 self.state.station_type = entry['StationType']
                 dirty = True
 
@@ -93,11 +113,11 @@ class BGSTally:
                 activity.organic_data_sold(entry, self.state)
                 dirty = True
 
-            case 'RedeemVoucher' if entry['Type'] == 'bounty':
+            case 'RedeemVoucher' if entry.get('Type') == 'bounty':
                 activity.bv_redeemed(entry, self.state)
                 dirty = True
 
-            case 'RedeemVoucher' if entry['Type'] == 'CombatBond':
+            case 'RedeemVoucher' if entry.get('Type') == 'CombatBond':
                 activity.cb_redeemed(entry, self.state)
                 dirty = True
 
@@ -110,11 +130,11 @@ class BGSTally:
                 dirty = True
 
             case 'MissionAccepted':
-                self.mission_log.add_mission(entry['Name'], entry['Faction'], entry['MissionID'], entry['Expiry'], system)
+                self.mission_log.add_mission(entry.get('Name', ""), entry.get('Faction', ""), entry.get('MissionID', ""), entry.get('Expiry', ""), system)
                 dirty = True
 
             case 'MissionAbandoned':
-                self.mission_log.delete_mission_by_id(entry['MissionID'])
+                self.mission_log.delete_mission_by_id(entry.get('MissionID'))
                 dirty = True
 
             case 'MissionFailed':
@@ -127,6 +147,7 @@ class BGSTally:
 
             case 'ShipTargeted':
                 activity.ship_targeted(entry, self.state)
+                self.target_log.ship_targeted(entry, system)
                 dirty = True
 
             case 'CommitCrime':
@@ -180,6 +201,7 @@ class BGSTally:
         Save all data structures
         """
         self.mission_log.save()
+        self.target_log.save()
         self.tick.save()
         self.activity_manager.save()
         self.state.save()

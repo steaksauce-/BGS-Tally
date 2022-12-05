@@ -1,5 +1,23 @@
 # Change Log
 
+## v2.1.0 - 2022-12-05
+
+### New Features:
+
+* CMDR Spotting. The plugin now keeps track of the players you target and scan, together with when it happened and in which system. It also looks up any public CMDR and Squadron information on Inara. All this information is presented in a new window where you can review the list of all CMDRs you've targeted. There is also a 'Post to Discord' feature so you can post the CMDR information to your Discord server if you wish (manual only).
+* New format available for Discord posts. The (I think) neater and clearer look uses Discord message embeds. The old text-only format is still available from the settings if you prefer it.
+
+### Changes:
+
+* After the game mode split in Odyssey Update 14, BGS-Tally only operates in `Live` game mode, not `Legacy`.
+* Additional data files created by BGS-Tally (such as the mission log) are now saved in an `otherdata` subfolder to keep the top level folder as tidy as possible.
+
+### Bug Fixes:
+
+* BGS-Tally was intentionally omitting secondary INF when a faction was in conflict, but it turns out some mission types can have -ve INF effects on those factions. So we now report all secondary INF.
+* The game was not including expiry dates in some mission types (why?), and BGS-Tally was throwing errors when it encountered these. Now we don't require an expiry date.
+
+
 ## v2.0.2 - 2022-10-27
 
 ### Bug Fixes:

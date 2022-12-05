@@ -3,7 +3,7 @@ from typing import Dict
 
 from config import config
 
-from bgstally.constants import CheckStates
+from bgstally.constants import CheckStates, DiscordPostStyle
 
 
 class State:
@@ -25,8 +25,10 @@ class State:
         self.ShowZeroActivitySystems:tk.StringVar = tk.StringVar(value=config.get_str('XShowZeroActivity', default=CheckStates.STATE_ON))
         self.AbbreviateFactionNames:tk.StringVar = tk.StringVar(value=config.get_str('XAbbreviate', default=CheckStates.STATE_OFF))
         self.IncludeSecondaryInf:tk.StringVar = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
-        self.DiscordWebhook:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordWebhook', default=""))
+        self.DiscordBGSWebhook:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordWebhook', default=""))
+        self.DiscordFCJumpWebhook:tk.StringVar = tk.StringVar(value=config.get_str("XDiscordFCJumpWebhook", default=""))
         self.DiscordUsername:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordUsername', default=""))
+        self.DiscordPostStyle:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordPostStyle', default=DiscordPostStyle.EMBED))
         self.EnableOverlay:tk.StringVar = tk.StringVar(value=config.get_str('XEnableOverlay', default=CheckStates.STATE_ON))
 
         # Persistent values
@@ -58,8 +60,10 @@ class State:
         config.set('XShowZeroActivity', self.ShowZeroActivitySystems.get())
         config.set('XAbbreviate', self.AbbreviateFactionNames.get())
         config.set('XSecondaryInf', self.IncludeSecondaryInf.get())
-        config.set('XDiscordWebhook', self.DiscordWebhook.get())
+        config.set('XDiscordWebhook', self.DiscordBGSWebhook.get())
+        config.set('XDiscordFCJumpWebhook', self.DiscordFCJumpWebhook.get())
         config.set('XDiscordUsername', self.DiscordUsername.get())
+        config.set('XDiscordPostStyle', self.DiscordPostStyle.get())
         config.set('XEnableOverlay', self.EnableOverlay.get())
 
         # Persistent values
