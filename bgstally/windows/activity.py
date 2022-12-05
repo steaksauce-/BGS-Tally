@@ -63,8 +63,12 @@ class WindowActivity:
 
         DiscordOptionsFrame = ttk.Frame(DiscordFrame)
         DiscordOptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
-        ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
-        ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(sticky=tk.W)
+        current_row = 1
+        ttk.Label(DiscordOptionsFrame, text="Post Format").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        ttk.Radiobutton(DiscordOptionsFrame, text="Text (Legacy)", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.TEXT).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Radiobutton(DiscordOptionsFrame, text="Embed (Modern)", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.EMBED).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
 
         system_list = activity.get_ordered_systems()
 
@@ -193,7 +197,7 @@ class WindowActivity:
         DiscordText.tag_add('sel', '1.0', 'end')
         DiscordText.focus()
 
-        ttk.Button(ContainerFrame, text="Copy to Clipboard", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
+        ttk.Button(ContainerFrame, text="Copy to Clipboard (Text Format)", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
         if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self._post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
 
         theme.update(ContainerFrame)
