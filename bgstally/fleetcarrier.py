@@ -16,7 +16,7 @@ class FleetCarrier:
         self.buying:List = []
         self.selling:List = []
 
-        #self._parse_materials()
+        self._parse_materials()
 
 
     def available(self):

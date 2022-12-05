@@ -70,8 +70,8 @@ class UI:
         self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tallies ", height=SIZE_BUTTON_PIXELS-2, image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
         self.PreviousButton.grid(row=current_row, column=1, padx=3)
         tk.Button(self.frame, image=self.image_button_cmdrs, height=SIZE_BUTTON_PIXELS, width=SIZE_BUTTON_PIXELS, command=self._show_cmdr_list_window).grid(row=current_row, column=2, padx=3)
-        if self.bgstally.fleet_carrier.available():
-            tk.Button(self.frame, image=self.image_button_carrier, height=SIZE_BUTTON_PIXELS, width=SIZE_BUTTON_PIXELS, command=self._show_fc_window).grid(row=current_row, column=3, padx=3)
+        #if self.bgstally.fleet_carrier.available():
+        #    tk.Button(self.frame, image=self.image_button_carrier, height=SIZE_BUTTON_PIXELS, width=SIZE_BUTTON_PIXELS, command=self._show_fc_window).grid(row=current_row, column=3, padx=3)
         current_row += 1
         tk.Label(self.frame, text="BGS Tally Status:").grid(row=current_row, column=0, sticky=tk.W)
         tk.Label(self.frame, textvariable=self.bgstally.state.Status).grid(row=current_row, column=1, sticky=tk.W); current_row += 1
@@ -118,8 +118,8 @@ class UI:
         nb.Checkbutton(frame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Label(frame, text="Discord BGS Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordBGSWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
-        nb.Label(frame, text="Discord FC Jump Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
-        EntryPlus(frame, textvariable=self.bgstally.state.DiscordFCJumpWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
+        #nb.Label(frame, text="Discord FC Jump Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
+        #EntryPlus(frame, textvariable=self.bgstally.state.DiscordFCJumpWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
         nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=current_row)
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=current_row); current_row += 1
 
