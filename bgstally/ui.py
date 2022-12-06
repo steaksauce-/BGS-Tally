@@ -111,21 +111,22 @@ class UI:
 
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW); current_row += 1
         nb.Label(frame, text="Discord", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
-        nb.Label(frame, text="Post Format").grid(column=0, padx=10, sticky=tk.W, row=current_row)
-        nb.Radiobutton(frame, text="Legacy", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.TEXT).grid(column=1, padx=10, sticky=tk.W, row=current_row); current_row += 1
-        nb.Radiobutton(frame, text="Modern", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.EMBED).grid(column=1, padx=10, sticky=tk.W, row=current_row); current_row += 1
+        nb.Label(frame, text="Post Format").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        nb.Radiobutton(frame, text="Modern", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.EMBED).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        nb.Radiobutton(frame, text="Legacy", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.TEXT).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Label(frame, text="Activity to Include").grid(row=current_row, column=0, padx=10, sticky=tk.W)
         nb.Radiobutton(frame, text="BGS", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BGS).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Radiobutton(frame, text="Thargoid War", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.THARGOIDWAR).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Radiobutton(frame, text="Both", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BOTH).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
-        nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
-        nb.Checkbutton(frame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
-        nb.Label(frame, text="Discord BGS Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
-        EntryPlus(frame, textvariable=self.bgstally.state.DiscordBGSWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
-        #nb.Label(frame, text="Discord FC Jump Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
-        #EntryPlus(frame, textvariable=self.bgstally.state.DiscordFCJumpWebhook).grid(column=1, padx=10, pady=2, sticky=tk.EW, row=current_row); current_row += 1
-        nb.Label(frame, text="Discord Post as User").grid(column=0, padx=10, sticky=tk.W, row=current_row)
-        EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(column=1, padx=10, pady=2, sticky=tk.W, row=current_row); current_row += 1
+        nb.Label(frame, text="Other Options").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        nb.Checkbutton(frame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        nb.Label(frame, text="Discord BGS Webhook URL").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        EntryPlus(frame, textvariable=self.bgstally.state.DiscordBGSWebhook).grid(row=current_row, column=1, padx=10, pady=2, sticky=tk.EW); current_row += 1
+        #nb.Label(frame, text="Discord FC Jump Webhook URL").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        #EntryPlus(frame, textvariable=self.bgstally.state.DiscordFCJumpWebhook).grid(row=current_row, column=1, padx=10, pady=2, sticky=tk.EW); current_row += 1
+        nb.Label(frame, text="Discord Post as User").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(row=current_row, column=1, padx=10, pady=2, sticky=tk.W); current_row += 1
 
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW); current_row += 1
         nb.Label(frame, text="In-game Overlay", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
