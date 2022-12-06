@@ -5,7 +5,7 @@ from tkinter import PhotoImage, ttk
 from typing import Dict
 
 from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
-from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordChannel, DiscordPostStyle
+from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordActivity, DiscordChannel, DiscordPostStyle
 from bgstally.debug import Debug
 from bgstally.discord import DATETIME_FORMAT
 from bgstally.widgets import TextPlus
@@ -49,6 +49,8 @@ class WindowActivity:
 
         DiscordFrame = ttk.Frame(ContainerFrame)
         DiscordFrame.pack(fill=tk.BOTH, padx=5, pady=5)
+        DiscordFrame.columnconfigure(0, weight=2)
+        DiscordFrame.columnconfigure(1, weight=1)
         ttk.Label(DiscordFrame, text="Discord Report", font=self.ui.heading_font).grid(row=0, column=0, sticky=tk.W)
         ttk.Label(DiscordFrame, text="Discord Options", font=self.ui.heading_font).grid(row=0, column=1, sticky=tk.W)
         ttk.Label(DiscordFrame, text="Double-check on-ground CZ tallies, sizes are not always correct", foreground='#f00').grid(row=1, column=0, columnspan=2, sticky=tk.W)
@@ -67,6 +69,11 @@ class WindowActivity:
         ttk.Label(DiscordOptionsFrame, text="Post Format").grid(row=current_row, column=0, padx=10, sticky=tk.W)
         ttk.Radiobutton(DiscordOptionsFrame, text="Legacy", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.TEXT).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         ttk.Radiobutton(DiscordOptionsFrame, text="Modern", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.EMBED).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Label(DiscordOptionsFrame, text="Activity to Include").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        ttk.Radiobutton(DiscordOptionsFrame, text="BGS", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BGS).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Radiobutton(DiscordOptionsFrame, text="Thargoid War", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.THARGOIDWAR).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Radiobutton(DiscordOptionsFrame, text="Both", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BOTH).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Label(DiscordOptionsFrame, text="Other Options").grid(row=current_row, column=0, padx=10, sticky=tk.W)
         ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
 

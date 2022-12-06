@@ -3,7 +3,7 @@ from typing import Dict
 
 from config import config
 
-from bgstally.constants import CheckStates, DiscordPostStyle
+from bgstally.constants import CheckStates, DiscordActivity, DiscordPostStyle
 
 
 class State:
@@ -29,6 +29,7 @@ class State:
         self.DiscordFCJumpWebhook:tk.StringVar = tk.StringVar(value=config.get_str("XDiscordFCJumpWebhook", default=""))
         self.DiscordUsername:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordUsername', default=""))
         self.DiscordPostStyle:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordPostStyle', default=DiscordPostStyle.EMBED))
+        self.DiscordActivity:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordActivity', default=DiscordActivity.BOTH))
         self.EnableOverlay:tk.StringVar = tk.StringVar(value=config.get_str('XEnableOverlay', default=CheckStates.STATE_ON))
 
         # Persistent values
@@ -64,6 +65,7 @@ class State:
         config.set('XDiscordFCJumpWebhook', self.DiscordFCJumpWebhook.get())
         config.set('XDiscordUsername', self.DiscordUsername.get())
         config.set('XDiscordPostStyle', self.DiscordPostStyle.get())
+        config.set('XDiscordActivity', self.DiscordActivity.get())
         config.set('XEnableOverlay', self.EnableOverlay.get())
 
         # Persistent values

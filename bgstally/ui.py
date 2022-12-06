@@ -13,7 +13,7 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from bgstally.activity import Activity
-from bgstally.constants import FOLDER_ASSETS, CheckStates, DiscordPostStyle, UpdateUIPolicy
+from bgstally.constants import FOLDER_ASSETS, CheckStates, DiscordActivity, DiscordPostStyle, UpdateUIPolicy
 from bgstally.debug import Debug
 from bgstally.widgets import EntryPlus
 from bgstally.windows.activity import WindowActivity
@@ -114,6 +114,10 @@ class UI:
         nb.Label(frame, text="Post Format").grid(column=0, padx=10, sticky=tk.W, row=current_row)
         nb.Radiobutton(frame, text="Legacy", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.TEXT).grid(column=1, padx=10, sticky=tk.W, row=current_row); current_row += 1
         nb.Radiobutton(frame, text="Modern", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.EMBED).grid(column=1, padx=10, sticky=tk.W, row=current_row); current_row += 1
+        nb.Label(frame, text="Activity to Include").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        nb.Radiobutton(frame, text="BGS", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BGS).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        nb.Radiobutton(frame, text="Thargoid War", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.THARGOIDWAR).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        nb.Radiobutton(frame, text="Both", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BOTH).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Checkbutton(frame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Checkbutton(frame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF).grid(column=1, padx=10, sticky=tk.W); current_row += 1
         nb.Label(frame, text="Discord BGS Webhook URL").grid(column=0, padx=10, sticky=tk.W, row=current_row)
