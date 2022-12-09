@@ -10,11 +10,11 @@ from bgstally.state import State
 from bgstally.tick import Tick
 
 DATETIME_FORMAT_ACTIVITY = "%Y-%m-%dT%H:%M:%S.%fZ"
-CONFLICT_STATES = ['War', 'CivilWar']
-ELECTION_STATES = ['Election']
+STATES_WAR = ['War', 'CivilWar']
+STATES_ELECTION = ['Election']
 
 # Missions that we count as +1 INF in Elections even if the Journal reports no +INF
-ELECTION_MISSIONS = [
+MISSIONS_ELECTION = [
     'Mission_AltruismCredits_name',
     'Mission_Collect_name', 'Mission_Collect_Industrial_name',
     'Mission_Courier_name', 'Mission_Courier_Boom_name', 'Mission_Courier_Democracy_name', 'Mission_Courier_Elections_name', 'Mission_Courier_Expansion_name',
@@ -32,11 +32,16 @@ ELECTION_MISSIONS = [
 ]
 
 # Missions that we count as +1 INF in conflicts even if the Journal reports no +INF
-CONFLICT_MISSIONS = [
+MISSIONS_WAR = [
     'Mission_Assassinate_Legal_CivilWar_name', 'Mission_Assassinate_Legal_War_name',
     'Mission_Massacre_Conflict_CivilWar_name', 'Mission_Massacre_Conflict_War_name',
     'Mission_OnFoot_Assassination_Covert_MB_name',
     'Mission_OnFoot_Onslaught_Offline_MB_name'
+]
+
+# Missions that count towards Thargoid War rescues
+MISSIONS_TW_RESCUE = [
+    'Mission_TW_Rescue_Burning_name', 'Mission_TW_PassengerEvacuation_Alert_name'
 ]
 
 CZ_GROUND_LOW_CB_MAX = 5000
@@ -159,7 +164,7 @@ class Activity:
             if faction['Name'] == "Pilots' Federation Local Branch": continue
 
             # Ignore conflict states in FactionState as we can't trust they always come in pairs. We deal with conflicts separately below.
-            faction_state = faction['FactionState'] if faction['FactionState'] not in CONFLICT_STATES and faction['FactionState'] not in ELECTION_STATES else "None"
+            faction_state = faction['FactionState'] if faction['FactionState'] not in STATES_WAR and faction['FactionState'] not in STATES_ELECTION else "None"
 
             if faction['Name'] in current_system['Factions']:
                 # We have this faction, ensure it's up to date with latest state
@@ -186,6 +191,8 @@ class Activity:
         """
         Handle mission completed
         """
+        mission = mission_log.get_mission(journal_entry['MissionID'])
+
         for faction_effect in journal_entry['FactionEffects']:
             effect_faction_name = faction_effect['Faction']
             if faction_effect['Influence'] != []:
@@ -207,25 +214,44 @@ class Activity:
                             faction['MissionPoints'] -= inf
                         else:
                             faction['MissionPointsSecondary'] -= inf
-                    self.recalculate_zero_activity()
 
-            else:  # No influence specified for faction effect
-                mission_log_items = mission_log.get_missionlog()
-                for mission in mission_log_items:
-                    if mission['MissionID'] != journal_entry['MissionID']: continue
+            elif mission is not None:  # No influence specified for faction effect
+                for system_address, system in self.systems.items():
+                    if mission['System'] != system['System']: continue
 
-                    for system_address, system in self.systems.items():
-                        if mission['System'] != system['System']: continue
+                    faction = system['Factions'].get(effect_faction_name)
+                    if not faction: continue
 
-                        faction = system['Factions'].get(effect_faction_name)
-                        if not faction: continue
+                    if (faction['FactionState'] in STATES_ELECTION and journal_entry['Name'] in MISSIONS_ELECTION) \
+                    or (faction['FactionState'] in STATES_WAR and journal_entry['Name'] in MISSIONS_WAR) \
+                    and effect_faction_name == journal_entry['Faction']:
+                        faction['MissionPoints'] += 1
 
-                        if (faction['FactionState'] in ELECTION_STATES and journal_entry['Name'] in ELECTION_MISSIONS) \
-                        or (faction['FactionState'] in CONFLICT_STATES and journal_entry['Name'] in CONFLICT_MISSIONS) \
-                        and effect_faction_name == journal_entry['Faction']:
-                            faction['MissionPoints'] += 1
-                    self.recalculate_zero_activity()
+            Debug.logger.info(f"Missiontype: {journal_entry['Name']}")
+            Debug.logger.info(f"mission: {mission}")
 
+            if journal_entry['Name'] in MISSIONS_TW_RESCUE and mission is not None:
+                mission_station = mission.get('Station', "")
+                Debug.logger.info(f"station: {mission_station}")
+                if mission_station == "": continue
+
+                for system_address, system in self.systems.items():
+                    if mission['System'] != system['System']: continue
+
+                    faction = system['Factions'].get(effect_faction_name)
+                    Debug.logger.info(f"faction: {faction}")
+                    if not faction: continue
+
+                    tw_stations = faction['TWStations']
+                    if mission_station not in tw_stations:
+                        tw_stations[mission_station] = {'name': mission_station, 'enabled': CheckStates.STATE_ON, 'missions': 0, 'passengers': 0, 'escapepods': 0}
+
+                    tw_stations[mission_station]['missions'] += 1
+                    tw_stations[mission_station]['passengers'] += mission.get('PassengerCount', 0)
+                    tw_stations[mission_station]['escapepods'] += mission.get('Count', 0)
+                    Debug.logger.info(f"tw_station: {tw_stations[mission_station]}")
+
+        self.recalculate_zero_activity()
         mission_log.delete_mission_by_id(journal_entry['MissionID'])
 
 
@@ -233,19 +259,18 @@ class Activity:
         """
         Handle mission failed
         """
-        mission_log_items = mission_log.get_missionlog()
-        for mission in mission_log_items:
-            if mission['MissionID'] != journal_entry['MissionID']: continue
+        mission = mission_log.get_mission(journal_entry['MissionID'])
+        if mission is None: return
 
-            for system in self.systems.values():
-                if mission['System'] != system['System']: continue
+        for system in self.systems.values():
+            if mission['System'] != system['System']: continue
 
-                faction = system['Factions'].get(mission['Faction'])
-                if faction: faction['MissionFailed'] += 1
+            faction = system['Factions'].get(mission['Faction'])
+            if faction: faction['MissionFailed'] += 1
 
-                mission_log.delete_mission_by_id(mission['MissionID'])
-                self.recalculate_zero_activity()
-                break
+            mission_log.delete_mission_by_id(mission['MissionID'])
+            self.recalculate_zero_activity()
+            break
 
 
     def exploration_data_sold(self, journal_entry: Dict, state: State):
@@ -471,7 +496,8 @@ class Activity:
                 'MissionPoints': 0, 'MissionPointsSecondary': 0,
                 'TradeProfit': 0, 'TradePurchase': 0, 'BlackMarketProfit': 0, 'Bounties': 0, 'CartData': 0, 'ExoData': 0,
                 'CombatBonds': 0, 'MissionFailed': 0, 'Murdered': 0,
-                'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': {}, 'Scenarios': 0}
+                'SpaceCZ': {}, 'GroundCZ': {}, 'GroundCZSettlements': {}, 'Scenarios': 0,
+                'TWStations': {}}
 
 
     def _update_faction_data(self, faction_data: Dict, faction_state: str = None):
@@ -496,6 +522,8 @@ class Activity:
         if not 'TradePurchase' in faction_data: faction_data['TradePurchase'] = 0
         # From < v1.9.0 to 1.9.0
         if not 'Scenarios' in faction_data: faction_data['Scenarios'] = 0
+        # From < v2.2.0 to 2.2.0
+        if not 'TWStations' in faction_data: faction_data['TWStations'] = {}
 
 
     def _is_faction_data_zero(self, faction_data: Dict):
@@ -509,7 +537,8 @@ class Activity:
                 (faction_data['SpaceCZ'] == {} or (int(faction_data['SpaceCZ'].get('l', 0)) == 0 and int(faction_data['SpaceCZ'].get('m', 0)) == 0 and int(faction_data['SpaceCZ'].get('h', 0)) == 0)) and \
                 (faction_data['GroundCZ'] == {} or (int(faction_data['GroundCZ'].get('l', 0)) == 0 and int(faction_data['GroundCZ'].get('m', 0)) == 0 and int(faction_data['GroundCZ'].get('h', 0)) == 0)) and \
                 faction_data['GroundCZSettlements'] == {} and \
-                int(faction_data['Scenarios']) == 0
+                int(faction_data['Scenarios']) == 0 and \
+                faction_data['TWStations'] == {}
 
 
     def _as_dict(self):

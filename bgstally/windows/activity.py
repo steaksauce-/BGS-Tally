@@ -4,7 +4,7 @@ from os import path
 from tkinter import PhotoImage, ttk
 from typing import Dict
 
-from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
+from bgstally.activity import STATES_WAR, STATES_ELECTION, Activity
 from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordActivity, DiscordChannel, DiscordPostStyle
 from bgstally.debug import Debug
 from bgstally.discord import DATETIME_FORMAT
@@ -171,7 +171,7 @@ class WindowActivity:
                 ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=ScenariosVar).grid(row=x + header_rows, column=14, sticky=tk.N, padx=2, pady=2)
                 ScenariosVar.trace('w', partial(self._scenarios_change, TabParent, tab_index, ScenariosVar, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
 
-                if (faction['FactionState'] in CONFLICT_STATES):
+                if (faction['FactionState'] in STATES_WAR):
                     CZSpaceLVar = tk.StringVar(value=faction['SpaceCZ'].get('l', '0'))
                     ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=15, sticky=tk.N, padx=2, pady=2)
                     CZSpaceMVar = tk.StringVar(value=faction['SpaceCZ'].get('m', '0'))
@@ -443,9 +443,9 @@ class WindowActivity:
         inf = faction['MissionPoints']
         if self.bgstally.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
 
-        if faction['FactionState'] in ELECTION_STATES:
+        if faction['FactionState'] in STATES_ELECTION:
             activity_discord_text += f".ElectionINF +{inf}; " if inf > 0 else f".ElectionINF {inf}; " if inf < 0 else ""
-        elif faction['FactionState'] in CONFLICT_STATES:
+        elif faction['FactionState'] in STATES_WAR:
             activity_discord_text += f".WarINF +{inf}; " if inf > 0 else f".WarINF {inf}; " if inf < 0 else ""
         else:
             activity_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
@@ -470,7 +470,12 @@ class WindowActivity:
 
         for settlement_name in faction.get('GroundCZSettlements', {}):
             if faction['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON:
-                faction_discord_text += f"  - {settlement_name} x {faction['GroundCZSettlements'][settlement_name]['count']}\n"
+                faction_discord_text += f"  ⚔️ {settlement_name} x {faction['GroundCZSettlements'][settlement_name]['count']}\n"
+
+        for station_name in faction.get('TWStations', {}):
+            tw_station = faction['TWStations'][station_name]
+            if tw_station['enabled'] == CheckStates.STATE_ON:
+                faction_discord_text += f"  🚑 {station_name}: {tw_station['missions']} missions; 🧍 x {tw_station['passengers']}; 📦 x {tw_station['escapepods']};\n"
 
         return faction_discord_text
 

@@ -130,7 +130,8 @@ class BGSTally:
                 dirty = True
 
             case 'MissionAccepted':
-                self.mission_log.add_mission(entry.get('Name', ""), entry.get('Faction', ""), entry.get('MissionID', ""), entry.get('Expiry', ""), system)
+                self.mission_log.add_mission(entry.get('Name', ""), entry.get('Faction', ""), entry.get('MissionID', ""), entry.get('Expiry', ""), system, station,
+                    entry.get('Count', -1), entry.get('PassengerCount', -1))
                 dirty = True
 
             case 'MissionAbandoned':
