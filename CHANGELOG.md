@@ -6,6 +6,10 @@
 
 * When displaying information about a CMDR, or posting to Discord, use the latest information we know about that CMDR (squadron membership, for example).
 
+### Bug Fixes:
+
+* If a selected CMDR has a squadron tag, but that squadron isn't available in Inara, still show the tag when displaying or posting the CMDR info to Discord.
+
 
 ## v2.1.0 - 2022-12-05
 

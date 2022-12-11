@@ -91,8 +91,6 @@ class WindowCMDRs:
         """
         A CMDR row has been clicked in the list, show details
         """
-        Debug.logger.debug(f"cell_values: {values} column: {column}")
-
         self.cmdr_details_name.config(text = "")
         self.cmdr_details_name_inara.configure(text = "", url = "")
         self.cmdr_details_squadron.config(text = "")
@@ -108,6 +106,8 @@ class WindowCMDRs:
             squadron_info = self.selected_cmdr['squadron']
             if 'squadronName' in squadron_info: self.cmdr_details_squadron.config(text = f"{squadron_info['squadronName']} ({squadron_info['squadronMemberRank']})")
             if 'inaraURL' in squadron_info: self.cmdr_details_squadron_inara.configure(text = "Inara Info Available", url = squadron_info['inaraURL'])
+        elif 'SquadronID' in self.selected_cmdr:
+            self.cmdr_details_squadron.config(text = f"{self.selected_cmdr['SquadronID']}")
 
         self.post_button['state'] = tk.NORMAL
 
