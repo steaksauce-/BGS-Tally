@@ -77,10 +77,10 @@ class TargetLog:
 
         cmdr_data = {'TargetName': cmdr_name,
                     'System': system,
-                    'SquadronID': journal_entry['SquadronID'] if 'SquadronID' in journal_entry else "----",
-                    'Ship': journal_entry['Ship'],
-                    'ShipLocalised': journal_entry['Ship_Localised'],
-                    'LegalStatus': journal_entry['LegalStatus'],
+                    'SquadronID': journal_entry.get('SquadronID', "----"),
+                    'Ship': journal_entry.get('Ship', '----'),
+                    'ShipLocalised': journal_entry.get('Ship_Localised', journal_entry.get('Ship', '----')),
+                    'LegalStatus': journal_entry.get('LegalStatus', '----'),
                     'Timestamp': journal_entry['timestamp']}
 
         cmdr_data, different = self._fetch_cmdr_info(cmdr_name, cmdr_data)
