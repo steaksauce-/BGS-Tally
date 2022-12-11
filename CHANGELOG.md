@@ -2,6 +2,9 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes:
+
+* When displaying information about a CMDR, or posting to Discord, use the latest information we know about that CMDR (squadron membership, for example).
 
 
 ## v2.1.0 - 2022-12-05

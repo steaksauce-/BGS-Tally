@@ -57,9 +57,9 @@ class TargetLog:
 
     def get_target_info(self, cmdr_name:str):
         """
-        Look up and return information on a CMDR
+        Look up and return latest information on a CMDR
         """
-        return next((item for item in self.targetlog if item['TargetName'] == cmdr_name), None)
+        return next((item for item in reversed(self.targetlog) if item['TargetName'] == cmdr_name), None)
 
 
     def ship_targeted(self, journal_entry: Dict, system: str):

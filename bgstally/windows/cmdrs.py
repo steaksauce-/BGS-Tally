@@ -98,6 +98,7 @@ class WindowCMDRs:
         self.cmdr_details_squadron.config(text = "")
         self.cmdr_details_squadron_inara.configure(text = "", url = "")
 
+        # Fetch the latest info for this CMDR
         self.selected_cmdr = self.bgstally.target_log.get_target_info(values[0])
         if not self.selected_cmdr: return
 
