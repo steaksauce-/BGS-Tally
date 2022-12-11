@@ -78,7 +78,7 @@ class WindowCMDRs:
             treeview.column(column['title'], anchor=column['align'], stretch=column['stretch'], width=column['width'])
 
         for target in reversed(target_data):
-            target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
+            target_values = [target['TargetName'], target['System'], target['SquadronID'], target.get('ShipLocalised', target['Ship']), target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
             treeview.insert("", 'end', values=target_values)
 
         if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS):
@@ -131,7 +131,7 @@ class WindowCMDRs:
             },
             {
                 "name": "In Ship",
-                "value": self.selected_cmdr['Ship'],
+                "value": self.selected_cmdr.get('ShipLocalised', self.selected_cmdr['Ship']),  # More recently we store both, but only 'Ship' may be present for old data
                 "inline": True
             },
             {

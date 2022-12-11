@@ -79,6 +79,7 @@ class TargetLog:
                     'System': system,
                     'SquadronID': journal_entry['SquadronID'] if 'SquadronID' in journal_entry else "----",
                     'Ship': journal_entry['Ship'],
+                    'ShipLocalised': journal_entry['Ship_Localised'],
                     'LegalStatus': journal_entry['LegalStatus'],
                     'Timestamp': journal_entry['timestamp']}
 
@@ -105,6 +106,7 @@ class TargetLog:
             cmdr_data_copy = copy(self.cmdr_cache[cmdr_name])
             cmdr_data_copy['System'] = cmdr_data['System']
             cmdr_data_copy['Ship'] = cmdr_data['Ship']
+            cmdr_data_copy['ShipLocalised'] = cmdr_data['ShipLocalised']
             cmdr_data_copy['LegalStatus'] = cmdr_data['LegalStatus']
             cmdr_data_copy['Timestamp'] = cmdr_data['Timestamp']
             # Re-cache the data with the latest updates
