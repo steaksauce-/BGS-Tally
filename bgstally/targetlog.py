@@ -116,7 +116,7 @@ class TargetLog:
         payload = {
             'header': {
                 'appName': self.bgstally.plugin_name,
-                'appVersion': self.bgstally.version,
+                'appVersion': str(self.bgstally.version),
                 'isBeingDeveloped': "true",
                 'APIkey': self.bgstally.config.apikey_inara()
             },

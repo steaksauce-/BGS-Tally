@@ -129,8 +129,8 @@ class Discord:
         'value' (the field contents)
         """
         footer_timestamp = f"Updated at {datetime.utcnow().strftime(DATETIME_FORMAT)}" if update else f"Posted at {datetime.utcnow().strftime(DATETIME_FORMAT)}"
-        footer_version = f"{self.bgstally.plugin_name} v{self.bgstally.version}"
-        footer_pad = 109 - len(footer_version)
+        footer_version = f"{self.bgstally.plugin_name} v{str(self.bgstally.version)}"
+        footer_pad = 108 - len(footer_version)
 
         embed:Dict = {
             "color": 10682531,
