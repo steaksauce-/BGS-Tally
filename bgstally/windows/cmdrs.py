@@ -78,7 +78,7 @@ class WindowCMDRs:
             treeview.column(column['title'], anchor=column['align'], stretch=column['stretch'], width=column['width'])
 
         for target in reversed(target_data):
-            target_values = [target['TargetName'], target['System'], target['SquadronID'], target['Ship'], target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
+            target_values = [target['TargetName'], target['System'], target['SquadronID'], target.get('ShipLocalised', target['Ship']), target['LegalStatus'], datetime.strptime(target['Timestamp'], DATETIME_FORMAT_JOURNAL).strftime(DATETIME_FORMAT_CMDRLIST)]
             treeview.insert("", 'end', values=target_values)
 
         if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS):
@@ -91,13 +91,12 @@ class WindowCMDRs:
         """
         A CMDR row has been clicked in the list, show details
         """
-        Debug.logger.debug(f"cell_values: {values} column: {column}")
-
         self.cmdr_details_name.config(text = "")
         self.cmdr_details_name_inara.configure(text = "", url = "")
         self.cmdr_details_squadron.config(text = "")
         self.cmdr_details_squadron_inara.configure(text = "", url = "")
 
+        # Fetch the latest info for this CMDR
         self.selected_cmdr = self.bgstally.target_log.get_target_info(values[0])
         if not self.selected_cmdr: return
 
@@ -107,6 +106,8 @@ class WindowCMDRs:
             squadron_info = self.selected_cmdr['squadron']
             if 'squadronName' in squadron_info: self.cmdr_details_squadron.config(text = f"{squadron_info['squadronName']} ({squadron_info['squadronMemberRank']})")
             if 'inaraURL' in squadron_info: self.cmdr_details_squadron_inara.configure(text = "Inara Info Available", url = squadron_info['inaraURL'])
+        elif 'SquadronID' in self.selected_cmdr:
+            self.cmdr_details_squadron.config(text = f"{self.selected_cmdr['SquadronID']}")
 
         self.post_button['state'] = tk.NORMAL
 
@@ -130,7 +131,7 @@ class WindowCMDRs:
             },
             {
                 "name": "In Ship",
-                "value": self.selected_cmdr['Ship'],
+                "value": self.selected_cmdr.get('ShipLocalised', self.selected_cmdr['Ship']),  # More recently we store both, but only 'Ship' may be present for old data
                 "inline": True
             },
             {

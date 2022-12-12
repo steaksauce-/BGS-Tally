@@ -57,9 +57,9 @@ class TargetLog:
 
     def get_target_info(self, cmdr_name:str):
         """
-        Look up and return information on a CMDR
+        Look up and return latest information on a CMDR
         """
-        return next((item for item in self.targetlog if item['TargetName'] == cmdr_name), None)
+        return next((item for item in reversed(self.targetlog) if item['TargetName'] == cmdr_name), None)
 
 
     def ship_targeted(self, journal_entry: Dict, system: str):
@@ -77,9 +77,10 @@ class TargetLog:
 
         cmdr_data = {'TargetName': cmdr_name,
                     'System': system,
-                    'SquadronID': journal_entry['SquadronID'] if 'SquadronID' in journal_entry else "----",
-                    'Ship': journal_entry['Ship'],
-                    'LegalStatus': journal_entry['LegalStatus'],
+                    'SquadronID': journal_entry.get('SquadronID', "----"),
+                    'Ship': journal_entry.get('Ship', '----'),
+                    'ShipLocalised': journal_entry.get('Ship_Localised', journal_entry.get('Ship', '----')),
+                    'LegalStatus': journal_entry.get('LegalStatus', '----'),
                     'Timestamp': journal_entry['timestamp']}
 
         cmdr_data, different = self._fetch_cmdr_info(cmdr_name, cmdr_data)
@@ -105,6 +106,7 @@ class TargetLog:
             cmdr_data_copy = copy(self.cmdr_cache[cmdr_name])
             cmdr_data_copy['System'] = cmdr_data['System']
             cmdr_data_copy['Ship'] = cmdr_data['Ship']
+            cmdr_data_copy['ShipLocalised'] = cmdr_data['ShipLocalised']
             cmdr_data_copy['LegalStatus'] = cmdr_data['LegalStatus']
             cmdr_data_copy['Timestamp'] = cmdr_data['Timestamp']
             # Re-cache the data with the latest updates

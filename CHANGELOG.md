@@ -2,6 +2,14 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### Changes:
+
+* When displaying information about a CMDR, or posting to Discord, use the latest information we know about that CMDR (squadron membership, for example).
+* When displaying CMDR ship type, try to use the localised name if present, instead of internal ship name (e.g. `Type-10 Defender` instead of `type9_military`).
+
+### Bug Fixes:
+
+* If a selected CMDR has a squadron tag, but that squadron isn't available in Inara, still show the tag when displaying or posting the CMDR info to Discord.
 
 
 ## v2.1.0 - 2022-12-05
