@@ -227,19 +227,14 @@ class Activity:
                     and effect_faction_name == journal_entry['Faction']:
                         faction['MissionPoints'] += 1
 
-            Debug.logger.info(f"Missiontype: {journal_entry['Name']}")
-            Debug.logger.info(f"mission: {mission}")
-
             if journal_entry['Name'] in MISSIONS_TW_RESCUE and mission is not None:
                 mission_station = mission.get('Station', "")
-                Debug.logger.info(f"station: {mission_station}")
                 if mission_station == "": continue
 
                 for system_address, system in self.systems.items():
                     if mission['System'] != system['System']: continue
 
                     faction = system['Factions'].get(effect_faction_name)
-                    Debug.logger.info(f"faction: {faction}")
                     if not faction: continue
 
                     tw_stations = faction['TWStations']
@@ -247,9 +242,8 @@ class Activity:
                         tw_stations[mission_station] = {'name': mission_station, 'enabled': CheckStates.STATE_ON, 'missions': 0, 'passengers': 0, 'escapepods': 0}
 
                     tw_stations[mission_station]['missions'] += 1
-                    tw_stations[mission_station]['passengers'] += mission.get('PassengerCount', 0)
-                    tw_stations[mission_station]['escapepods'] += mission.get('Count', 0)
-                    Debug.logger.info(f"tw_station: {tw_stations[mission_station]}")
+                    tw_stations[mission_station]['passengers'] += max(mission.get('PassengerCount', -1), 0)
+                    tw_stations[mission_station]['escapepods'] += max(mission.get('CommodityCount', -1), 0)
 
         self.recalculate_zero_activity()
         mission_log.delete_mission_by_id(journal_entry['MissionID'])

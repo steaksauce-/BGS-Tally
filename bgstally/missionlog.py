@@ -55,7 +55,7 @@ class MissionLog:
         return self.missionlog
 
 
-    def get_mission(self, missionid: str):
+    def get_mission(self, missionid: int):
         """
         Fetch a given mission from the missionlog, or None if not found
         """
@@ -68,7 +68,6 @@ class MissionLog:
         """
         Add a mission to the missionlog
         """
-        Debug.logger.info(f"{'Name': name, 'Faction': faction, 'MissionID': missionid, 'Expiry': expiry, 'System': system_name, 'Station': station_name, 'CommodityCount': commodity_count, 'PassengerCount': passenger_count}")
         self.missionlog.append({'Name': name, 'Faction': faction, 'MissionID': missionid, 'Expiry': expiry, 'System': system_name, 'Station': station_name,
                                 'CommodityCount': commodity_count, 'PassengerCount': passenger_count})
 
