@@ -3,7 +3,9 @@ from os import path
 from bgstally.bgstally import BGSTally
 from bgstally.constants import UpdateUIPolicy
 
-PLUGIN_VERSION = "2.1.0"
+import semantic_version
+
+PLUGIN_VERSION = semantic_version.Version.coerce("2.1.0")
 
 # Initialise the main plugin class
 this:BGSTally = BGSTally(path.basename(path.dirname(__file__)), PLUGIN_VERSION)

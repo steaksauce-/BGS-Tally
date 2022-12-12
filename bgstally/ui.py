@@ -9,6 +9,8 @@ from tkinter.messagebox import askyesno
 from typing import List, Optional
 
 import myNotebook as nb
+import semantic_version
+
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
@@ -54,7 +56,7 @@ class UI:
         """
 
 
-    def get_plugin_frame(self, parent_frame: tk.Frame, git_version_number: str):
+    def get_plugin_frame(self, parent_frame: tk.Frame, git_version: Optional[semantic_version.Version]):
         """
         Return a TK Frame for adding to the EDMC main window
         """
@@ -62,9 +64,9 @@ class UI:
 
         current_row = 0
         tk.Label(self.frame, text="BGS Tally (Aussi)").grid(row=current_row, column=0, sticky=tk.W)
-        tk.Label(self.frame, text="v" + self.bgstally.version).grid(row=current_row, column=1, sticky=tk.W)
-        if self._version_tuple(git_version_number) > self._version_tuple(self.bgstally.version):
-            HyperlinkLabel(self.frame, text="New version available", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=current_row, column=1, sticky=tk.W)
+        tk.Label(self.frame, text=f"v{str(self.bgstally.version)}").grid(row=current_row, column=1, sticky=tk.W)
+        if git_version > self.bgstally.version:
+            HyperlinkLabel(self.frame, text=f"New version available (v{str(git_version)})", background=nb.Label().cget('background'), url=URL_LATEST_RELEASE, underline=True).grid(row=current_row, column=1, columnspan=2, sticky=tk.W)
         current_row += 1
         tk.Button(self.frame, text="Latest BGS Tally", height=SIZE_BUTTON_PIXELS-2, image=self.image_blank, compound=tk.RIGHT, command=partial(self._show_activity_window, self.bgstally.activity_manager.get_current_activity())).grid(row=current_row, column=0, padx=3)
         self.PreviousButton = tk.Button(self.frame, text="Previous BGS Tallies ", height=SIZE_BUTTON_PIXELS-2, image=self.image_button_dropdown_menu, compound=tk.RIGHT, command=self._previous_ticks_popup)
@@ -101,7 +103,7 @@ class UI:
         frame.columnconfigure(1, weight=1)
 
         current_row = 1
-        nb.Label(frame, text=f"BGS Tally (modified by Aussi) v{self.bgstally.version}", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
+        nb.Label(frame, text=f"BGS Tally (modified by Aussi) v{str(self.bgstally.version)}", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
         HyperlinkLabel(frame, text="Instructions for Use", background=nb.Label().cget('background'), url=URL_WIKI, underline=True).grid(column=1, padx=10, sticky=tk.W); current_row += 1
 
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=2, sticky=tk.EW); current_row += 1
@@ -198,14 +200,3 @@ class UI:
         """
         answer = askyesno(title="Confirm FORCE a New Tick", message="This will move your current activity into the previous tick, and clear activity for the current tick.\n\nWARNING: It is not usually necessary to force a tick. Only do this if you know FOR CERTAIN there has been a tick but BGS-Tally is not showing it.\n\nAre you sure that you want to do this?", default="no")
         if answer: self.bgstally.new_tick(True, UpdateUIPolicy.IMMEDIATE)
-
-
-    def _version_tuple(self, version: str):
-        """
-        Parse the plugin version number into a tuple
-        """
-        try:
-            ret = tuple(map(int, version.split(".")))
-        except:
-            ret = (0,)
-        return ret
