@@ -4,7 +4,7 @@
 
 ### New Features:
 
-* Thargoid War rescue mission tracking. BGS-Tally now tracks your Thargoid War rescue activity - both passenger missions and cargo (escape pod) missions. There are options to report just BGS, just Thargoid War or all combined activity.
+* Thargoid War rescue mission tracking. BGS-Tally now tracks your Thargoid War rescue activity - passenger missions, cargo, and wounded (escape pod) missions. There are options to report just BGS, just Thargoid War or all combined activity, as well as an option to have a separate Discord channel when reporting just Thargoid War activity.
 
 ### Changes:
 
