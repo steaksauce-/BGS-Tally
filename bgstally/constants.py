@@ -34,6 +34,7 @@ class UpdateUIPolicy(Enum):
 class DiscordChannel(Enum):
     BGS = 0
     FLEETCARRIER = 1
+    THARGOIDWAR = 2
 
 
 class MaterialsCategory(Enum):

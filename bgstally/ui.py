@@ -103,8 +103,8 @@ class UI:
         frame.columnconfigure(1, weight=1)
 
         current_row = 1
-        nb.Label(frame, text=f"BGS Tally (modified by Aussi) v{str(self.bgstally.version)}", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
-        HyperlinkLabel(frame, text="Instructions for Use", background=nb.Label().cget('background'), url=URL_WIKI, underline=True).grid(column=1, padx=10, sticky=tk.W); current_row += 1
+        nb.Label(frame, text=f"BGS Tally (modified by Aussi) v{str(self.bgstally.version)}", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W)
+        HyperlinkLabel(frame, text="Instructions for Use", background=nb.Label().cget('background'), url=URL_WIKI, underline=True).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
 
         ttk.Separator(frame, orient=tk.HORIZONTAL).grid(columnspan=2, padx=10, pady=1, sticky=tk.EW); current_row += 1
         nb.Label(frame, text="General", font=self.heading_font).grid(column=0, padx=10, sticky=tk.W); current_row += 1
@@ -127,6 +127,8 @@ class UI:
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordBGSWebhook).grid(row=current_row, column=1, padx=10, pady=1, sticky=tk.EW); current_row += 1
         #nb.Label(frame, text="Discord FC Jump Webhook URL").grid(row=current_row, column=0, padx=10, sticky=tk.W)
         #EntryPlus(frame, textvariable=self.bgstally.state.DiscordFCJumpWebhook).grid(row=current_row, column=1, padx=10, pady=1, sticky=tk.EW); current_row += 1
+        nb.Label(frame, text="Discord Thargoid War Webhook URL").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        EntryPlus(frame, textvariable=self.bgstally.state.DiscordTWWebhook).grid(row=current_row, column=1, padx=10, pady=1, sticky=tk.EW); current_row += 1
         nb.Label(frame, text="Discord Post as User").grid(row=current_row, column=0, padx=10, sticky=tk.W)
         EntryPlus(frame, textvariable=self.bgstally.state.DiscordUsername).grid(row=current_row, column=1, padx=10, pady=1, sticky=tk.W); current_row += 1
 
