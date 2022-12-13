@@ -1,6 +1,6 @@
 # Change Log
 
-## vx.x.x - xxxx-xx-xx
+## v2.2.0 - xxxx-xx-xx
 
 ### New Features:
 
