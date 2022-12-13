@@ -2,6 +2,10 @@
 
 ## vx.x.x - xxxx-xx-xx
 
+### New Features:
+
+* Thargoid War rescue mission tracking. BGS-Tally now tracks your Thargoid War rescue activity - both passenger missions and cargo (escape pod) missions. There are options to report just BGS, just Thargoid War or all combined activity.
+
 ### Changes:
 
 * When displaying information about a CMDR, or posting to Discord, use the latest information we know about that CMDR (squadron membership, for example).

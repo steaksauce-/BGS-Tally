@@ -162,6 +162,8 @@ class Discord:
                 return self.bgstally.state.DiscordBGSWebhook.get()
             case DiscordChannel.FLEETCARRIER:
                 return self.bgstally.state.DiscordFCJumpWebhook.get()
+            case DiscordChannel.THARGOIDWAR:
+                return self.bgstally.state.DiscordTWWebhook.get()
 
 
     def _is_webhook_valid(self, webhook:str):

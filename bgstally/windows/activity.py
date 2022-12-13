@@ -4,8 +4,8 @@ from os import path
 from tkinter import PhotoImage, ttk
 from typing import Dict
 
-from bgstally.activity import CONFLICT_STATES, ELECTION_STATES, Activity
-from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordChannel, DiscordPostStyle
+from bgstally.activity import STATES_WAR, STATES_ELECTION, Activity
+from bgstally.constants import FOLDER_ASSETS, CheckStates, CZs, DiscordActivity, DiscordChannel, DiscordPostStyle
 from bgstally.debug import Debug
 from bgstally.discord import DATETIME_FORMAT
 from bgstally.widgets import TextPlus
@@ -49,6 +49,8 @@ class WindowActivity:
 
         DiscordFrame = ttk.Frame(ContainerFrame)
         DiscordFrame.pack(fill=tk.BOTH, padx=5, pady=5)
+        DiscordFrame.columnconfigure(0, weight=2)
+        DiscordFrame.columnconfigure(1, weight=1)
         ttk.Label(DiscordFrame, text="Discord Report", font=self.ui.heading_font).grid(row=0, column=0, sticky=tk.W)
         ttk.Label(DiscordFrame, text="Discord Options", font=self.ui.heading_font).grid(row=0, column=1, sticky=tk.W)
         ttk.Label(DiscordFrame, text="Double-check on-ground CZ tallies, sizes are not always correct", foreground='#f00').grid(row=1, column=0, columnspan=2, sticky=tk.W)
@@ -65,8 +67,13 @@ class WindowActivity:
         DiscordOptionsFrame.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NW)
         current_row = 1
         ttk.Label(DiscordOptionsFrame, text="Post Format").grid(row=current_row, column=0, padx=10, sticky=tk.W)
-        ttk.Radiobutton(DiscordOptionsFrame, text="Legacy", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.TEXT).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         ttk.Radiobutton(DiscordOptionsFrame, text="Modern", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.EMBED).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Radiobutton(DiscordOptionsFrame, text="Legacy", variable=self.bgstally.state.DiscordPostStyle, value=DiscordPostStyle.TEXT).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Label(DiscordOptionsFrame, text="Activity to Include").grid(row=current_row, column=0, padx=10, sticky=tk.W)
+        ttk.Radiobutton(DiscordOptionsFrame, text="BGS", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BGS, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Radiobutton(DiscordOptionsFrame, text="Thargoid War", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.THARGOIDWAR, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Radiobutton(DiscordOptionsFrame, text="Both", variable=self.bgstally.state.DiscordActivity, value=DiscordActivity.BOTH, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
+        ttk.Label(DiscordOptionsFrame, text="Other Options").grid(row=current_row, column=0, padx=10, sticky=tk.W)
         ttk.Checkbutton(DiscordOptionsFrame, text="Abbreviate Faction Names", variable=self.bgstally.state.AbbreviateFactionNames, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
         ttk.Checkbutton(DiscordOptionsFrame, text="Include Secondary INF", variable=self.bgstally.state.IncludeSecondaryInf, onvalue=CheckStates.STATE_ON, offvalue=CheckStates.STATE_OFF, command=partial(self._option_change, DiscordText, activity)).grid(row=current_row, column=1, padx=10, sticky=tk.W); current_row += 1
 
@@ -164,7 +171,7 @@ class WindowActivity:
                 ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=ScenariosVar).grid(row=x + header_rows, column=14, sticky=tk.N, padx=2, pady=2)
                 ScenariosVar.trace('w', partial(self._scenarios_change, TabParent, tab_index, ScenariosVar, EnableAllCheckbutton, DiscordText, activity, system, faction, x))
 
-                if (faction['FactionState'] in CONFLICT_STATES):
+                if (faction['FactionState'] in STATES_WAR):
                     CZSpaceLVar = tk.StringVar(value=faction['SpaceCZ'].get('l', '0'))
                     ttk.Spinbox(tab, from_=0, to=999, width=3, textvariable=CZSpaceLVar).grid(row=x + header_rows, column=15, sticky=tk.N, padx=2, pady=2)
                     CZSpaceMVar = tk.StringVar(value=faction['SpaceCZ'].get('m', '0'))
@@ -210,12 +217,18 @@ class WindowActivity:
         """
         Callback to post to discord
         """
+        # We post to the TW channel if we're _only_ reporting TW activity
+        if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR and self.bgstally.discord.is_webhook_valid(DiscordChannel.THARGOIDWAR):
+            discord_channel = DiscordChannel.THARGOIDWAR
+        else:
+            discord_channel = DiscordChannel.BGS
+
         if self.bgstally.state.DiscordPostStyle.get() == DiscordPostStyle.TEXT:
             discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
-            activity.discord_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_messageid, DiscordChannel.BGS)
+            activity.discord_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_messageid, discord_channel)
         else:
             discord_fields:Dict = self._generate_discord_embed_fields(activity)
-            activity.discord_messageid = self.bgstally.discord.post_embed(f"Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_messageid, DiscordChannel.BGS)
+            activity.discord_messageid = self.bgstally.discord.post_embed(f"Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_messageid, discord_channel)
 
 
     def _option_change(self, DiscordText, activity: Activity):
@@ -396,9 +409,13 @@ class WindowActivity:
         for system in activity.systems.values():
             system_discord_text = ""
 
-            for faction in system['Factions'].values():
-                if faction['Enabled'] != CheckStates.STATE_ON: continue
-                system_discord_text += self._generate_faction_discord_text(faction)
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+                system_discord_text += self._generate_tw_system_discord_text(system)
+
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+                for faction in system['Factions'].values():
+                    if faction['Enabled'] != CheckStates.STATE_ON: continue
+                    system_discord_text += self._generate_faction_discord_text(faction)
 
             if system_discord_text != "":
                 discord_text += f"```css\n{system['System']}\n{system_discord_text}```"
@@ -415,9 +432,13 @@ class WindowActivity:
         for system in activity.systems.values():
             system_discord_text = ""
 
-            for faction in system['Factions'].values():
-                if faction['Enabled'] != CheckStates.STATE_ON: continue
-                system_discord_text += self._generate_faction_discord_text(faction)
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+                system_discord_text += self._generate_tw_system_discord_text(system)
+
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+                for faction in system['Factions'].values():
+                    if faction['Enabled'] != CheckStates.STATE_ON: continue
+                    system_discord_text += self._generate_faction_discord_text(faction)
 
             if system_discord_text != "":
                 system_discord_text = system_discord_text.replace("'", "")
@@ -436,9 +457,9 @@ class WindowActivity:
         inf = faction['MissionPoints']
         if self.bgstally.state.IncludeSecondaryInf.get() == CheckStates.STATE_ON: inf += faction['MissionPointsSecondary']
 
-        if faction['FactionState'] in ELECTION_STATES:
+        if faction['FactionState'] in STATES_ELECTION:
             activity_discord_text += f".ElectionINF +{inf}; " if inf > 0 else f".ElectionINF {inf}; " if inf < 0 else ""
-        elif faction['FactionState'] in CONFLICT_STATES:
+        elif faction['FactionState'] in STATES_WAR:
             activity_discord_text += f".WarINF +{inf}; " if inf > 0 else f".WarINF {inf}; " if inf < 0 else ""
         else:
             activity_discord_text += f".INF +{inf}; " if inf > 0 else f".INF {inf}; " if inf < 0 else ""
@@ -463,9 +484,36 @@ class WindowActivity:
 
         for settlement_name in faction.get('GroundCZSettlements', {}):
             if faction['GroundCZSettlements'][settlement_name]['enabled'] == CheckStates.STATE_ON:
-                faction_discord_text += f"  - {settlement_name} x {faction['GroundCZSettlements'][settlement_name]['count']}\n"
+                faction_discord_text += f"  ⚔️ {settlement_name} x {faction['GroundCZSettlements'][settlement_name]['count']}\n"
 
         return faction_discord_text
+
+
+    def _generate_tw_system_discord_text(self, system:Dict):
+        """
+        Create formatted Discord text for Thargoid War in a system
+        """
+        system_discord_text = ""
+        system_stations = {}
+
+        for faction in system['Factions'].values():
+            if faction['Enabled'] != CheckStates.STATE_ON: continue
+
+            for station_name in faction.get('TWStations', {}):
+                faction_station = faction['TWStations'][station_name]
+                if faction_station['enabled'] != CheckStates.STATE_ON: continue
+
+                if not station_name in system_stations: system_stations[station_name] = {'missions': 0, 'passengers': 0, 'escapepods': 0, 'cargo': 0}
+                system_station = system_stations[station_name]
+                system_station['missions'] += faction_station['missions']
+                system_station['passengers'] += faction_station['passengers']
+                system_station['escapepods'] += faction_station['escapepods']
+                system_station['cargo'] += faction_station['cargo']
+
+        for system_station_name, system_station in system_stations.items():
+            system_discord_text += f"🚑 {system_station_name}: {system_station['missions']} missions; 🧍 x {system_station['passengers']}; ⚰️ x {system_station['escapepods']}; 📦 x {system_station['cargo']}\n"
+
+        return system_discord_text
 
 
     def _build_cz_text(self, cz_data, prefix):

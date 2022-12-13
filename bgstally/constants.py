@@ -34,6 +34,7 @@ class UpdateUIPolicy(Enum):
 class DiscordChannel(Enum):
     BGS = 0
     FLEETCARRIER = 1
+    THARGOIDWAR = 2
 
 
 class MaterialsCategory(Enum):
@@ -44,6 +45,12 @@ class MaterialsCategory(Enum):
 class DiscordPostStyle(str, Enum):
     TEXT = 'Text'
     EMBED = 'Embed'
+
+
+class DiscordActivity(str, Enum):
+    BGS = 'BGS'
+    THARGOIDWAR = 'TW'
+    BOTH = 'Both'
 
 
 DATETIME_FORMAT_JOURNAL = "%Y-%m-%dT%H:%M:%SZ"
