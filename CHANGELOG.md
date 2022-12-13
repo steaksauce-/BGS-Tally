@@ -1,5 +1,21 @@
 # Change Log
 
+## v2.2.0 - xxxx-xx-xx
+
+### New Features:
+
+* Thargoid War rescue mission tracking. BGS-Tally now tracks your Thargoid War rescue activity - passenger missions, cargo, and wounded (escape pod) missions. There are options to report just BGS, just Thargoid War or all combined activity, as well as an option to have a separate Discord channel when reporting just Thargoid War activity.
+
+### Changes:
+
+* When displaying information about a CMDR, or posting to Discord, use the latest information we know about that CMDR (squadron membership, for example).
+* When displaying CMDR ship type, try to use the localised name if present, instead of internal ship name (e.g. `Type-10 Defender` instead of `type9_military`).
+
+### Bug Fixes:
+
+* If a selected CMDR has a squadron tag, but that squadron isn't available in Inara, still show the tag when displaying or posting the CMDR info to Discord.
+
+
 ## v2.1.0 - 2022-12-05
 
 ### New Features:

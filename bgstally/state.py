@@ -3,7 +3,7 @@ from typing import Dict
 
 from config import config
 
-from bgstally.constants import CheckStates, DiscordPostStyle
+from bgstally.constants import CheckStates, DiscordActivity, DiscordPostStyle
 
 
 class State:
@@ -27,8 +27,10 @@ class State:
         self.IncludeSecondaryInf:tk.StringVar = tk.StringVar(value=config.get_str('XSecondaryInf', default=CheckStates.STATE_ON))
         self.DiscordBGSWebhook:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordWebhook', default=""))
         self.DiscordFCJumpWebhook:tk.StringVar = tk.StringVar(value=config.get_str("XDiscordFCJumpWebhook", default=""))
+        self.DiscordTWWebhook:tk.StringVar = tk.StringVar(value=config.get_str("XDiscordTWWebhook", default=""))
         self.DiscordUsername:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordUsername', default=""))
         self.DiscordPostStyle:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordPostStyle', default=DiscordPostStyle.EMBED))
+        self.DiscordActivity:tk.StringVar = tk.StringVar(value=config.get_str('XDiscordActivity', default=DiscordActivity.BOTH))
         self.EnableOverlay:tk.StringVar = tk.StringVar(value=config.get_str('XEnableOverlay', default=CheckStates.STATE_ON))
 
         # Persistent values
@@ -62,8 +64,10 @@ class State:
         config.set('XSecondaryInf', self.IncludeSecondaryInf.get())
         config.set('XDiscordWebhook', self.DiscordBGSWebhook.get())
         config.set('XDiscordFCJumpWebhook', self.DiscordFCJumpWebhook.get())
+        config.set('XDiscordTWWebhook', self.DiscordTWWebhook.get())
         config.set('XDiscordUsername', self.DiscordUsername.get())
         config.set('XDiscordPostStyle', self.DiscordPostStyle.get())
+        config.set('XDiscordActivity', self.DiscordActivity.get())
         config.set('XEnableOverlay', self.EnableOverlay.get())
 
         # Persistent values

@@ -5,6 +5,8 @@ from typing import Optional
 
 import plug
 import requests
+import semantic_version
+
 from config import config
 from monitor import monitor
 
@@ -31,10 +33,10 @@ class BGSTally:
     """
     Main plugin class
     """
-    def __init__(self, plugin_name: str, version:str):
+    def __init__(self, plugin_name: str, version: Optional[semantic_version.Version]):
         self.plugin_name:str = plugin_name
-        self.version:str = version
-        self.git_version:str = "0.0.0"
+        self.version: Optional[semantic_version.Version] = version
+        self.git_version: Optional[semantic_version.Version] = semantic_version.Version.coerce("0")
 
 
     def plugin_start(self, plugin_dir: str):
@@ -130,7 +132,8 @@ class BGSTally:
                 dirty = True
 
             case 'MissionAccepted':
-                self.mission_log.add_mission(entry.get('Name', ""), entry.get('Faction', ""), entry.get('MissionID', ""), entry.get('Expiry', ""), system)
+                self.mission_log.add_mission(entry.get('Name', ""), entry.get('Faction', ""), entry.get('MissionID', ""), entry.get('Expiry', ""), system, station,
+                    entry.get('Count', -1), entry.get('PassengerCount', -1))
                 dirty = True
 
             case 'MissionAbandoned':
@@ -178,7 +181,7 @@ class BGSTally:
             return None
         else:
             latest = response.json()
-            self.git_version = latest['tag_name']
+            self.git_version = semantic_version.Version.coerce(latest['tag_name'])
 
         return True
 
