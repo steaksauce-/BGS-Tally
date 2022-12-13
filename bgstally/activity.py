@@ -39,9 +39,11 @@ MISSIONS_WAR = [
     'Mission_OnFoot_Onslaught_Offline_MB_name'
 ]
 
-# Missions that count towards Thargoid War rescues
-MISSIONS_TW_RESCUE = [
-    'Mission_TW_Rescue_Burning_name', 'Mission_TW_PassengerEvacuation_Alert_name'
+# Missions that count towards the Thargoid War
+MISSIONS_TW = [
+    'Mission_TW_Rescue_Alert_name', 'Mission_TW_PassengerEvacuation_Alert_name', 'Mission_TW_Collect_Alert_name', 'Mission_TW_CollectWing_Alert_name',
+    'Mission_TW_Rescue_Burning_name', 'Mission_TW_PassengerEvacuation_Burning_name',
+    'Mission_TW_Rescue_UnderAttack_name', 'Mission_TW_PassengerEvacuation_UnderAttack_name'
 ]
 
 CZ_GROUND_LOW_CB_MAX = 5000
@@ -227,23 +229,28 @@ class Activity:
                     and effect_faction_name == journal_entry['Faction']:
                         faction['MissionPoints'] += 1
 
-            if journal_entry['Name'] in MISSIONS_TW_RESCUE and mission is not None:
+            if journal_entry['Name'] in MISSIONS_TW and mission is not None:
                 mission_station = mission.get('Station', "")
                 if mission_station == "": continue
 
                 for system_address, system in self.systems.items():
                     if mission['System'] != system['System']: continue
-
                     faction = system['Factions'].get(effect_faction_name)
                     if not faction: continue
 
                     tw_stations = faction['TWStations']
                     if mission_station not in tw_stations:
-                        tw_stations[mission_station] = {'name': mission_station, 'enabled': CheckStates.STATE_ON, 'missions': 0, 'passengers': 0, 'escapepods': 0}
+                        tw_stations[mission_station] = {'name': mission_station, 'enabled': CheckStates.STATE_ON, 'missions': 0, 'passengers': 0, 'escapepods': 0, 'cargo': 0}
 
                     tw_stations[mission_station]['missions'] += 1
-                    tw_stations[mission_station]['passengers'] += max(mission.get('PassengerCount', -1), 0)
-                    tw_stations[mission_station]['escapepods'] += max(mission.get('CommodityCount', -1), 0)
+                    if mission.get('PassengerCount', -1) > -1:
+                        tw_stations[mission_station]['passengers'] += mission.get('PassengerCount', -1)
+                    elif mission.get('CommodityCount', -1) > -1:
+                        match journal_entry.get('Commodity'):
+                            case "$OccupiedCryoPod_Name;":
+                                tw_stations[mission_station]['escapepods'] += mission.get('CommodityCount', -1)
+                            case _:
+                                tw_stations[mission_station]['cargo'] += mission.get('CommodityCount', -1)
 
         self.recalculate_zero_activity()
         mission_log.delete_mission_by_id(journal_entry['MissionID'])
