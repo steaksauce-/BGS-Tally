@@ -10,6 +10,7 @@
 
 * When displaying information about a CMDR, or posting to Discord, use the latest information we know about that CMDR (squadron membership, for example).
 * When displaying CMDR ship type, try to use the localised name if present, instead of internal ship name (e.g. `Type-10 Defender` instead of `type9_military`).
+* The text report field is unfortunately no longer manually editable.  This wasn't possible with the splitting of the reports into BGS and Thargoid War, and was a bit of an oddity anyway, as any edits were always overwritten by any changes and lost when the window was closed. If you need to edit your post, copy it and edit it at the destination after pasting.
 
 ### Bug Fixes:
 
