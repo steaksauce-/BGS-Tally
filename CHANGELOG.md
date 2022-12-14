@@ -12,6 +12,7 @@
 * When displaying CMDR ship type, try to use the localised name if present, instead of internal ship name (e.g. `Type-10 Defender` instead of `type9_military`).
 * The text report field is unfortunately no longer manually editable.  This wasn't possible with the splitting of the reports into BGS and Thargoid War, and was a bit of an oddity anyway, as any edits were always overwritten by any changes and lost when the window was closed. If you need to edit your post, copy it and edit it at the destination after pasting.
 * When listing ground CZs, use a ⚔️ icon against each to easily differentiate them.
+* Tweaks to post titles and footers.
 
 ### Bug Fixes:
 
