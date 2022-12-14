@@ -57,7 +57,7 @@ class WindowActivity:
 
         DiscordTextFrame = ttk.Frame(DiscordFrame)
         DiscordTextFrame.grid(row=2, column=0, pady=5, sticky=tk.NSEW)
-        DiscordText = TextPlus(DiscordTextFrame, wrap=tk.WORD, height=14, font=("Helvetica", 9))
+        DiscordText = TextPlus(DiscordTextFrame, state='disabled', wrap=tk.WORD, height=14, font=("Helvetica", 9))
         DiscordScroll = tk.Scrollbar(DiscordTextFrame, orient=tk.VERTICAL, command=DiscordText.yview)
         DiscordText['yscrollcommand'] = DiscordScroll.set
         DiscordScroll.pack(fill=tk.Y, side=tk.RIGHT)
@@ -199,13 +199,10 @@ class WindowActivity:
             tab.pack_forget()
             tab_index += 1
 
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
-        # Select all text and focus the field
-        DiscordText.tag_add('sel', '1.0', 'end')
-        DiscordText.focus()
+        self._update_discord_field(DiscordText, activity)
 
         ttk.Button(ContainerFrame, text="Copy to Clipboard (Legacy Format)", command=partial(self._copy_to_clipboard, ContainerFrame, DiscordText)).pack(side=tk.LEFT, padx=5, pady=5)
-        if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self._post_to_discord, DiscordText, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
+        if self.bgstally.discord.is_webhook_valid(DiscordChannel.BGS): ttk.Button(ContainerFrame, text="Post to Discord", command=partial(self._post_to_discord, activity)).pack(side=tk.RIGHT, padx=5, pady=5)
 
         theme.update(ContainerFrame)
 
@@ -213,30 +210,65 @@ class WindowActivity:
         Form.bind_class('TSpinbox', '<MouseWheel>', lambda event : "break")
 
 
-    def _post_to_discord(self, DiscordText, activity: Activity):
+    def _update_discord_field(self, DiscordText, activity: Activity):
+        """
+        Update the contents of the Discord text field
+        """
+        DiscordText.configure(state='normal')
+        DiscordText.delete('1.0', 'end-1c')
+        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity, self.bgstally.state.DiscordActivity.get()))
+        DiscordText.configure(state='disabled')
+
+
+    def _post_to_discord(self, activity: Activity):
         """
         Callback to post to discord
         """
-        # We post to the TW channel if we're _only_ reporting TW activity
-        if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR and self.bgstally.discord.is_webhook_valid(DiscordChannel.THARGOIDWAR):
-            discord_channel = DiscordChannel.THARGOIDWAR
-        else:
-            discord_channel = DiscordChannel.BGS
-
         if self.bgstally.state.DiscordPostStyle.get() == DiscordPostStyle.TEXT:
-            discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
-            activity.discord_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_messageid, discord_channel)
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS:
+                # BGS Only - one post to BGS channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_bgs_messageid, DiscordChannel.BGS)
+            elif self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR:
+                # TW Only - one post to TW channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            elif self.bgstally.discord.is_webhook_valid(DiscordChannel.THARGOIDWAR):
+                # Both, TW channel is available - two posts, one to each channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_bgs_messageid, DiscordChannel.BGS)
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            else:
+                # Both, TW channel is not available - one combined post to BGS channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.BOTH)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_bgs_messageid, DiscordChannel.BGS)
         else:
-            discord_fields:Dict = self._generate_discord_embed_fields(activity)
-            activity.discord_messageid = self.bgstally.discord.post_embed(f"Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_messageid, discord_channel)
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS:
+                # BGS Only - one post to BGS channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_embed(f"BGS Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_bgs_messageid, DiscordChannel.BGS)
+            elif self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR:
+                # TW Only - one post to TW channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_embed(f"TW Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            elif self.bgstally.discord.is_webhook_valid(DiscordChannel.THARGOIDWAR):
+                # Both, TW channel is available - two posts, one to each channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_embed(f"BGS Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_bgs_messageid, DiscordChannel.BGS)
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_embed(f"TW Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            else:
+                # Both, TW channel is not available - one combined post to BGS channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.BOTH)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_embed(f"Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_bgs_messageid, DiscordChannel.BGS)
 
 
     def _option_change(self, DiscordText, activity: Activity):
         """
         Callback when one of the Discord options is changed
         """
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+        self._update_discord_field(DiscordText, activity)
 
 
     def _enable_faction_change(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, system, faction, faction_index, *args):
@@ -245,9 +277,7 @@ class WindowActivity:
         """
         faction['Enabled'] = CheckStates.STATE_ON if FactionEnableCheckbuttons[faction_index].instate(['selected']) else CheckStates.STATE_OFF
         self._update_enable_all_factions_checkbutton(notebook, tab_index, EnableAllCheckbutton, FactionEnableCheckbuttons, system)
-
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+        self._update_discord_field(DiscordText, activity)
 
 
     def _enable_all_factions_change(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, FactionEnableCheckbuttons, DiscordText, activity: Activity, system, *args):
@@ -265,9 +295,7 @@ class WindowActivity:
             x += 1
 
         self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
-
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+        self._update_discord_field(DiscordText, activity)
 
 
     def _enable_settlement_change(self, SettlementCheckbutton, settlement_name, DiscordText, activity: Activity, faction, faction_index, *args):
@@ -275,9 +303,7 @@ class WindowActivity:
         Callback for when a Settlement Enable Checkbutton is changed
         """
         faction['GroundCZSettlements'][settlement_name]['enabled'] = CheckStates.STATE_ON if SettlementCheckbutton.instate(['selected']) else CheckStates.STATE_OFF
-
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+        self._update_discord_field(DiscordText, activity)
 
 
     def _update_enable_all_factions_checkbutton(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, FactionEnableCheckbuttons, system):
@@ -339,9 +365,7 @@ class WindowActivity:
 
         activity.recalculate_zero_activity()
         self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
-
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+        self._update_discord_field(DiscordText, activity)
 
 
     def _mission_points_change(self, notebook: ScrollableNotebook, tab_index: int, MissionPointsVar, primary, EnableAllCheckbutton, DiscordText, activity: Activity, system, faction, faction_index, *args):
@@ -356,9 +380,7 @@ class WindowActivity:
         activity.recalculate_zero_activity()
         Debug.logger.info(system)
         self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
-
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+        self._update_discord_field(DiscordText, activity)
 
 
     def _scenarios_change(self, notebook: ScrollableNotebook, tab_index: int, ScenariosVar, EnableAllCheckbutton, DiscordText, activity: Activity, system, faction, faction_index, *args):
@@ -369,9 +391,7 @@ class WindowActivity:
 
         activity.recalculate_zero_activity()
         self._update_tab_image(notebook, tab_index, EnableAllCheckbutton, system)
-
-        DiscordText.delete('1.0', 'end-1c')
-        DiscordText.insert(tk.INSERT, self._generate_discord_text(activity))
+        self._update_discord_field(DiscordText, activity)
 
 
     def _update_tab_image(self, notebook: ScrollableNotebook, tab_index: int, EnableAllCheckbutton, system: Dict):
@@ -400,7 +420,7 @@ class WindowActivity:
             return faction_name
 
 
-    def _generate_discord_text(self, activity: Activity):
+    def _generate_discord_text(self, activity: Activity, activity_mode: DiscordActivity):
         """
         Generate text for a plain text Discord post
         """
@@ -409,10 +429,10 @@ class WindowActivity:
         for system in activity.systems.values():
             system_discord_text = ""
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.THARGOIDWAR or activity_mode == DiscordActivity.BOTH:
                 system_discord_text += self._generate_tw_system_discord_text(system)
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.BGS or activity_mode == DiscordActivity.BOTH:
                 for faction in system['Factions'].values():
                     if faction['Enabled'] != CheckStates.STATE_ON: continue
                     system_discord_text += self._generate_faction_discord_text(faction)
@@ -423,7 +443,7 @@ class WindowActivity:
         return discord_text.replace("'", "")
 
 
-    def _generate_discord_embed_fields(self, activity: Activity):
+    def _generate_discord_embed_fields(self, activity: Activity, activity_mode: DiscordActivity):
         """
         Generate fields for a Discord post with embed
         """
@@ -432,10 +452,10 @@ class WindowActivity:
         for system in activity.systems.values():
             system_discord_text = ""
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.THARGOIDWAR or activity_mode == DiscordActivity.BOTH:
                 system_discord_text += self._generate_tw_system_discord_text(system)
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.BGS or activity_mode == DiscordActivity.BOTH:
                 for faction in system['Factions'].values():
                     if faction['Enabled'] != CheckStates.STATE_ON: continue
                     system_discord_text += self._generate_faction_discord_text(faction)
@@ -511,7 +531,7 @@ class WindowActivity:
                 system_station['cargo'] += faction_station['cargo']
 
         for system_station_name, system_station in system_stations.items():
-            system_discord_text += f"🚑 {system_station_name}: {system_station['missions']} missions; 🧍 x {system_station['passengers']}; ⚰️ x {system_station['escapepods']}; 📦 x {system_station['cargo']}\n"
+            system_discord_text += f"🍀 {system_station_name}: {system_station['missions']} missions; 🧍 x {system_station['passengers']}; ⚰️ x {system_station['escapepods']}; 📦 x {system_station['cargo']}\n"
 
         return system_discord_text
 

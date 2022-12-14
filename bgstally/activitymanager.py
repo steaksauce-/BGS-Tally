@@ -62,7 +62,8 @@ class ActivityManager:
         new_activity = deepcopy(self.current_activity)
         new_activity.tick_id = tick.tick_id
         new_activity.tick_time = tick.tick_time
-        new_activity.discord_messageid = None
+        new_activity.discord_bgs_messageid = None
+        new_activity.discord_tw_messageid = None
         new_activity.clear_activity(self.bgstally.mission_log)
         self.activity_data.append(new_activity)
         self.activity_data.sort(reverse=True)
@@ -92,7 +93,7 @@ class ActivityManager:
         self.activity_data.sort(reverse=True)
 
 
-    def _convert_legacy_data(self, filepath: str, tick: Tick, discordmessageid: str):
+    def _convert_legacy_data(self, filepath: str, tick: Tick, discord_bgs_messageid: str):
         """
         Convert a legacy activity data file to new location and format.
         """
@@ -103,7 +104,7 @@ class ActivityManager:
                 # TODO: remove(filepath) - Can be done in a future version of the plugin, when we are sure everything is solid
                 return
 
-        activity = Activity(self.bgstally, tick, discordmessageid)
+        activity = Activity(self.bgstally, tick, discord_bgs_messageid)
         activity.load_legacy_data(filepath)
         self.activity_data.append(activity)
         if activity.tick_id == tick.tick_id: self.current_activity = activity

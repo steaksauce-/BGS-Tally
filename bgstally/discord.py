@@ -6,7 +6,7 @@ import requests
 from bgstally.constants import DiscordChannel
 from bgstally.debug import Debug
 
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S (in-game time)"
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S (game)"
 URL_CLOCK_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Fxemoji_u1F556.svg/240px-Fxemoji_u1F556.svg.png"
 
 class Discord:

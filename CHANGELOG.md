@@ -4,12 +4,15 @@
 
 ### New Features:
 
-* Thargoid War rescue mission tracking. BGS-Tally now tracks your Thargoid War rescue activity - passenger missions, cargo, and wounded (escape pod) missions. There are options to report just BGS, just Thargoid War or all combined activity, as well as an option to have a separate Discord channel when reporting just Thargoid War activity.
+* Thargoid War mission tracking 🍀. BGS-Tally now tracks your Thargoid War passenger 🧍, cargo 📦, and wounded ⚰️ (escape pod) missions. There are options to report just BGS, just Thargoid War or all combined activity, as well as an option to have a separate Discord channel when reporting Thargoid War activity.
 
 ### Changes:
 
 * When displaying information about a CMDR, or posting to Discord, use the latest information we know about that CMDR (squadron membership, for example).
 * When displaying CMDR ship type, try to use the localised name if present, instead of internal ship name (e.g. `Type-10 Defender` instead of `type9_military`).
+* The text report field is unfortunately no longer manually editable.  This wasn't possible with the splitting of the reports into BGS and Thargoid War, and was a bit of an oddity anyway, as any edits were always overwritten by any changes and lost when the window was closed. If you need to edit your post, copy it and edit it at the destination after pasting.
+* When listing ground CZs, use a ⚔️ icon against each to easily differentiate them.
+* Tweaks to post titles and footers.
 
 ### Bug Fixes:
 

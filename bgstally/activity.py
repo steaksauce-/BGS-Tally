@@ -58,7 +58,7 @@ class Activity:
     factions with their activity
     """
 
-    def __init__(self, bgstally, tick: Tick = None, discord_messageid: str = None):
+    def __init__(self, bgstally, tick: Tick = None, discord_bgs_messageid: str = None):
         """
         Instantiate using a given Tick
         """
@@ -68,7 +68,8 @@ class Activity:
         # Stored data. Remember to modify __deepcopy__() if these are changed or new data added.
         self.tick_id = tick.tick_id
         self.tick_time = tick.tick_time
-        self.discord_messageid = discord_messageid
+        self.discord_bgs_messageid = discord_bgs_messageid
+        self.discord_tw_messageid = None
         self.systems = {}
 
 
@@ -549,7 +550,8 @@ class Activity:
         return {
             'tickid': self.tick_id,
             'ticktime': self.tick_time.strftime(DATETIME_FORMAT_ACTIVITY),
-            'discordmessageid': self.discord_messageid,
+            'discordmessageid': self.discord_bgs_messageid,
+            'discordtwmessageid': self.discord_tw_messageid,
             'systems': self.systems}
 
 
@@ -559,7 +561,8 @@ class Activity:
         """
         self.tick_id = dict.get('tickid')
         self.tick_time = datetime.strptime(dict.get('ticktime'), DATETIME_FORMAT_ACTIVITY)
-        self.discord_messageid = dict.get('discordmessageid')
+        self.discord_bgs_messageid = dict.get('discordmessageid')
+        self.discord_tw_messageid = dict.get('discordtwmessageid')
         self.systems = dict.get('systems')
 
 
@@ -601,7 +604,8 @@ class Activity:
         setattr(result, 'bgstally', self.bgstally)
         setattr(result, 'tick_id', self.tick_id)
         setattr(result, 'tick_time', self.tick_time)
-        setattr(result, 'discord_messageid', self.discord_messageid)
+        setattr(result, 'discord_bgs_messageid', self.discord_bgs_messageid)
+        setattr(result, 'discord_tw_messageid', self.discord_tw_messageid)
 
         # Deep copied items
         setattr(result, 'systems', deepcopy(self.systems, memo))
