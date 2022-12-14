@@ -224,18 +224,44 @@ class WindowActivity:
         """
         Callback to post to discord
         """
-        # We post to the TW channel if we're _only_ reporting TW activity
-        if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR and self.bgstally.discord.is_webhook_valid(DiscordChannel.THARGOIDWAR):
-            discord_channel = DiscordChannel.THARGOIDWAR
-        else:
-            discord_channel = DiscordChannel.BGS
-
         if self.bgstally.state.DiscordPostStyle.get() == DiscordPostStyle.TEXT:
-            discord_text:str = DiscordText.get('1.0', 'end-1c').strip()
-            activity.discord_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_messageid, discord_channel)
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS:
+                # BGS Only - one post to BGS channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_bgs_messageid, DiscordChannel.BGS)
+            elif self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR:
+                # TW Only - one post to TW channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            elif self.bgstally.discord.is_webhook_valid(DiscordChannel.THARGOIDWAR):
+                # Both, TW channel is available - two posts, one to each channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_bgs_messageid, DiscordChannel.BGS)
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            else:
+                # Both, TW channel is not available - one combined post to BGS channel
+                discord_text:str = self._generate_discord_text(activity, DiscordActivity.BOTH)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_plaintext(discord_text, activity.discord_bgs_messageid, DiscordChannel.BGS)
         else:
-            discord_fields:Dict = self._generate_discord_embed_fields(activity)
-            activity.discord_messageid = self.bgstally.discord.post_embed(f"Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_messageid, discord_channel)
+            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS:
+                # BGS Only - one post to BGS channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_embed(f"BGS Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_bgs_messageid, DiscordChannel.BGS)
+            elif self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR:
+                # TW Only - one post to TW channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_embed(f"TW Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            elif self.bgstally.discord.is_webhook_valid(DiscordChannel.THARGOIDWAR):
+                # Both, TW channel is available - two posts, one to each channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.BGS)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_embed(f"BGS Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_bgs_messageid, DiscordChannel.BGS)
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.THARGOIDWAR)
+                activity.discord_tw_messageid = self.bgstally.discord.post_embed(f"TW Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_tw_messageid, DiscordChannel.THARGOIDWAR)
+            else:
+                # Both, TW channel is not available - one combined post to BGS channel
+                discord_fields:Dict = self._generate_discord_embed_fields(activity, DiscordActivity.BOTH)
+                activity.discord_bgs_messageid = self.bgstally.discord.post_embed(f"Activity after tick: {activity.tick_time.strftime(DATETIME_FORMAT)}", "", discord_fields, activity.discord_bgs_messageid, DiscordChannel.BGS)
 
 
     def _option_change(self, DiscordText, activity: Activity):
@@ -394,7 +420,7 @@ class WindowActivity:
             return faction_name
 
 
-    def _generate_discord_text(self, activity: Activity):
+    def _generate_discord_text(self, activity: Activity, activity_mode: DiscordActivity):
         """
         Generate text for a plain text Discord post
         """
@@ -403,10 +429,10 @@ class WindowActivity:
         for system in activity.systems.values():
             system_discord_text = ""
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.THARGOIDWAR or activity_mode == DiscordActivity.BOTH:
                 system_discord_text += self._generate_tw_system_discord_text(system)
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.BGS or activity_mode == DiscordActivity.BOTH:
                 for faction in system['Factions'].values():
                     if faction['Enabled'] != CheckStates.STATE_ON: continue
                     system_discord_text += self._generate_faction_discord_text(faction)
@@ -417,7 +443,7 @@ class WindowActivity:
         return discord_text.replace("'", "")
 
 
-    def _generate_discord_embed_fields(self, activity: Activity):
+    def _generate_discord_embed_fields(self, activity: Activity, activity_mode: DiscordActivity):
         """
         Generate fields for a Discord post with embed
         """
@@ -426,10 +452,10 @@ class WindowActivity:
         for system in activity.systems.values():
             system_discord_text = ""
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.THARGOIDWAR or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.THARGOIDWAR or activity_mode == DiscordActivity.BOTH:
                 system_discord_text += self._generate_tw_system_discord_text(system)
 
-            if self.bgstally.state.DiscordActivity.get() == DiscordActivity.BGS or self.bgstally.state.DiscordActivity.get() == DiscordActivity.BOTH:
+            if activity_mode == DiscordActivity.BGS or activity_mode == DiscordActivity.BOTH:
                 for faction in system['Factions'].values():
                     if faction['Enabled'] != CheckStates.STATE_ON: continue
                     system_discord_text += self._generate_faction_discord_text(faction)
@@ -505,7 +531,7 @@ class WindowActivity:
                 system_station['cargo'] += faction_station['cargo']
 
         for system_station_name, system_station in system_stations.items():
-            system_discord_text += f"🚑 {system_station_name}: {system_station['missions']} missions; 🧍 x {system_station['passengers']}; ⚰️ x {system_station['escapepods']}; 📦 x {system_station['cargo']}\n"
+            system_discord_text += f"🍀 {system_station_name}: {system_station['missions']} missions; 🧍 x {system_station['passengers']}; ⚰️ x {system_station['escapepods']}; 📦 x {system_station['cargo']}\n"
 
         return system_discord_text
 
