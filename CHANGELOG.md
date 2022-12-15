@@ -13,6 +13,7 @@
 * The text report field is unfortunately no longer manually editable.  This wasn't possible with the splitting of the reports into BGS and Thargoid War, and was a bit of an oddity anyway, as any edits were always overwritten by any changes and lost when the window was closed. If you need to edit your post, copy it and edit it at the destination after pasting.
 * When listing ground CZs, use a ⚔️ icon against each to easily differentiate them.
 * Tweaks to post titles and footers.
+* Whitespace is now stripped from Discord URLs to minimise user error (thanks @steaksauce-).
 
 ### Bug Fixes:
 
